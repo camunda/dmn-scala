@@ -2,7 +2,9 @@ package org.camunda.dmn
 
 sealed trait EvalResult
 
-case class EvalValue(key: String, value: Any) extends EvalResult
+object EvalNull extends EvalResult
+
+case class EvalValue(value: Any) extends EvalResult
 
 case class ParseFailure(error: String) extends EvalResult
 

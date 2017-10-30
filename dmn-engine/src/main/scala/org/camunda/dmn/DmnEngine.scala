@@ -8,21 +8,28 @@ import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.instance.{Decision, DecisionTable, InputEntry, OutputEntry, Output}
 import org.camunda.feel.FeelEngine
 import org.camunda.feel.interpreter.RootContext
+import org.camunda.feel.ParsedExpression
 
 class DmnEngine {
   
   lazy val feelEngine = new FeelEngine
   
-  def eval(stream: InputStream, decisionId: String, context: Map[String, Any] = Map()): EvalResult = {
-    
-    val model = readModel(stream)
-    
-    findDecision(model, decisionId)
-      .map(evalDecision(_, context))
-      .getOrElse(EvalFailure(s"no decision found with id '$decisionId'"))
+  val parser = new DmnParser
+  
+  def eval(stream: InputStream, decisionId: String, context: Map[String, Any]): EvalResult = {
+    parse(stream) match {
+      case Right(errors)    => ParseFailure(s"Failed to parse DMN: ${errors.mkString("\n")}")
+      case Left(parsedDmn)  => eval(parsedDmn, decisionId, context)
+    }
   }
   
-  private def readModel(stream: InputStream): DmnModelInstance = Dmn.readModelFromStream(stream)
+  def parse(stream: InputStream): Either[ParsedDmn, List[String]] = parser.parse(stream)
+  
+  def eval(dmn: ParsedDmn, decisionId: String, context: Map[String, Any]): EvalResult = {
+    findDecision(dmn.model, decisionId)
+          .map(evalDecision(_, context, dmn.expressionsById))
+          .getOrElse(EvalFailure(s"no decision found with id '$decisionId'"))
+  }
   
   private def findDecision(model: DmnModelInstance, decisionId: String): Option[Decision] = {
     model.getDefinitions
@@ -31,7 +38,7 @@ class DmnEngine {
       .map(_.asInstanceOf[Decision])
   }
       
-  private def evalDecision(decision: Decision, context: Map[String, Any]): EvalResult = {
+  private def evalDecision(decision: Decision, context: Map[String, Any], parsedExpressions: Map[String, ParsedExpression]): EvalResult = {
     
     val decisionId = decision.getId
     val decisionName = decision.getName
@@ -43,23 +50,32 @@ class DmnEngine {
     
     if (expression.isInstanceOf[DecisionTable]) {
       
-      val result = evalDecisionTable(expression.asInstanceOf[DecisionTable], context)
+      val result = evalDecisionTable(expression.asInstanceOf[DecisionTable], context, parsedExpressions)
     
-      EvalValue(variableName, result)
+      if (result.isEmpty) {
+        EvalNull;
+      } 
+      else if (result.size == 1) {
+        EvalValue(result.head._2)
+      }
+      else {
+        EvalValue(result) 
+      } 
+      
     }
     else {
       EvalFailure(s"decision of type '${expression.getTypeRef}' is not supported")
     }
   }
 
-  private def evalDecisionTable(decisionTable: DecisionTable, context: Map[String,Any]): Any = {
+  private def evalDecisionTable(decisionTable: DecisionTable, context: Map[String,Any], parsedExpressions: Map[String, ParsedExpression]): Map[String, Any] = {
     
     val hitPolicy = decisionTable.getHitPolicy
     
     val inputValues = decisionTable.getInputs.asScala
       .map(i => {
-        val label = i.getLabel
-        val expression = i.getInputExpression.getText.getTextContent
+        val id = i.getInputExpression.getId
+        val expression = parsedExpressions(id)
         
         evalExpression(expression, context)
       })
@@ -71,7 +87,7 @@ class DmnEngine {
       .map(r => {
         val inputEntries = r.getInputEntries.asScala.toList
         
-        evalInputEntries(inputEntries, inputValues, context) match {
+        evalInputEntries(inputEntries, inputValues, context, parsedExpressions) match {
           case false  => None
           case true   => Some(r)
         }
@@ -85,7 +101,8 @@ class DmnEngine {
       val outputEntries = r.getOutputEntries.asScala.toList
        
       val outputValues = outputEntries.map(o => {
-        val expression = o.getText.getTextContent
+        val id = o.getId
+        val expression = parsedExpressions(id)
         
         evalExpression(expression, context) 
       })
@@ -96,43 +113,29 @@ class DmnEngine {
     })  
     
     // assume that unique hit policy
-    val result = outputValues.head
-    
-    if (result.isEmpty) {
-      return null;
-    } 
-    else if (result.size == 1) {
-      return result.head._2  
-    }
-    else {
-     return result 
-    } 
+    outputValues.headOption.getOrElse(Map.empty)
   }
   
-  private def evalExpression(expression: String, context: Map[String, Any]): Any = {
-    feelEngine.evalExpression(expression, context) match {
+  private def evalExpression(expression: ParsedExpression, context: Map[String, Any]): Any = {
+    feelEngine.eval(expression, context) match {
       case org.camunda.feel.EvalValue(value) => value
       case _ => throw new RuntimeException("todo: handle failure")
     }
   }
   
-  private def evalUnaryTests(expression: String, inputValue: Any, context: Map[String, Any]): Boolean = {
-    feelEngine.evalUnaryTests(expression, context + (RootContext.defaultInputVariable -> inputValue)) match {
-      case org.camunda.feel.EvalValue(value) => value.asInstanceOf[Boolean]
-      case _ => throw new RuntimeException("todo: handle failure")
-    }
-  }
-  
-  private def evalInputEntries(inputEntries: List[InputEntry], inputValues: List[Any], context: Map[String, Any]): Boolean = {
+  private def evalInputEntries(inputEntries: List[InputEntry], inputValues: List[Any], context: Map[String, Any], parsedExpressions: Map[String, ParsedExpression]): Boolean = {
     inputEntries match {
       case Nil     => true
       case i :: is => {
-        val expression = i.getText.getTextContent
-        val inputValue = inputValues.head
+        val id = i.getId
+        val expression = parsedExpressions(id)
         
-        evalUnaryTests(expression, inputValue, context) match {
+        val inputValue = inputValues.head
+        val contextWithInput = context + (RootContext.defaultInputVariable -> inputValue)
+        
+        evalExpression(expression, contextWithInput) match {
           case false => false
-          case true => evalInputEntries(is, inputValues.tail, context)
+          case true => evalInputEntries(is, inputValues.tail, context, parsedExpressions)
         }
       }
     }
