@@ -9,6 +9,7 @@ import org.camunda.bpm.model.dmn.instance.{Decision, DecisionTable, InputEntry, 
 import org.camunda.feel.parser.FeelParser
 import org.camunda.feel.parser.FeelParser._
 import org.camunda.feel.ParsedExpression
+import org.camunda.feel.parser.ConstBool
 
 class DmnParser {
   
@@ -24,6 +25,8 @@ class DmnParser {
      val decisionTables = decisions.map(d => d.getExpression)
        .filter(_.isInstanceOf[DecisionTable])
        .map(_.asInstanceOf[DecisionTable])
+       
+     // TODO ensure that single hit policy (U, A, P, F) is only used for decision table with one output
        
      // assume that expression language is FEEL  
      val inputExpressions = decisionTables.flatMap(dt => dt.getInputs.asScala)
@@ -86,9 +89,14 @@ class DmnParser {
   }
   
   private def parseUnaryTests(expression: String): Either[ParsedExpression, String] = {
-    FeelParser.parseUnaryTests(expression) match {
-      case Success(exp, _) => Left(ParsedExpression(exp, expression))
-      case e: NoSuccess    => Right(s"Failed to parse FEEL unary-tests '$expression':\n$e")
+    
+    if (expression.isEmpty()) {
+      Left(ParsedExpression(ConstBool(true), expression))
+    } else {
+      FeelParser.parseUnaryTests(expression) match {
+          case Success(exp, _) => Left(ParsedExpression(exp, expression))
+          case e: NoSuccess    => Right(s"Failed to parse FEEL unary-tests '$expression':\n$e")
+      }
     }
   }
   

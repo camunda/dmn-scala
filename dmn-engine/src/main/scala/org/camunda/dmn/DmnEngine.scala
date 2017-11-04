@@ -50,25 +50,17 @@ class DmnEngine {
     
     if (expression.isInstanceOf[DecisionTable]) {
       
-      val result = evalDecisionTable(expression.asInstanceOf[DecisionTable], context, parsedExpressions)
-    
-      if (result.isEmpty) {
-        EvalNull;
-      } 
-      else if (result.size == 1) {
-        EvalValue(result.head._2)
+      evalDecisionTable(expression.asInstanceOf[DecisionTable], context, parsedExpressions) match {
+        case None => EvalNull
+        case Some(value) => EvalValue(value)
       }
-      else {
-        EvalValue(result) 
-      } 
-      
     }
     else {
       EvalFailure(s"decision of type '${expression.getTypeRef}' is not supported")
     }
   }
 
-  private def evalDecisionTable(decisionTable: DecisionTable, context: Map[String,Any], parsedExpressions: Map[String, ParsedExpression]): Map[String, Any] = {
+  private def evalDecisionTable(decisionTable: DecisionTable, context: Map[String,Any], parsedExpressions: Map[String, ParsedExpression]): Option[Any] = {
     
     val hitPolicy = decisionTable.getHitPolicy
     
@@ -94,10 +86,14 @@ class DmnEngine {
       })
       .flatten
       .toList
-    
-    // TODO check hit policy  
+
+    val relevantRules = if (hitPolicy == HitPolicy.FIRST) {
+      List(matchedRules.head)
+    } else {
+      matchedRules
+    }  
       
-    val outputValues = matchedRules.map(r => {
+    val outputValues: List[Map[String, Any]] = relevantRules.map(r => {
       val outputEntries = r.getOutputEntries.asScala.toList
        
       val outputValues = outputEntries.map(o => {
@@ -112,8 +108,100 @@ class DmnEngine {
         .toMap
     })  
     
-    // assume that unique hit policy
-    outputValues.headOption.getOrElse(Map.empty)
+    applyHitPolicy(hitPolicy, decisionTable.getAggregation, outputs, outputValues)
+  }
+
+  private def applyHitPolicy(
+    hitPolicy: HitPolicy,
+    aggregator: BuiltinAggregator,
+    outputs: List[Output],
+    outputValues: List[Map[String, Any]]): Option[Any] = {
+    
+    hitPolicy match {
+
+      // single hit policies
+      case HitPolicy.UNIQUE => {
+        // TODO ensure only one result
+        singleOutputValue(outputValues)
+      }
+      case HitPolicy.FIRST => {
+        singleOutputValue(outputValues)  
+      }
+      case HitPolicy.ANY => {
+        // TODO ensure output values are equal
+        singleOutputValue(outputValues)
+      }
+      case HitPolicy.PRIORITY => {
+        singleOutputValue(sortByPriority(outputValues, outputs))
+      }
+
+      // multiple hit policy
+      case HitPolicy.OUTPUT_ORDER => {
+        multipleOutputValues(sortByPriority(outputValues, outputs))
+      }
+      case HitPolicy.RULE_ORDER => {
+        multipleOutputValues(outputValues)
+      }
+      case HitPolicy.COLLECT => {
+        aggregator match {
+          case BuiltinAggregator.COUNT => Some(outputValues.size)
+          case BuiltinAggregator.MIN => Some(withSingleOutput(outputValues, withListOfNumbers(_, _.min)))
+          case BuiltinAggregator.MAX => Some(withSingleOutput(outputValues, withListOfNumbers(_, _.max)))
+          case BuiltinAggregator.SUM => Some(withSingleOutput(outputValues, withListOfNumbers(_, _.sum)))
+          case _ => multipleOutputValues(outputValues)
+        }
+      }
+
+      // default = unique
+      case _ => {
+        // TODO ensure only one result
+        singleOutputValue(outputValues)
+      }
+    }
+  }
+
+  private def withSingleOutput(values: List[Map[String, Any]], f: List[Any] => Any) = f(values.map(_.values.head))
+  
+  private def withListOfNumbers(values: List[Any], f: List[Double] => Any) = f(values.map(_.asInstanceOf[Double]))
+  
+  private def sortByPriority(outputValues: List[Map[String, Any]], outputs: List[Output]): List[Map[String, Any]] = {
+    val priorities: List[(String, Map[String, Int])] = outputs.map { output =>
+
+      val values = Option(output.getOutputValues).map(
+        _.getText.getTextContent
+          .split(",")
+          .map(_.trim)
+          .toList
+        ).getOrElse(List())
+
+      output.getName -> values.zipWithIndex.map {
+        case (value, index) =>
+          value -> index
+      }.toMap
+    }
+
+    outputValues.sortBy(values =>
+      priorities.map {
+        case (output, priority) =>
+          val value = values(output).toString
+          priority.get(value).map(_.toString).getOrElse("")
+      }.reduce(_ + _))
+  }
+  
+  private def singleOutputValue(values: List[Map[String, Any]]): Option[Any] = values.headOption.map{v => 
+    if (v.size == 1) {
+      v.values.head
+    } else {
+      v
+    }
+  }
+
+  private def multipleOutputValues(values: List[Map[String, Any]]): Option[Any] = values match {
+    case Nil                           => None
+    case v :: Nil if (v.size == 1)     => Some(v.values.head)
+    case v :: Nil                      => Some(v)
+    case list if (list.head.size == 1) => Some(list.map(_.values.head))
+    case list => Some(list)
   }
   
   private def evalExpression(expression: ParsedExpression, context: Map[String, Any]): Any = {
