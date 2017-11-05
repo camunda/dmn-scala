@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/DMN/20151101/dmn.xsd" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="definitions_1bv2vgs" name="definitions" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="specialDiscount" name="Special Discount">
+    <decisionTable id="decisionTable" hitPolicy="FIRST">
+      <input id="input1" label="Type of Order" camunda:inputVariable="">
+        <inputExpression id="inputExpression1" typeRef="string">        <text>typeOfOrder</text>
+</inputExpression>
+      </input>
+      <input id="InputClause_0pq0esz" label="Customer Location" camunda:inputVariable="">
+        <inputExpression id="LiteralExpression_04hfn5k" typeRef="string">        <text>customerLocation</text>
+</inputExpression>
+      </input>
+      <input id="InputClause_01g74qm" label="Type of Customer" camunda:inputVariable="">
+        <inputExpression id="LiteralExpression_1n7ejgt" typeRef="string">        <text>typeOfCustomer</text>
+</inputExpression>
+      </input>
+      <output id="output1" label="Special Discount %" name="specialDiscount" typeRef="string" />
+      <rule id="row-723033347-14">
+        <inputEntry id="UnaryTests_11m0nd7">        <text><![CDATA["Web"]]></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_193t9ws">        <text><![CDATA["US"]]></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_1sirphi">        <text><![CDATA["Wholesaler"]]></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_0ut8vlg">        <text>10</text>
+</outputEntry>
+      </rule>
+      <rule id="row-723033347-15">
+        <inputEntry id="UnaryTests_18c7h5b">        <text><![CDATA["Phone"]]></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_1bi3sx3">        <text></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_00vqal0">        <text></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_1l83d43">        <text>0</text>
+</outputEntry>
+      </rule>
+      <rule id="row-723033347-16">
+        <inputEntry id="UnaryTests_0ejps89">        <text></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_1xx6qxa">        <text><![CDATA["Non-US"]]></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_0ygv08h">        <text></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_0kj3p7p">        <text>0</text>
+</outputEntry>
+      </rule>
+      <rule id="row-723033347-17">
+        <inputEntry id="UnaryTests_1eqruai">        <text></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_1jlwutg">        <text></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_0dkrz0x">        <text><![CDATA["Retailer"]]></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_1mzg0yk">        <text>5</text>
+</outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>

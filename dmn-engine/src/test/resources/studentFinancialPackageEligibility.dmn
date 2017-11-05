@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/DMN/20151101/dmn.xsd" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="definitions_0hrr1im" name="definitions" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="eligibility" name="Student Financial Package Eligibility">
+    <decisionTable id="decisionTable" hitPolicy="RULE ORDER">
+      <input id="input1" label="Student GPA" camunda:inputVariable="">
+        <inputExpression id="inputExpression1" typeRef="string">        <text>gpa</text>
+</inputExpression>
+      </input>
+      <input id="InputClause_126ruxk" label="Student Extra-Curricular Activities Count" camunda:inputVariable="">
+        <inputExpression id="LiteralExpression_11tvpd7" typeRef="string">        <text>acitvitiesCount</text>
+</inputExpression>
+      </input>
+      <input id="InputClause_04kj210" label="Student National Honor Society Membership" camunda:inputVariable="">
+        <inputExpression id="LiteralExpression_0gk66pd" typeRef="string">        <text>socialMembership</text>
+</inputExpression>
+      </input>
+      <output id="output1" label="Student Financial Package Eligibility List" name="eligibilityList" typeRef="string" />
+      <rule id="row-723033347-26">
+        <inputEntry id="UnaryTests_1mh27l3">        <text><![CDATA[> 3.5]]></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_0jk3xyn">        <text><![CDATA[>= 4]]></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_1jp3cjo">        <text><![CDATA["Yes"]]></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_1om4p0w">        <text><![CDATA["20% Scholarship"]]></text>
+</outputEntry>
+      </rule>
+      <rule id="row-723033347-27">
+        <inputEntry id="UnaryTests_18yb8zz">        <text><![CDATA[> 3.0]]></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_0aq0b81">        <text></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_17kz8t1">        <text><![CDATA["Yes"]]></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_0kogb4m">        <text><![CDATA["30% Loan"]]></text>
+</outputEntry>
+      </rule>
+      <rule id="row-723033347-28">
+        <inputEntry id="UnaryTests_1xhb9d2">        <text><![CDATA[> 3.0]]></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_0iizfhk">        <text><![CDATA[>= 2]]></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_1vnvgqc">        <text><![CDATA["No"]]></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_0cuwqhg">        <text><![CDATA["20% Work-On-Campus"]]></text>
+</outputEntry>
+      </rule>
+      <rule id="row-723033347-29">
+        <inputEntry id="UnaryTests_0398bhe">        <text><![CDATA[<= 3.0]]></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_1tqhfg3">        <text></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_0mke5kf">        <text></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_18fduu4">        <text><![CDATA["5% Work-On-Campus"]]></text>
+</outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>

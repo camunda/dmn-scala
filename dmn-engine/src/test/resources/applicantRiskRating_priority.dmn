@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/DMN/20151101/dmn.xsd" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="definitions_15b72mg" name="definitions" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="applicantRiskRating" name="Applicant Risk Rating">
+    <decisionTable id="decisionTable" hitPolicy="PRIORITY">
+      <input id="input1" label="Applicant Age" camunda:inputVariable="">
+        <inputExpression id="inputExpression1" typeRef="string">        <text>applicantAge</text>
+</inputExpression>
+      </input>
+      <input id="InputClause_0qrs0nf" label="Medical History" camunda:inputVariable="">
+        <inputExpression id="LiteralExpression_075zlen" typeRef="string">        <text>medicalHistory</text>
+</inputExpression>
+      </input>
+      <output id="output1" label="Applicant Risk Rating" name="applicantRiskRating" typeRef="string">
+        <outputValues>        <text>High, Medium, Low</text>
+</outputValues>
+      </output>
+      <rule id="row-723033347-10">
+        <inputEntry id="UnaryTests_14qb2t9">        <text><![CDATA[>= 25]]></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_0y2tnos">        <text><![CDATA["good"]]></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_0lsywnq">        <text><![CDATA["Medium"]]></text>
+</outputEntry>
+      </rule>
+      <rule id="row-723033347-11">
+        <inputEntry id="UnaryTests_0etl0q1">        <text><![CDATA[> 60]]></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_1xaua5g">        <text><![CDATA["bad"]]></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_082rq5c">        <text><![CDATA["High"]]></text>
+</outputEntry>
+      </rule>
+      <rule id="row-723033347-12">
+        <inputEntry id="UnaryTests_045ebgv">        <text></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_1jdgp4s">        <text><![CDATA["bad"]]></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_0igryey">        <text><![CDATA["Medium"]]></text>
+</outputEntry>
+      </rule>
+      <rule id="row-723033347-13">
+        <inputEntry id="UnaryTests_1ejnu9q">        <text><![CDATA[< 25]]></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_0q8kb9b">        <text><![CDATA["good"]]></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_09ly38z">        <text><![CDATA["Low"]]></text>
+</outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>

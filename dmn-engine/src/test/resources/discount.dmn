@@ -31,7 +31,7 @@
       <rule id="row-958866071-3">
         <inputEntry id="UnaryTests_1d94e9a">        <text><![CDATA["Private"]]></text>
 </inputEntry>
-        <inputEntry id="UnaryTests_05iyfwy">        <text>-</text>
+        <inputEntry id="UnaryTests_05iyfwy">        <text></text>
 </inputEntry>
         <outputEntry id="LiteralExpression_1dx9evc">        <text>0.05</text>
 </outputEntry>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/DMN/20151101/dmn.xsd" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="definitions_065yecq" name="definitions" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="personLoanCompliance" name="Person Loan Compliance">
+    <decisionTable id="decisionTable" hitPolicy="ANY">
+      <input id="input1" label="Persons Credit Rating from Bureau" camunda:inputVariable="">
+        <inputExpression id="inputExpression1" typeRef="string">        <text>creditRating</text>
+</inputExpression>
+      </input>
+      <input id="InputClause_0zba5is" label="Person Credit Card Balance" camunda:inputVariable="">
+        <inputExpression id="LiteralExpression_01mlxqe" typeRef="string">        <text>creditBalance</text>
+</inputExpression>
+      </input>
+      <input id="InputClause_0cdk436" label="Person Education Loan Balance" camunda:inputVariable="">
+        <inputExpression id="LiteralExpression_06v7p1o" typeRef="string">        <text>loanBalance</text>
+</inputExpression>
+      </input>
+      <output id="output1" label="Person Loan Compliance" name="compliance" typeRef="string" />
+      <rule id="row-723033347-6">
+        <inputEntry id="UnaryTests_1iujufx">        <text><![CDATA["A"]]></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_09f90ta">        <text><![CDATA[< 10000]]></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_12891oj">        <text><![CDATA[< 50000]]></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_0vurph7">        <text><![CDATA["Compliant"]]></text>
+</outputEntry>
+      </rule>
+      <rule id="row-723033347-7">
+        <inputEntry id="UnaryTests_12xjlgg">        <text><![CDATA[not("A")]]></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_0vgr2y9">        <text></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_028i8qe">        <text></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_16m6w4l">        <text><![CDATA["Not Compliant"]]></text>
+</outputEntry>
+      </rule>
+      <rule id="row-723033347-8">
+        <description></description>
+        <inputEntry id="UnaryTests_12u1cgl">        <text></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_0domo3z">        <text><![CDATA[>= 10000]]></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_0zmb9u6">        <text></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_1tha4q9">        <text><![CDATA["Not Compliant"]]></text>
+</outputEntry>
+      </rule>
+      <rule id="row-723033347-9">
+        <inputEntry id="UnaryTests_1ihg1k6">        <text></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_1j1i6ba">        <text></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_04360jw">        <text><![CDATA[>= 50000]]></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_1r15cd2">        <text><![CDATA["Not Compliant"]]></text>
+</outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>

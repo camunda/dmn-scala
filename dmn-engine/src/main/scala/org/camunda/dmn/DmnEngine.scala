@@ -162,7 +162,7 @@ class DmnEngine {
 
   private def withSingleOutput(values: List[Map[String, Any]], f: List[Any] => Any) = f(values.map(_.values.head))
   
-  private def withListOfNumbers(values: List[Any], f: List[Double] => Any) = f(values.map(_.asInstanceOf[Double]))
+  private def withListOfNumbers(values: List[Any], f: List[BigDecimal] => Any) = f(values.map(_.asInstanceOf[BigDecimal]))
   
   private def sortByPriority(outputValues: List[Map[String, Any]], outputs: List[Output]): List[Map[String, Any]] = {
     val priorities: List[(String, Map[String, Int])] = outputs.map { output =>
