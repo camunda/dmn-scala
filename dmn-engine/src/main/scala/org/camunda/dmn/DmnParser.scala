@@ -42,6 +42,11 @@ class DmnParser {
        .map(o => o.getId -> o.getText.getTextContent)
        .toMap
        
+     val defaultOutputEntryExpressions = decisionTables.flatMap(dt => dt.getOutputs.asScala)
+       .flatMap(o => Option(o.getDefaultOutputEntry))
+       .map(o => o.getId -> o.getText.getTextContent)
+       .toMap
+       
      val parsedUnaryTests = decisionTables.flatMap(dt => dt.getRules.asScala)
        .flatMap(_.getInputEntries.asScala)
        .map(i => {          
@@ -55,7 +60,7 @@ class DmnParser {
        })
        .toList
        
-     val parsedExpressions = (inputExpressions ++ outputExpressions)
+     val parsedExpressions = (inputExpressions ++ outputExpressions ++ defaultOutputEntryExpressions)
        .map{ case (id, expression) => parseExpression(expression) match {
                case Left(exp)    => Left(id -> exp)
                case Right(error) => Right(error)

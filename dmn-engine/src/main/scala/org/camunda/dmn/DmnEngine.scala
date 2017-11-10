@@ -5,7 +5,7 @@ import scala.collection.JavaConverters._
 import java.io.InputStream
 
 import org.camunda.bpm.model.dmn._
-import org.camunda.bpm.model.dmn.instance.{Decision, DecisionTable, InputEntry, OutputEntry, Output}
+import org.camunda.bpm.model.dmn.instance.{Decision, DecisionTable, InputEntry, OutputEntry, Output, Rule}
 import org.camunda.feel.FeelEngine
 import org.camunda.feel.interpreter.RootContext
 import org.camunda.feel.ParsedExpression
@@ -87,28 +87,50 @@ class DmnEngine {
       .flatten
       .toList
 
-    val relevantRules = if (hitPolicy == HitPolicy.FIRST) {
-      List(matchedRules.head)
-    } else {
-      matchedRules
-    }  
+    if (matchedRules.isEmpty) {
       
-    val outputValues: List[Map[String, Any]] = relevantRules.map(r => {
-      val outputEntries = r.getOutputEntries.asScala.toList
-       
-      val outputValues = outputEntries.map(o => {
-        val id = o.getId
-        val expression = parsedExpressions(id)
+      val defaultOutputValues = outputs
+        .flatMap(o => Option(o.getDefaultOutputEntry))
+        .map(o => parsedExpressions(o.getId))
+        .map(e => evalExpression(e, context))
+      
+      val outputValues = outputs.map(_.getName)
+          .zip(defaultOutputValues)
+          .toMap
         
-        evalExpression(expression, context) 
-      })
+      if (outputValues.isEmpty) {
+        None
+      } else if (outputValues.size == 1) {
+        outputValues.values.headOption
+      } else {
+        Some(outputValues)
+      }
       
-      outputs.map(_.getName)
-        .zip(outputValues)
-        .toMap
-    })  
-    
-    applyHitPolicy(hitPolicy, decisionTable.getAggregation, outputs, outputValues)
+    } else {
+      
+      val relevantRules: List[Rule] = if (hitPolicy == HitPolicy.FIRST) {
+        List(matchedRules.head)
+      } else {
+        matchedRules
+      }  
+        
+      val outputValues: List[Map[String, Any]] = relevantRules.map(r => {
+        val outputEntries = r.getOutputEntries.asScala.toList
+         
+        val outputValues = outputEntries.map(o => {
+          val id = o.getId
+          val expression = parsedExpressions(id)
+          
+          evalExpression(expression, context) 
+        })
+        
+        outputs.map(_.getName)
+          .zip(outputValues)
+          .toMap
+      })  
+      
+      applyHitPolicy(hitPolicy, decisionTable.getAggregation, outputs, outputValues)
+    }
   }
 
   private def applyHitPolicy(
