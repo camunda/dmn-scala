@@ -12,6 +12,9 @@ class DecisionTableHitPolicyTest extends FlatSpec with Matchers with DecisionTes
   lazy val applicantRiskRatingPriorityDecision = parse("/applicantRiskRating_priority.dmn")
   lazy val specialDiscountDecision = parse("/specialDiscount.dmn")
   lazy val holidaysCollectSumDecision = parse("/holidays_collect_sum.dmn")
+  lazy val discountCollectMaxDecision = parse("/discount_collect_max.dmn")
+  lazy val insuranceFeeDecision = parse("/insuranceFee.dmn")
+  lazy val holidaysCollectDecision = parse("/holidays_collect.dmn")
   lazy val holidaysOutputOrderDecision = parse("/holidays_output_order.dmn")
   lazy val eligibilityDecision = parse("/studentFinancialPackageEligibility.dmn")
   
@@ -156,6 +159,53 @@ class DecisionTableHitPolicyTest extends FlatSpec with Matchers with DecisionTes
     engine.eval(holidaysCollectSumDecision, "holidays", Map("age" -> 46, "yearsOfService" -> 19)) should be(EvalValue(24))
   }
   
+  
+  "The decision table 'Discount' (Collect-Max)" should "return '0.1'" in 
+  {
+    engine.eval(discountCollectMaxDecision, "discount", Map("customer" -> "Business", "orderSize" -> 8)) should be(EvalValue(0.1))
+  }
+  
+  it should "return '0.15'" in 
+  {
+    engine.eval(discountCollectMaxDecision, "discount", Map("customer" -> "Business", "orderSize" -> 12)) should be(EvalValue(0.15))
+  }
+  
+  it should "return '0.06'" in 
+  {
+    engine.eval(discountCollectMaxDecision, "discount", Map("customer" -> "Private", "orderSize" -> 17)) should be(EvalValue(0.06))
+  }
+  
+  it should "return '0.05'" in 
+  {
+    engine.eval(discountCollectMaxDecision, "discount", Map("customer" -> "Private", "orderSize" -> 13)) should be(EvalValue(0.05))
+  }
+    
+  
+  "The decision table 'Insurance Fee' (Collect-Min)" should "return '200'" in 
+  {
+    engine.eval(insuranceFeeDecision, "insuranceFee", Map("years" -> 1)) should be(EvalValue(200))
+  }
+  
+  it should "return '190'" in 
+  {
+    engine.eval(insuranceFeeDecision, "insuranceFee", Map("years" -> 4)) should be(EvalValue(190))
+  }
+  
+  it should "return '100'" in 
+  {
+    engine.eval(insuranceFeeDecision, "insuranceFee", Map("years" -> 16)) should be(EvalValue(100))
+  }
+  
+  
+  "The decision table 'Holidays' (Collect)" should "return '22,3,5'" in 
+  {
+    engine.eval(holidaysCollectDecision, "holidays", Map("age" -> 58, "yearsOfService" -> 31)) should be(EvalValue(List(22,3,5)))
+  }
+  
+  it should "return '22'" in 
+  {
+    engine.eval(holidaysCollectDecision, "holidays", Map("age" -> 25, "yearsOfService" -> 2)) should be(EvalValue(22))
+  }
   
   "The decision table 'Holidays' (Output Order)" should "return '22,5,3'" in 
   {

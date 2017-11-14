@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/DMN/20151101/dmn.xsd" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="definitions_1nwos5r" name="definitions" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="discount" name="Discount">
+    <decisionTable id="decisionTable" hitPolicy="COLLECT" aggregation="MAX">
+      <input id="input1" label="Customer" camunda:inputVariable="">
+        <inputExpression id="inputExpression1" typeRef="string">        <text>customer</text>
+</inputExpression>
+      </input>
+      <input id="InputClause_0z9v9tq" label="Order Size" camunda:inputVariable="">
+        <inputExpression id="LiteralExpression_1cfd202" typeRef="string">        <text>orderSize</text>
+</inputExpression>
+      </input>
+      <output id="output1" label="Discount" name="discount" typeRef="string" />
+      <rule id="row-8003113-1">
+        <inputEntry id="UnaryTests_19diiix">        <text><![CDATA["Business"]]></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_0cnuiwo">        <text></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_1f6e5g2">        <text>0.1</text>
+</outputEntry>
+      </rule>
+      <rule id="row-8003113-3">
+        <inputEntry id="UnaryTests_004g252">        <text><![CDATA["Business"]]></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_0p4xsxq">        <text><![CDATA[>= 10]]></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_1afrgwq">        <text>0.15</text>
+</outputEntry>
+      </rule>
+      <rule id="row-8003113-2">
+        <inputEntry id="UnaryTests_0unxwzm">        <text><![CDATA["Private"]]></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_0whjxuf">        <text><![CDATA[>= 15]]></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_0xcxjkc">        <text>0.06</text>
+</outputEntry>
+      </rule>
+      <rule id="row-8003113-4">
+        <inputEntry id="UnaryTests_14efjlf">        <text><![CDATA["Private"]]></text>
+</inputEntry>
+        <inputEntry id="UnaryTests_0ou1be2">        <text></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_0xcxhe2">        <text>0.05</text>
+</outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/DMN/20151101/dmn.xsd" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="definitions_0e7e408" name="definitions" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="insuranceFee" name="Insurance Fee">
+    <decisionTable id="decisionTable" hitPolicy="COLLECT" aggregation="MIN">
+      <input id="input1" label="Years without Incident" camunda:inputVariable="">
+        <inputExpression id="inputExpression1" typeRef="string">        <text>years</text>
+</inputExpression>
+      </input>
+      <output id="output1" label="Insurance Fee" name="insuranceFee" typeRef="string" />
+      <rule id="row-8003113-5">
+        <inputEntry id="UnaryTests_04wqd9x">        <text></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_0q0vfa3">        <text>200</text>
+</outputEntry>
+      </rule>
+      <rule id="row-8003113-6">
+        <inputEntry id="UnaryTests_196uxa5">        <text><![CDATA[> 2]]></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_0x5rvjf">        <text>190</text>
+</outputEntry>
+      </rule>
+      <rule id="row-8003113-7">
+        <inputEntry id="UnaryTests_0ar9o6i">        <text><![CDATA[> 5]]></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_0hyt2jk">        <text>170</text>
+</outputEntry>
+      </rule>
+      <rule id="row-8003113-8">
+        <inputEntry id="UnaryTests_0c1iqbs">        <text><![CDATA[> 10]]></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_067tbnk">        <text>150</text>
+</outputEntry>
+      </rule>
+      <rule id="row-8003113-9">
+        <inputEntry id="UnaryTests_1hkgblu">        <text><![CDATA[> 15]]></text>
+</inputEntry>
+        <outputEntry id="LiteralExpression_17u1nxe">        <text>100</text>
+</outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>
