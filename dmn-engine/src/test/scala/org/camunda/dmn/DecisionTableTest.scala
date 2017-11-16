@@ -2,6 +2,7 @@ package org.camunda.dmn
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
+import org.camunda.dmn.DmnEngine._
 
 class DecisionTableTest extends FlatSpec with Matchers with DecisionTest {
   
@@ -17,22 +18,22 @@ class DecisionTableTest extends FlatSpec with Matchers with DecisionTest {
   
   "A decision table with single output" should "return single value" in
   {
-    engine.eval(discountDecision, "discount", Map("customer" -> "Business", "orderSize" -> 7)) should be(EvalValue(0.1)) 
+    eval(discountDecision, "discount", Map("customer" -> "Business", "orderSize" -> 7)) should be(Result(0.1)) 
   }
   
   it should "return value list" in
   {
-    engine.eval(holidaysDecision, "holidays", Map("age" -> 58, "yearsOfService" -> 31)) should be(EvalValue(List(22,5,3)))
+    eval(holidaysDecision, "holidays", Map("age" -> 58, "yearsOfService" -> 31)) should be(Result(List(22,5,3)))
   }
   
   it should "return null if no rule match" in 
   {
-    engine.eval(discountDecision, "discount", Map("customer" -> "Something else", "orderSize" -> 9)) should be(EvalNull)  
+    eval(discountDecision, "discount", Map("customer" -> "Something else", "orderSize" -> 9)) should be(NilResult)  
   }
   
   it should "return the default-output if no rule match" in 
   {
-    engine.eval(discountWithDefaultOutputDecision, "discount", Map("customer" -> "Something else", "orderSize" -> 9)) should be(EvalValue(0.05))  
+    eval(discountWithDefaultOutputDecision, "discount", Map("customer" -> "Something else", "orderSize" -> 9)) should be(Result(0.05))  
   }
   
   
@@ -40,14 +41,14 @@ class DecisionTableTest extends FlatSpec with Matchers with DecisionTest {
   {
     val context = Map("customer" -> "Business", "orderSize" -> 7)
     
-    engine.eval(adjustmentsDecision, "adjustments", context) should be(EvalValue(Map("discount" -> 0.1, "shipping" -> "Air"))) 
+    eval(adjustmentsDecision, "adjustments", context) should be(Result(Map("discount" -> 0.1, "shipping" -> "Air"))) 
   }
   
   it should "return value list" in 
   {
     val context = Map("age" -> 25, "riskCategory" -> "MEDIUM", "deptReview" -> true)
     
-    engine.eval(routingRulesDecision, "routingRules", context) should be(EvalValue(List(
+    eval(routingRulesDecision, "routingRules", context) should be(Result(List(
       Map("routing" -> "REFER",   "reviewLevel" -> "LEVEL 2",  "reason" -> "Applicant under dept review"),
       Map("routing" -> "ACCEPT",  "reviewLevel" -> "NONE",     "reason" -> "Acceptable")
     )))  
@@ -57,14 +58,14 @@ class DecisionTableTest extends FlatSpec with Matchers with DecisionTest {
   {
     val context = Map("customer" -> "Something else", "orderSize" -> 9)
     
-    engine.eval(adjustmentsDecision, "adjustments", context) should be(EvalNull)  
+    eval(adjustmentsDecision, "adjustments", context) should be(NilResult)  
   }
   
   it should "return the default-output if no rule match" in 
   {
     val context = Map("customer" -> "Something else", "orderSize" -> 9)
     
-    engine.eval(adjustmentsWithDefaultOutputDecision, "adjustments", context) should be(EvalValue(Map("discount" -> 0.05, "shipping" -> "Ground")))  
+    eval(adjustmentsWithDefaultOutputDecision, "adjustments", context) should be(Result(Map("discount" -> 0.05, "shipping" -> "Ground")))  
   }
  
   

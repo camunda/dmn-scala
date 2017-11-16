@@ -4,16 +4,19 @@ import scala.collection.JavaConverters._
 
 import java.io.InputStream
 
+import org.camunda.dmn.DmnEngine.Failure
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.instance.{Decision, DecisionTable, InputEntry, OutputEntry, Output}
 import org.camunda.feel.parser.FeelParser
-import org.camunda.feel.parser.FeelParser._
+import org.camunda.feel.parser.FeelParser.{Success, NoSuccess}
 import org.camunda.feel.ParsedExpression
 import org.camunda.feel.parser.ConstBool
 
 class DmnParser {
+
+  case class ParseFailure(error: String)
   
-  def parse(stream: InputStream): Either[ParsedDmn, List[String]] = {
+  def parse(stream: InputStream): Either[Failure, ParsedDmn] = {
  
     val model = readModel(stream)
     
@@ -53,54 +56,48 @@ class DmnParser {
          val id = i.getId
          val expression = i.getText.getTextContent
          
-         parseUnaryTests(expression) match {
-               case Left(exp)    => Left(id -> exp)
-               case Right(error) => Right(error)
-         }
+         parseUnaryTests(expression).right.map(id -> _)
        })
        .toList
        
      val parsedExpressions = (inputExpressions ++ outputExpressions ++ defaultOutputEntryExpressions)
-       .map{ case (id, expression) => parseExpression(expression) match {
-               case Left(exp)    => Left(id -> exp)
-               case Right(error) => Right(error)
-         }
+       .map{ case (id, expression) => parseExpression(expression).right.map(id -> _)
        }
       .toList
      
      val expressions = (parsedExpressions ++ parsedUnaryTests) 
       
-     expressions.filter(e => e.isRight) match {
+     expressions.filter(e => e.isLeft) match {
          case Nil     => {
-           val e = expressions.map(_.left.get).toMap 
+           val e = expressions.map(_.right.get).toMap 
            
-           Left(ParsedDmn(model, e))
+           Right(ParsedDmn(model, e))
          }
          case e  => {
-           val errors = e.map(_.right.get)
+           val errors = e.map(_.left.get)
            
-           Right(errors)
+           Left(Failure(errors.mkString("\n")))
          }
        }
   }
   
   private def readModel(stream: InputStream): DmnModelInstance = Dmn.readModelFromStream(stream)
   
-  private def parseExpression(expression: String): Either[ParsedExpression, String] = {
+  private def parseExpression(expression: String): Either[ParseFailure, ParsedExpression] = {
     FeelParser.parseExpression(expression) match {
-      case Success(exp, _) => Left(ParsedExpression(exp, expression))
-      case e: NoSuccess    => Right(s"Failed to parse FEEL expression '$expression':\n$e")
+      case Success(exp, _) => Right(ParsedExpression(exp, expression))
+      case e: NoSuccess    => Left(ParseFailure(s"Failed to parse FEEL expression '$expression':\n$e"))
     }
   }
   
-  private def parseUnaryTests(expression: String): Either[ParsedExpression, String] = {
+  private def parseUnaryTests(expression: String): Either[ParseFailure, ParsedExpression] = {
     
     if (expression.isEmpty()) {
-      Left(ParsedExpression(ConstBool(true), expression))
+      Right(ParsedExpression(ConstBool(true), expression))
     } else {
       FeelParser.parseUnaryTests(expression) match {
-          case Success(exp, _) => Left(ParsedExpression(exp, expression))
-          case e: NoSuccess    => Right(s"Failed to parse FEEL unary-tests '$expression':\n$e")
+          case Success(exp, _) => Right(ParsedExpression(exp, expression))
+          case e: NoSuccess    => Left(ParseFailure(s"Failed to parse FEEL unary-tests '$expression':\n$e"))
       }
     }
   }

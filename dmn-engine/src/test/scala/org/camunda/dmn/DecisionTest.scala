@@ -1,5 +1,7 @@
 package org.camunda.dmn
 
+import org.camunda.dmn.DmnEngine._
+
 trait DecisionTest {
   
   val engine = new DmnEngine
@@ -8,11 +10,13 @@ trait DecisionTest {
     val stream = getClass.getResourceAsStream(file)    
     val result = engine.parse(stream)
     
-    if (result.isRight) {
-      println(result.right.get.mkString("\n"))
-    }
-    
-    result.left.get
+    result.left.foreach(println)
+        
+    result.right.get
+  }
+  
+  def eval(decision: ParsedDmn, id: String, context: Map[String, Any]): Any = {
+    engine.eval(decision, id, context).right.get
   }
   
 }
