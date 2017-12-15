@@ -99,6 +99,8 @@ class DmnParser {
        .map(_.getText.getTextContent)
     
     val parsedUnaryTests = unaryTests
+      .toList
+      .distinct
       .filter(!ctx.parsedExpressions.contains(_))
       .map(expr => parseUnaryTests(expr).right.map(expr -> _))
     
@@ -135,18 +137,51 @@ class DmnParser {
     val entries = context.getContextEntries.asScala
     val expressions = entries.map(_.getExpression)
    
-    val literalExpressions = expressions
-      .filter(_.isInstanceOf[LiteralExpression])
-      .map(_.asInstanceOf[LiteralExpression])
-      .map(_.getText.getTextContent)
+//    val literalExpressions = expressions
+//      .filter(_.isInstanceOf[LiteralExpression])
+//      .map(_.asInstanceOf[LiteralExpression])
+//      .map(_.getText.getTextContent)
+//      
+//    val parsedExpressions = literalExpressions
+//      .toList
+//      .distinct
+//      .filter(!ctx.parsedExpressions.contains(_))
+//      .map(expr => parseExpression(expr).right.map(expr -> _))  
       
-    val parsedExpressions = literalExpressions
-      .filter(!ctx.parsedExpressions.contains(_))
-      .map(expr => parseExpression(expr).right.map(expr -> _))  
-      
-    // TODO parse also other expressions (decision table, nested context, invocation=
     
-    parsedExpressions
+    (List[Either[Failure, (String, ParsedExpression)]]() /: expressions){ case (result, element) => {
+      
+      val parsedExpressions = result
+        .filter(_.isRight)
+        .map(_.right.get)
+        .toMap
+      
+      val ctx = ParsingContext(parsedExpressions)
+      
+      val p = element match {
+        case lt: LiteralExpression => parseLiteralExpression(lt)(ctx)
+        case dt: DecisionTable     => parseDecisionTable(dt)(ctx)
+        case inv: Invocation       => parseInvocation(inv)(ctx)
+        case c: Context            => parseContext(c)(ctx)
+        case other                 => List( Left(Failure(s"unsupported context entry expression found '$other'")) )
+      }
+      
+      result ++ p
+    }}  
+  }
+  
+  private def parseLiteralExpression(expression: LiteralExpression)(implicit ctx: ParsingContext): ParseResult = 
+  {
+    val expr = expression.getText.getTextContent
+    
+    if (ctx.parsedExpressions.contains(expr)) 
+    {
+      List.empty
+    }
+    else
+    {
+      List( parseExpression(expr).right.map(expr -> _) )
+    }
   }
   
   private def parseBusinessKnowledgeModel(bkm: BusinessKnowledgeModel)(implicit ctx: ParsingContext): ParseResult = {

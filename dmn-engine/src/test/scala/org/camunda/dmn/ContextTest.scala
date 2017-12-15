@@ -7,8 +7,20 @@ import org.camunda.dmn.DmnEngine._
 class ContextTest extends FlatSpec with Matchers with DecisionTest {
   
   lazy val simpleContext = parse("/context/SimpleContext.dmn")
+  lazy val nestedContext = parse("/context/NestedContext.dmn")
     
   "A context" should "return static values" in
+  {
+    eval(simpleContext, "applicantData", Map()) should be(
+        Result(Map(
+                   "Age" -> 51,
+                   "MaritalStatus" -> "M", 
+                   "EmploymentStatus" -> "EMPLOYED", 
+                   "ExistingCustomer" -> false
+                   ))) 
+  }
+  
+  "A nested context" should "return nested values" in
   {
     eval(simpleContext, "applicantData", Map()) should be(
         Result(Map(

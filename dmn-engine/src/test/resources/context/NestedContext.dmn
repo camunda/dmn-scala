@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/DMN/20151101/dmn.xsd" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="definitions_16rwaqm" name="definitions" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="applicantData" name="Applicant Data">
+    <context>
+        <contextEntry>
+            <variable name="EmploymentStatus"/>
+            <literalExpression>
+                <text>"EMPLOYED"</text>
+            </literalExpression>
+        </contextEntry>
+        <contextEntry>
+            <variable name="Monthly"/>
+            <context>
+            	<contextEntry>
+		            <variable name="Income"/>
+		            <literalExpression>
+		                <text>10000.00</text>
+		            </literalExpression>
+		        </contextEntry>
+		        <contextEntry>
+		            <variable name="Repayments"/>
+		            <literalExpression>
+		                <text>2500.00</text>
+		            </literalExpression>
+		        </contextEntry>
+		        <contextEntry>
+		            <variable name="Expenses"/>
+		            <literalExpression>
+		                <text>3000.00</text>
+		            </literalExpression>
+		        </contextEntry>
+            </context>
+        </contextEntry>
+    </context>
+  </decision>
+</definitions>
