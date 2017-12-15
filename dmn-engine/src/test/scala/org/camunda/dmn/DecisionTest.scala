@@ -16,7 +16,11 @@ trait DecisionTest {
   }
   
   def eval(decision: ParsedDmn, id: String, context: Map[String, Any]): Any = {
-    engine.eval(decision, id, context).right.get
+    val result = engine.eval(decision, id, context)
+    
+    result.left.foreach(println)
+    
+    result.right.get
   }
   
 }

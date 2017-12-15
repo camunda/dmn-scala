@@ -6,7 +6,9 @@ import java.io.InputStream
 
 import org.camunda.dmn.DmnEngine.Failure
 import org.camunda.bpm.model.dmn._
-import org.camunda.bpm.model.dmn.instance.{Decision, DecisionTable, InputEntry, OutputEntry, Output, BusinessKnowledgeModel, Invocation, LiteralExpression}
+import org.camunda.bpm.model.dmn.instance.{Decision, BusinessKnowledgeModel, Invocation, LiteralExpression}
+import org.camunda.bpm.model.dmn.instance.{Decision, DecisionTable, InputEntry, OutputEntry, Output}
+import org.camunda.bpm.model.dmn.instance.{Context, ContextEntry}
 import org.camunda.feel.parser.FeelParser
 import org.camunda.feel.parser.FeelParser.{Success, NoSuccess}
 import org.camunda.feel.ParsedExpression
@@ -63,6 +65,8 @@ class DmnParser {
     decision.getExpression match {
       case dt: DecisionTable => parseDecisionTable(dt)
       case inv: Invocation   => parseInvocation(inv)
+      case c: Context        => parseContext(c)
+      case other             => List(Left(Failure(s"unsupported decision expression '$other'")))
     }
   }
   
@@ -85,6 +89,8 @@ class DmnParser {
        .map(_.getText.getTextContent)
        
      val parsedExpressions = (inputExpressions ++ outputExpressions ++ defaultOutputEntryExpressions)
+       .toList
+       .distinct
        .filter(!ctx.parsedExpressions.contains(_))
        .map(expr => parseExpression(expr).right.map(expr -> _))
        
@@ -122,6 +128,25 @@ class DmnParser {
       .map(expr => parseExpression(expr).right.map(expr -> _))
       
     parsedExpressions ++ failures
+  }
+  
+  private def parseContext(context: Context)(implicit ctx: ParsingContext): ParseResult = {
+    
+    val entries = context.getContextEntries.asScala
+    val expressions = entries.map(_.getExpression)
+   
+    val literalExpressions = expressions
+      .filter(_.isInstanceOf[LiteralExpression])
+      .map(_.asInstanceOf[LiteralExpression])
+      .map(_.getText.getTextContent)
+      
+    val parsedExpressions = literalExpressions
+      .filter(!ctx.parsedExpressions.contains(_))
+      .map(expr => parseExpression(expr).right.map(expr -> _))  
+      
+    // TODO parse also other expressions (decision table, nested context, invocation=
+    
+    parsedExpressions
   }
   
   private def parseBusinessKnowledgeModel(bkm: BusinessKnowledgeModel)(implicit ctx: ParsingContext): ParseResult = {
