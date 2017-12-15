@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/DMN/20151101/dmn.xsd" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="definitions_16rwaqm" name="definitions" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="eligibility" name="Eligibility">
+    <context>
+        <contextEntry>
+            <variable name="Age"/>
+            <literalExpression>
+                <text>Applicant.Age</text>
+            </literalExpression>
+        </contextEntry>
+        <contextEntry>
+            <variable name="MonthlyIncome"/>
+             <literalExpression>
+                <text>Applicant.Monthly.Income</text>
+            </literalExpression>
+        </contextEntry>
+        <contextEntry>
+            <variable name="PreBureauRiskCategory"/>
+            <literalExpression>
+                <text>Affordability.PreBureauRiskCategory</text>
+            </literalExpression>
+        </contextEntry>
+        <contextEntry>
+            <variable name="InstallmentAffordable"/>
+            <literalExpression>
+                <text>Affordability.InstallmentAffordable</text>
+            </literalExpression>
+        </contextEntry>
+        <contextEntry>
+            <literalExpression>
+                <text><![CDATA[ 
+                	if PreBureauRiskCategory = "DECLINE" or
+						InstallmentAffordable = false or
+						Age < 18 or
+						MonthlyIncome < 100
+					then "INELIGIBLE"
+					else "ELIGIBLE"
+                ]]></text>
+            </literalExpression>
+        </contextEntry>
+    </context>
+  </decision>
+</definitions>
