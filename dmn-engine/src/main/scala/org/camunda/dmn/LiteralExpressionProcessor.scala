@@ -8,7 +8,7 @@ class LiteralExpressionProcessor(val feelEngine: FeelEngine) extends ExpressionP
   
   def eval(literalExpression: LiteralExpression)(implicit context: EvalContext): Either[Failure, Any] = 
   {
-    val expression = context.parsedExpressions(literalExpression.getId)
+    val expression = context.parsedExpressions(literalExpression.getText.getTextContent)
     
     evalExpression(expression, context.variables)
   }

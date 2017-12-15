@@ -43,8 +43,8 @@ class DecisionTableProcessor(val feelEngine: FeelEngine) extends ExpressionProce
   private def evalInputExpressions(inputs: Iterable[Input])(implicit context: EvalContext): Either[Failure, List[Any]] = { 
     mapEither(inputs, (input: Input) => {
       
-      val id = input.getInputExpression.getId
-      val expression = context.parsedExpressions(id)
+      val expr = input.getInputExpression.getText.getTextContent
+      val expression = context.parsedExpressions(expr)
 
       evalExpression(expression, context.variables)
     })
@@ -72,7 +72,7 @@ class DecisionTableProcessor(val feelEngine: FeelEngine) extends ExpressionProce
       case Nil => Right(true)
       case (entry, value) :: is => {
 
-        val expression = context.parsedExpressions(entry.getId)
+        val expression = context.parsedExpressions(entry.getText.getTextContent)
 
         evalInputEntry(expression, value)
           .right
@@ -117,7 +117,7 @@ class DecisionTableProcessor(val feelEngine: FeelEngine) extends ExpressionProce
 
       val outputValue = Option(output.getDefaultOutputEntry).map { defaultOutput =>
 
-        val expression = context.parsedExpressions(defaultOutput.getId)
+        val expression = context.parsedExpressions(defaultOutput.getText.getTextContent)
 
         evalExpression(expression, context.variables)
           .right
@@ -135,8 +135,8 @@ class DecisionTableProcessor(val feelEngine: FeelEngine) extends ExpressionProce
       val outputEntries = rule.getOutputEntries.asScala.toList
 
       val values = mapEither(outputEntries, (entry: OutputEntry) => {
-        val id = entry.getId
-        val expression = context.parsedExpressions(id)
+        
+        val expression = context.parsedExpressions(entry.getText.getTextContent)
 
         evalExpression(expression, context.variables)
       })
