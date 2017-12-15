@@ -7,9 +7,11 @@ import org.camunda.dmn.FunctionalHelper._
 import org.camunda.feel._
 import org.camunda.feel.interpreter.RootContext
 import org.camunda.bpm.model.dmn._
-import org.camunda.bpm.model.dmn.instance.{ Decision, DecisionTable, InputEntry, OutputEntry, Output, Rule, Input }
+import org.camunda.bpm.model.dmn.instance.{ Decision, DecisionTable, InputEntry, OutputEntry, Output, Rule, Input, LiteralExpression, UnaryTests}
 
-class DecisionTableProcessor(val feelEngine: FeelEngine) extends ExpressionProcessor {
+class DecisionTableProcessor(
+  eval: (LiteralExpression, EvalContext) => Either[Failure, Any],
+  unaryTests: (UnaryTests, EvalContext) => Either[Failure, Any]) {
 
   def eval(decisionTable: DecisionTable)(implicit context: EvalContext): Either[Failure, Option[Any]] = {
 
@@ -41,13 +43,7 @@ class DecisionTableProcessor(val feelEngine: FeelEngine) extends ExpressionProce
   }
   
   private def evalInputExpressions(inputs: Iterable[Input])(implicit context: EvalContext): Either[Failure, List[Any]] = { 
-    mapEither(inputs, (input: Input) => {
-      
-      val expr = input.getInputExpression.getText.getTextContent
-      val expression = context.parsedExpressions(expr)
-
-      evalExpression(expression, context.variables)
-    })
+    mapEither(inputs, (input: Input) => eval(input.getInputExpression, context))
   }
   
   private def checkRules(rules: Iterable[Rule], inputValues: List[Any])(implicit context: EvalContext): Either[Failure, List[Option[Rule]]] = {
@@ -72,9 +68,7 @@ class DecisionTableProcessor(val feelEngine: FeelEngine) extends ExpressionProce
       case Nil => Right(true)
       case (entry, value) :: is => {
 
-        val expression = context.parsedExpressions(entry.getText.getTextContent)
-
-        evalInputEntry(expression, value)
+        evalInputEntry(entry, value)
           .right
           .flatMap { result =>
             result match {
@@ -87,11 +81,11 @@ class DecisionTableProcessor(val feelEngine: FeelEngine) extends ExpressionProce
     }
   }
   
-  private def evalInputEntry(expression: ParsedExpression, inputValue: Any)(implicit context: EvalContext): Either[Failure, Any] = {
+  private def evalInputEntry(entry: InputEntry, inputValue: Any)(implicit context: EvalContext): Either[Failure, Any] = {
     
     val variablesWithInput = context.variables + (RootContext.defaultInputVariable -> inputValue)
     
-    evalExpression(expression, variablesWithInput)
+    unaryTests(entry, context.copy(variables = variablesWithInput))
   }
 
   private def applyDefaultOutputEntries(outputs: Iterable[Output])(implicit context: EvalContext): Either[Failure, Option[Any]] = {
@@ -117,9 +111,7 @@ class DecisionTableProcessor(val feelEngine: FeelEngine) extends ExpressionProce
 
       val outputValue = Option(output.getDefaultOutputEntry).map { defaultOutput =>
 
-        val expression = context.parsedExpressions(defaultOutput.getText.getTextContent)
-
-        evalExpression(expression, context.variables)
+      eval(defaultOutput, context)
           .right
           .map(r => Some(output.getName -> r))
       }
@@ -134,12 +126,7 @@ class DecisionTableProcessor(val feelEngine: FeelEngine) extends ExpressionProce
 
       val outputEntries = rule.getOutputEntries.asScala.toList
 
-      val values = mapEither(outputEntries, (entry: OutputEntry) => {
-        
-        val expression = context.parsedExpressions(entry.getText.getTextContent)
-
-        evalExpression(expression, context.variables)
-      })
+      val values = mapEither(outputEntries, (entry: OutputEntry) => eval(entry, context))
 
       values.right.map(outputValues => {
         outputs

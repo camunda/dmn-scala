@@ -7,7 +7,7 @@ import java.io.InputStream
 import org.camunda.dmn.FunctionalHelper._
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.instance.{Decision, DecisionTable, Expression, BusinessKnowledgeModel, LiteralExpression}
-import org.camunda.bpm.model.dmn.instance.{Invocation, Binding, FormalParameter}
+import org.camunda.bpm.model.dmn.instance.{Invocation, Binding, FormalParameter, Context}
 import org.camunda.feel._
 import org.camunda.feel.FeelEngine
 import org.camunda.feel.ParsedExpression
@@ -38,8 +38,13 @@ class DmnEngine {
 
   val feelEngine = new FeelEngine
   
-  val decisionTableProcessor = new DecisionTableProcessor(feelEngine)
   val literalExpressionProcessor = new LiteralExpressionProcessor(feelEngine)
+  
+  val decisionTableProcessor = new DecisionTableProcessor(
+    eval = literalExpressionProcessor.eval, 
+    unaryTests = literalExpressionProcessor.evalUnaryTests)
+  
+  val contextProcessor = new ContextProcessor(this.evalExpression)
   
   def eval(stream: InputStream, decisionId: String, context: Map[String, Any]): Either[Failure, EvalResult] = {
     parse(stream).right.flatMap( parsedDmn => eval(parsedDmn, decisionId, context))
@@ -80,22 +85,25 @@ class DmnEngine {
 
     evalExpression(expression, EvalContext(context.variables, context.parsedExpressions, context.bkms ++ requiredBkms))
       .right
-      .map(result => result
-        .map(Result)
-        .getOrElse(NilResult))
+      .map(_ match {
+        case None => NilResult
+        case Some(r) => Result(r)
+        case r => Result(r)
+      })
   }
   
-  private def evalExpression(expression: Expression, context: EvalContext): Either[Failure, Option[Any]] = 
+  private def evalExpression(expression: Expression, context: EvalContext): Either[Failure, Any] = 
   {
     expression match {
       case dt: DecisionTable => decisionTableProcessor.eval(dt)(context)
       case inv: Invocation   => evalInvocation(inv, context)
-      case le: LiteralExpression => (literalExpressionProcessor.eval(le)(context)).right.map(Some(_))
+      case le: LiteralExpression => (literalExpressionProcessor.eval(le, context))
+      case c: Context          => contextProcessor.eval(c)(context)
       case _                 => Left(Failure(s"expression of type '${expression.getTypeRef}' is not supported"))
     }
   }
   
-  private def evalInvocation(invocation: Invocation, context: EvalContext): Either[Failure, Option[Any]] = {
+  private def evalInvocation(invocation: Invocation, context: EvalContext): Either[Failure, Any] = {
     
     val bindings = invocation.getBindings.asScala
     
@@ -106,14 +114,14 @@ class DmnEngine {
       
       evalExpression(binding.getExpression, context)
         .right
-        .map(value => paramName -> value.get)
+        .map(value => paramName -> value)
     })
     
     parameters
       .right
       .flatMap(p => {
           
-          val ctx = EvalContext(context.variables ++ p.toMap, context.parsedExpressions, context.bkms)
+          val ctx = context.copy(variables = context.variables ++ p.toMap)
         
           invocation.getExpression match {
               case le: LiteralExpression => {
@@ -129,7 +137,7 @@ class DmnEngine {
       })
   }
   
-  private def evalBusinessKnowledgeModel(bkm: BusinessKnowledgeModel, context: EvalContext): Either[Failure, Option[Any]] = {
+  private def evalBusinessKnowledgeModel(bkm: BusinessKnowledgeModel, context: EvalContext): Either[Failure, Any] = {
     
     val logic = bkm.getEncapsulatedLogic
     val expression = logic.getExpression

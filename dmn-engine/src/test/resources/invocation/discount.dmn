@@ -47,7 +47,7 @@
             <requiredKnowledge href="#bkm_discount"/>
         </knowledgeRequirement>
         <invocation>
-            <literalExpression id="le_discountTable">
+            <literalExpression>
                 <text>Discount table</text>
             </literalExpression>
             <binding>
@@ -58,7 +58,7 @@
             </binding>
             <binding>
                 <parameter id="p_orderSize" name="orderSize"/>
-                <literalExpression id="le_orderSize">
+                <literalExpression>
                     <text>OrderSize</text>
                 </literalExpression>
             </binding>
