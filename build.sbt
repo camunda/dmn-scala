@@ -6,6 +6,7 @@ lazy val commonSettings = Seq(
 
   resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
   resolvers += "camunda-bpm-nexus" at "https://app.camunda.com/nexus/content/groups/public",
+  resolvers += Resolver.mavenLocal,
 
   scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")
 )
@@ -21,7 +22,7 @@ val commonDependencies = Seq(
 )
 
 val feelVersion = "1.3.0"
-val camundaVersion = "7.7.0"
+val camundaVersion = "7.8.0"
 
 lazy val root = (project in file(".")).
   settings(commonSettings).
@@ -33,6 +34,6 @@ lazy val engine = (project in file("dmn-engine")).
     libraryDependencies ++= commonDependencies,
     libraryDependencies ++= Seq(
       "org.camunda.bpm.extension.feel.scala" % "feel-engine" % feelVersion,
-      "org.camunda.bpm.model" % "camunda-dmn-model" % camundaVersion
+      "org.camunda.bpm.model" % "camunda-dmn-model" % "7.9.0-SNAPSHOT"
     )
   )

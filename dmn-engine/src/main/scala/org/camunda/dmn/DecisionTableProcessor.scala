@@ -3,12 +3,13 @@ package org.camunda.dmn
 import scala.collection.JavaConverters._
 
 import org.camunda.dmn.DmnEngine._
+import org.camunda.dmn.FunctionalHelper._
 import org.camunda.feel._
 import org.camunda.feel.interpreter.RootContext
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.instance.{ Decision, DecisionTable, InputEntry, OutputEntry, Output, Rule, Input }
 
-class DecisionTableProcessor(val feelEngine: FeelEngine) extends DecisionProcessor {
+class DecisionTableProcessor(val feelEngine: FeelEngine) extends ExpressionProcessor {
 
   def eval(decisionTable: DecisionTable)(implicit context: EvalContext): Either[Failure, Option[Any]] = {
 

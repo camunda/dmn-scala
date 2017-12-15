@@ -8,8 +8,8 @@ class DmnEngineTest extends FlatSpec with Matchers {
   
   val engine = new DmnEngine
   
-  def discountDecision = getClass.getResourceAsStream("/discount.dmn")
-  def invalidExpressionDecision = getClass.getResourceAsStream("/invalid-expression.dmn")
+  def discountDecision = getClass.getResourceAsStream("/decisiontable/discount.dmn")
+  def invalidExpressionDecision = getClass.getResourceAsStream("/decisiontable/invalid-expression.dmn")
   
   "A DMN engine" should "evaluate a decision table" in {
     

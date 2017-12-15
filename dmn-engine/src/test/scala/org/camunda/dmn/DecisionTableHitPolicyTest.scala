@@ -6,18 +6,18 @@ import org.camunda.dmn.DmnEngine._
 
 class DecisionTableHitPolicyTest extends FlatSpec with Matchers with DecisionTest {
   
-  lazy val discountDecision = parse("/discount.dmn")    
-  lazy val routingRulesDecision = parse("/routingRules.dmn")    
-  lazy val applicantRiskRatingDecision = parse("/applicantRiskRating.dmn")
-  lazy val personLoanComplianceDecision = parse("/personLoanCompliance.dmn")
-  lazy val applicantRiskRatingPriorityDecision = parse("/applicantRiskRating_priority.dmn")
-  lazy val specialDiscountDecision = parse("/specialDiscount.dmn")
-  lazy val holidaysCollectSumDecision = parse("/holidays_collect_sum.dmn")
-  lazy val discountCollectMaxDecision = parse("/discount_collect_max.dmn")
-  lazy val insuranceFeeDecision = parse("/insuranceFee.dmn")
-  lazy val holidaysCollectDecision = parse("/holidays_collect.dmn")
-  lazy val holidaysOutputOrderDecision = parse("/holidays_output_order.dmn")
-  lazy val eligibilityDecision = parse("/studentFinancialPackageEligibility.dmn")
+  lazy val discountDecision = parse("/decisiontable/discount.dmn")    
+  lazy val routingRulesDecision = parse("/decisiontable/routingRules.dmn")    
+  lazy val applicantRiskRatingDecision = parse("/decisiontable/applicantRiskRating.dmn")
+  lazy val personLoanComplianceDecision = parse("/decisiontable/personLoanCompliance.dmn")
+  lazy val applicantRiskRatingPriorityDecision = parse("/decisiontable/applicantRiskRating_priority.dmn")
+  lazy val specialDiscountDecision = parse("/decisiontable/specialDiscount.dmn")
+  lazy val holidaysCollectSumDecision = parse("/decisiontable/holidays_collect_sum.dmn")
+  lazy val discountCollectMaxDecision = parse("/decisiontable/discount_collect_max.dmn")
+  lazy val insuranceFeeDecision = parse("/decisiontable/insuranceFee.dmn")
+  lazy val holidaysCollectDecision = parse("/decisiontable/holidays_collect.dmn")
+  lazy val holidaysOutputOrderDecision = parse("/decisiontable/holidays_output_order.dmn")
+  lazy val eligibilityDecision = parse("/decisiontable/studentFinancialPackageEligibility.dmn")
   
   "The decision table 'Discount' (Unique)" should "return '0.1'" in 
   {

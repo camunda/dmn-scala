@@ -6,14 +6,14 @@ import org.camunda.dmn.DmnEngine._
 
 class DecisionTableTest extends FlatSpec with Matchers with DecisionTest {
   
-  lazy val discountDecision = parse("/discount.dmn")
-  lazy val discountWithDefaultOutputDecision = parse("/discount_default-output.dmn")
+  lazy val discountDecision = parse("/decisiontable/discount.dmn")
+  lazy val discountWithDefaultOutputDecision = parse("/decisiontable/discount_default-output.dmn")
   
-  lazy val adjustmentsDecision = parse("/adjustments.dmn")
-  lazy val adjustmentsWithDefaultOutputDecision = parse("/adjustments_default-output.dmn")
+  lazy val adjustmentsDecision = parse("/decisiontable/adjustments.dmn")
+  lazy val adjustmentsWithDefaultOutputDecision = parse("/decisiontable/adjustments_default-output.dmn")
   
-  lazy val routingRulesDecision = parse("/routingRules.dmn")    
-  lazy val holidaysDecision = parse("/holidays_output_order.dmn")
+  lazy val routingRulesDecision = parse("/decisiontable/routingRules.dmn")    
+  lazy val holidaysDecision = parse("/decisiontable/holidays_output_order.dmn")
   
   
   "A decision table with single output" should "return single value" in

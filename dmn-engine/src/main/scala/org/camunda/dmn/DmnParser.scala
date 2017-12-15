@@ -6,7 +6,7 @@ import java.io.InputStream
 
 import org.camunda.dmn.DmnEngine.Failure
 import org.camunda.bpm.model.dmn._
-import org.camunda.bpm.model.dmn.instance.{Decision, DecisionTable, InputEntry, OutputEntry, Output}
+import org.camunda.bpm.model.dmn.instance.{Decision, DecisionTable, InputEntry, OutputEntry, Output, BusinessKnowledgeModel, Invocation, LiteralExpression}
 import org.camunda.feel.parser.FeelParser
 import org.camunda.feel.parser.FeelParser.{Success, NoSuccess}
 import org.camunda.feel.ParsedExpression
@@ -20,12 +20,29 @@ class DmnParser {
  
     val model = readModel(stream)
     
-    val decisions = model.getDefinitions
-      .getDrgElements.asScala
-      .filter(e => e.isInstanceOf[Decision])
+    val drgElements = model.getDefinitions.getDrgElements.asScala
+    
+    val decisions = drgElements
+      .filter(_.isInstanceOf[Decision])
       .map(_.asInstanceOf[Decision])
       
-     val decisionTables = decisions.map(d => d.getExpression)
+     val bkms = drgElements
+       .filter(_.isInstanceOf[BusinessKnowledgeModel])
+       .map(_.asInstanceOf[BusinessKnowledgeModel])
+       
+     val drgExpressions = 
+       decisions.map(_.getExpression) ++ 
+       bkms.map(_.getEncapsulatedLogic).map(_.getExpression)  
+      
+     val literalExpressions = drgExpressions
+       .filter(_.isInstanceOf[Invocation])
+       .map(_.asInstanceOf[Invocation])
+       .flatMap(_.getBindings.asScala)
+       .map(_.getExpression.asInstanceOf[LiteralExpression])
+       .map(e => e.getId -> e.getText.getTextContent)
+       .toMap
+       
+     val decisionTables = drgExpressions
        .filter(_.isInstanceOf[DecisionTable])
        .map(_.asInstanceOf[DecisionTable])
        
@@ -60,7 +77,7 @@ class DmnParser {
        })
        .toList
        
-     val parsedExpressions = (inputExpressions ++ outputExpressions ++ defaultOutputEntryExpressions)
+     val parsedExpressions = (inputExpressions ++ outputExpressions ++ defaultOutputEntryExpressions ++ literalExpressions)
        .map{ case (id, expression) => parseExpression(expression).right.map(id -> _)
        }
       .toList
