@@ -5,12 +5,15 @@ import scala.collection.JavaConverters._
 import java.io.InputStream
 
 import org.camunda.dmn.FunctionalHelper._
+import org.camunda.dmn.parser._
+import org.camunda.dmn.evaluation._
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.instance.{Decision, DecisionTable, Expression, BusinessKnowledgeModel, LiteralExpression}
 import org.camunda.bpm.model.dmn.instance.{Invocation, Binding, FormalParameter, Context}
 import org.camunda.feel._
 import org.camunda.feel.{FeelEngine, ParsedExpression}
 import org.camunda.feel.interpreter.ValNull
+import org.camunda.dmn.parser.ParsedDmn
 
 object DmnEngine {
   
@@ -38,13 +41,22 @@ class DmnEngine {
 
   val feelEngine = new FeelEngine
   
-  val literalExpressionProcessor = new LiteralExpressionProcessor(feelEngine)
+  val decisionEval = new DecisionEvaluator(this.evalExpression)
   
-  val decisionTableProcessor = new DecisionTableProcessor(
-    eval = literalExpressionProcessor.eval, 
-    unaryTests = literalExpressionProcessor.evalUnaryTests)
+  val bkmEval = new BusinessKnowledgeEvaluator(this.evalExpression)
+
+  val literalExpressionEval = new LiteralExpressionEvaluator(feelEngine)
   
-  val contextProcessor = new ContextProcessor(this.evalExpression)
+  val decisionTableEval = new DecisionTableEvaluator(
+    eval = literalExpressionEval.evalExpression, 
+    unaryTests = literalExpressionEval.evalUnaryTests)
+  
+  val contextEval = new ContextEvaluator(this.evalExpression)
+  
+  val invocationEval = new InvocationEvaluator(
+    evalExpression = this.evalExpression,
+    evalBkm = bkmEval.eval)
+  
   
   def eval(stream: InputStream, decisionId: String, context: Map[String, Any]): Either[Failure, EvalResult] = {
     parse(stream).right.flatMap( parsedDmn => eval(parsedDmn, decisionId, context))
@@ -65,94 +77,26 @@ class DmnEngine {
       .map(_.asInstanceOf[Decision])
   }
 
-  private def evalDecision(decision: Decision, context: EvalContext): Either[Failure, EvalResult] = {
-
-    val decisionId = decision.getId
-    val decisionName = decision.getName
-
-    val variable = Option.apply(decision.getVariable)
-    val variableName = variable.map(_.getName).getOrElse(decisionId)
-
-    val knowledgeRequirements = decision.getKnowledgeRequirements.asScala
-    
-    val requiredBkms = knowledgeRequirements.map(kr => {
-      val bkm = kr.getRequiredKnowledge
-      bkm.getName -> bkm
-    })
-    .toMap
-            
-    val expression = decision.getExpression
-
-    evalExpression(expression, EvalContext(context.variables, context.parsedExpressions, context.bkms ++ requiredBkms))
+  private def evalDecision(decision: Decision, context: EvalContext): Either[Failure, EvalResult] = 
+  {
+    decisionEval.eval(decision, context)
       .right
-      .map(_ match {
+      .map(
+      {
         case ValNull => NilResult
-        case r => Result(r)
+        case r       => Result(r)
       })
   }
   
   private def evalExpression(expression: Expression, context: EvalContext): Either[Failure, Any] = 
   {
     expression match {
-      case dt: DecisionTable => decisionTableProcessor.eval(dt)(context)
-      case inv: Invocation   => evalInvocation(inv, context)
-      case le: LiteralExpression => literalExpressionProcessor.eval(le, context)
-      case c: Context          => contextProcessor.eval(c)(context)
+      case dt: DecisionTable => decisionTableEval.eval(dt, context)
+      case inv: Invocation   => invocationEval.eval(inv, context)
+      case le: LiteralExpression => literalExpressionEval.evalExpression(le, context)
+      case c: Context          => contextEval.eval(c, context)
       case _                 => Left(Failure(s"expression of type '${expression.getTypeRef}' is not supported"))
     }
   }
-  
-  private def evalInvocation(invocation: Invocation, context: EvalContext): Either[Failure, Any] = {
-    
-    val bindings = invocation.getBindings.asScala
-    
-    val parameters = mapEither(bindings, (binding: Binding) => {
-      
-      val paramName = binding.getParameter.getName
-      
-      evalExpression(binding.getExpression, context)
-        .right
-        .map(value => paramName -> value)
-    })
-    
-    parameters
-      .right
-      .flatMap(p => {
-          
-          val ctx = context.copy(variables = context.variables ++ p.toMap)
-        
-          invocation.getExpression match {
-              case le: LiteralExpression => {
-                  
-                  val bkmName = le.getText.getTextContent
-                          
-                  context.bkms.get(bkmName)
-                    .map(bkm => evalBusinessKnowledgeModel(bkm, ctx))
-                    .getOrElse(Left(Failure(s"no BKM found with name '$bkmName'")))
-              }
-              case other => Left(Failure(s"expected invocation with literal expression but found '$other'"))
-          }
-      })
-  }
-  
-  private def evalBusinessKnowledgeModel(bkm: BusinessKnowledgeModel, context: EvalContext): Either[Failure, Any] = {
-    
-    val logic = bkm.getEncapsulatedLogic
-    val expression = logic.getExpression
-    
-    val parameters = logic.getFormalParameters.asScala
-    
-    // TODO check type of parameters
-    val parameterValidation = mapEither(parameters, (p: FormalParameter) => 
-      context.variables.get(p.getName)
-        .map(Right(_))
-        .getOrElse(Left(Failure(s"no parameter found with name '${p.getName}'")))
-    )
-    
-    parameterValidation
-      .right
-      .flatMap(_ => evalExpression(expression, context))
-  }
-
     
 }

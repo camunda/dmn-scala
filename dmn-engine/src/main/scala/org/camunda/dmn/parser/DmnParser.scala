@@ -1,4 +1,4 @@
-package org.camunda.dmn
+package org.camunda.dmn.parser
 
 import scala.collection.JavaConverters._
 

@@ -1,6 +1,7 @@
 package org.camunda.dmn
 
 import org.camunda.dmn.DmnEngine._
+import org.camunda.dmn.parser.ParsedDmn
 
 trait DecisionTest {
   

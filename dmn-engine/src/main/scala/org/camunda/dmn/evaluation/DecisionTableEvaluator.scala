@@ -1,4 +1,4 @@
-package org.camunda.dmn
+package org.camunda.dmn.evaluation
 
 import scala.collection.JavaConverters._
 
@@ -9,12 +9,13 @@ import org.camunda.feel.interpreter.{RootContext, ValNull}
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.instance.{ Decision, DecisionTable, InputEntry, OutputEntry, Output, Rule, Input, LiteralExpression, UnaryTests}
 
-class DecisionTableProcessor(
+class DecisionTableEvaluator(
   eval: (LiteralExpression, EvalContext) => Either[Failure, Any],
   unaryTests: (UnaryTests, EvalContext) => Either[Failure, Any]) {
 
-  def eval(decisionTable: DecisionTable)(implicit context: EvalContext): Either[Failure, Any] = {
-
+  def eval(decisionTable: DecisionTable, context: EvalContext): Either[Failure, Any] = {
+    implicit val ctx = context
+    
     val inputs = decisionTable.getInputs.asScala
 
     evalInputExpressions(inputs).right.flatMap { inputValues =>

@@ -1,16 +1,17 @@
-package org.camunda.dmn
+package org.camunda.dmn.evaluation
 
 import org.camunda.dmn.DmnEngine._
 import org.camunda.feel._
-import org.camunda.feel.ParsedExpression
 import org.camunda.bpm.model.dmn.instance.{LiteralExpression, UnaryTests}
+import scala.Left
+import scala.Right
 
-class LiteralExpressionProcessor(feelEngine: FeelEngine) {
+class LiteralExpressionEvaluator(feelEngine: FeelEngine) {
   
   def evalUnaryTests(unaryTests: UnaryTests, context: EvalContext): Either[Failure, Any] = 
     eval(unaryTests.getText.getTextContent, context)
   
-  def eval(literalExpression: LiteralExpression, context: EvalContext): Either[Failure, Any] = 
+  def evalExpression(literalExpression: LiteralExpression, context: EvalContext): Either[Failure, Any] = 
     eval(literalExpression.getText.getTextContent, context) 
   
   private def eval(expr: String, context: EvalContext): Either[Failure, Any] = {
