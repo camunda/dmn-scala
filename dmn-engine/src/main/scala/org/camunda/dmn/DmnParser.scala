@@ -129,6 +129,8 @@ class DmnParser {
       .filter(!ctx.parsedExpressions.contains(_))
       .map(expr => parseExpression(expr).right.map(expr -> _))
       
+    // TODO validate invocation expression  
+      
     parsedExpressions ++ failures
   }
   
@@ -136,18 +138,6 @@ class DmnParser {
     
     val entries = context.getContextEntries.asScala
     val expressions = entries.map(_.getExpression)
-   
-//    val literalExpressions = expressions
-//      .filter(_.isInstanceOf[LiteralExpression])
-//      .map(_.asInstanceOf[LiteralExpression])
-//      .map(_.getText.getTextContent)
-//      
-//    val parsedExpressions = literalExpressions
-//      .toList
-//      .distinct
-//      .filter(!ctx.parsedExpressions.contains(_))
-//      .map(expr => parseExpression(expr).right.map(expr -> _))  
-      
     
     (List[Either[Failure, (String, ParsedExpression)]]() /: expressions){ case (result, element) => {
       
@@ -190,7 +180,9 @@ class DmnParser {
     
     logic.getExpression match {
       case dt: DecisionTable => parseDecisionTable(dt)
-      case other => List(Left(Failure(s"expected BKM with decision table but found '$other'")))
+      case c: Context        => parseContext(c)
+      case lt: LiteralExpression => parseLiteralExpression(lt)(ctx)
+      case other => List(Left(Failure(s"unsupported business knowledge model logic found '$other'")))
     }
   }
   

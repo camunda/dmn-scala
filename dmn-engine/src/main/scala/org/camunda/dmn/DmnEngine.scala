@@ -108,7 +108,6 @@ class DmnEngine {
     
     val parameters = mapEither(bindings, (binding: Binding) => {
       
-      // ---> bug in model API!!!
       val paramName = binding.getParameter.getName
       
       evalExpression(binding.getExpression, context)

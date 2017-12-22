@@ -43,25 +43,22 @@
 		</encapsulatedLogic>
   </businessKnowledgeModel>
   <decision id="discount" name="Discount">
-    <knowledgeRequirement>
-            <requiredKnowledge href="#bkm_discount"/>
-        </knowledgeRequirement>
-        <invocation>
+     <invocation>
+        <literalExpression>
+            <text>Discount table</text>
+        </literalExpression>
+        <binding>
+            <parameter name="customer"/>
             <literalExpression>
-                <text>Discount table</text>
+                <text>Customer</text>
             </literalExpression>
-            <binding>
-                <parameter name="customer"/>
-                <literalExpression>
-                    <text>Customer</text>
-                </literalExpression>
-            </binding>
-            <binding>
-                <parameter name="orderSize"/>
-                <literalExpression>
-                    <text>OrderSize</text>
-                </literalExpression>
-            </binding>
-        </invocation>
+        </binding>
+        <binding>
+            <parameter name="orderSize"/>
+            <literalExpression>
+                <text>OrderSize</text>
+            </literalExpression>
+        </binding>
+    </invocation>
   </decision>
 </definitions>
