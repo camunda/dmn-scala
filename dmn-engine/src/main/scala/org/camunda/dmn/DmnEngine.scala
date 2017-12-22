@@ -9,8 +9,8 @@ import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.instance.{Decision, DecisionTable, Expression, BusinessKnowledgeModel, LiteralExpression}
 import org.camunda.bpm.model.dmn.instance.{Invocation, Binding, FormalParameter, Context}
 import org.camunda.feel._
-import org.camunda.feel.FeelEngine
-import org.camunda.feel.ParsedExpression
+import org.camunda.feel.{FeelEngine, ParsedExpression}
+import org.camunda.feel.interpreter.ValNull
 
 object DmnEngine {
   
@@ -86,8 +86,7 @@ class DmnEngine {
     evalExpression(expression, EvalContext(context.variables, context.parsedExpressions, context.bkms ++ requiredBkms))
       .right
       .map(_ match {
-        case None => NilResult
-        case Some(r) => Result(r)
+        case ValNull => NilResult
         case r => Result(r)
       })
   }
@@ -97,7 +96,7 @@ class DmnEngine {
     expression match {
       case dt: DecisionTable => decisionTableProcessor.eval(dt)(context)
       case inv: Invocation   => evalInvocation(inv, context)
-      case le: LiteralExpression => (literalExpressionProcessor.eval(le, context))
+      case le: LiteralExpression => literalExpressionProcessor.eval(le, context)
       case c: Context          => contextProcessor.eval(c)(context)
       case _                 => Left(Failure(s"expression of type '${expression.getTypeRef}' is not supported"))
     }

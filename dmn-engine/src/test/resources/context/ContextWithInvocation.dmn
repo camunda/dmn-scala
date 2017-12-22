@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/DMN/20151101/dmn.xsd" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="definitions_16rwaqm" name="definitions" namespace="http://camunda.org/schema/1.0/dmn">
+  <businessKnowledgeModel id="bkm_discount" name="Discount table">
+		<encapsulatedLogic>
+			<formalParameter name="customer" typeRef="string"/>
+			<formalParameter name="orderSize" typeRef="integer"/>
+			<decisionTable id="decisionTable">
+		      <input id="input1" label="Customer" camunda:inputVariable="">
+		        <inputExpression id="inputExpression1" typeRef="string">        <text>customer</text>
+		</inputExpression>
+		      </input>
+		      <input id="InputClause_0948jsx" label="Order Size" camunda:inputVariable="">
+		        <inputExpression id="LiteralExpression_0541nfx" typeRef="integer">        <text>orderSize</text>
+		</inputExpression>
+		      </input>
+		      <output id="output1" label="Discount" name="discount" typeRef="double" />
+		      <rule id="row-958866071-1">
+		        <inputEntry id="UnaryTests_1j7evgw">        <text><![CDATA["Business"]]></text>
+		</inputEntry>
+		        <inputEntry id="UnaryTests_1jf21ih">        <text><![CDATA[< 10]]></text>
+		</inputEntry>
+		        <outputEntry id="LiteralExpression_104sjjb">        <text>0.1</text>
+		</outputEntry>
+		      </rule>
+		      <rule id="row-958866071-2">
+		        <description></description>
+		        <inputEntry id="UnaryTests_1nz4a49">        <text><![CDATA["Business"]]></text>
+		</inputEntry>
+		        <inputEntry id="UnaryTests_13nukij">        <text><![CDATA[>= 10]]></text>
+		</inputEntry>
+		        <outputEntry id="LiteralExpression_15ipzxo">        <text>0.15</text>
+		</outputEntry>
+		      </rule>
+		      <rule id="row-958866071-3">
+		        <inputEntry id="UnaryTests_1d94e9a">        <text><![CDATA["Private"]]></text>
+		</inputEntry>
+		        <inputEntry id="UnaryTests_05iyfwy">        <text></text>
+		</inputEntry>
+		        <outputEntry id="LiteralExpression_1dx9evc">        <text>0.05</text>
+		</outputEntry>
+		      </rule>
+		    </decisionTable>
+		</encapsulatedLogic>
+  </businessKnowledgeModel>
+  <decision id="discount" name="Discount">
+    <knowledgeRequirement>
+            <requiredKnowledge href="#bkm_discount"/>
+        </knowledgeRequirement>
+        <context>
+        <contextEntry>
+                <variable name="Discount"/>
+                <invocation>
+                    <literalExpression>
+                        <text>Discount table</text>
+                    </literalExpression>
+                    <binding>
+		                <parameter name="customer"/>
+		                <literalExpression>
+		                    <text>Customer</text>
+		                </literalExpression>
+		            </binding>
+		            <binding>
+		                <parameter name="orderSize"/>
+		                <literalExpression>
+		                    <text>OrderSize</text>
+		                </literalExpression>
+		            </binding>
+                </invocation>
+            </contextEntry>
+	        <contextEntry>
+            	<variable name="ExistingCustomer"/>
+	            <literalExpression>
+	                <text>false</text>
+	            </literalExpression>
+        	</contextEntry>
+	    </context>
+  </decision>
+</definitions>

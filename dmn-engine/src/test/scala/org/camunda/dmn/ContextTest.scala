@@ -9,6 +9,7 @@ class ContextTest extends FlatSpec with Matchers with DecisionTest {
   lazy val simpleContext = parse("/context/SimpleContext.dmn")
   lazy val nestedContext = parse("/context/NestedContext.dmn")
   lazy val eligibilityContext = parse("/context/Eligibility.dmn")
+  lazy val contextWithInvocation = parse("/context/ContextWithInvocation.dmn")
     
   "A context" should "return static values" in
   {
@@ -21,7 +22,16 @@ class ContextTest extends FlatSpec with Matchers with DecisionTest {
                    ))) 
   }
   
-  "A nested context" should "return nested values" in
+  it should "invocate BKM" in 
+  {
+    eval(contextWithInvocation, "discount", Map("Customer" -> "Business", "OrderSize" -> 7)) should be(
+        Result(Map(
+                   "Discount" -> 0.1,
+                   "ExistingCustomer" -> false
+                   ))) 
+  }
+  
+  it should "return nested values" in
   {
     eval(nestedContext, "applicantData", Map()) should be(
         Result(Map(
@@ -51,5 +61,5 @@ class ContextTest extends FlatSpec with Matchers with DecisionTest {
     
     eval(eligibilityContext, "eligibility", variables) should be(Result("INELIGIBLE")) 
   }
-  
+    
 }

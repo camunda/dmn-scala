@@ -5,7 +5,7 @@ import scala.collection.JavaConverters._
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
 import org.camunda.feel._
-import org.camunda.feel.interpreter.RootContext
+import org.camunda.feel.interpreter.{RootContext, ValNull}
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.instance.{ Decision, DecisionTable, InputEntry, OutputEntry, Output, Rule, Input, LiteralExpression, UnaryTests}
 
@@ -13,7 +13,7 @@ class DecisionTableProcessor(
   eval: (LiteralExpression, EvalContext) => Either[Failure, Any],
   unaryTests: (UnaryTests, EvalContext) => Either[Failure, Any]) {
 
-  def eval(decisionTable: DecisionTable)(implicit context: EvalContext): Either[Failure, Option[Any]] = {
+  def eval(decisionTable: DecisionTable)(implicit context: EvalContext): Either[Failure, Any] = {
 
     val inputs = decisionTable.getInputs.asScala
 
@@ -88,7 +88,7 @@ class DecisionTableProcessor(
     unaryTests(entry, context.copy(variables = variablesWithInput))
   }
 
-  private def applyDefaultOutputEntries(outputs: Iterable[Output])(implicit context: EvalContext): Either[Failure, Option[Any]] = {
+  private def applyDefaultOutputEntries(outputs: Iterable[Output])(implicit context: EvalContext): Either[Failure, Any] = {
 
     evalDefaultOutputEntries(outputs)
       .right
@@ -97,11 +97,11 @@ class DecisionTableProcessor(
       .map { outputValues =>
 
         if (outputValues.isEmpty) {
-          None
+          ValNull
         } else if (outputValues.size == 1) {
-          outputValues.values.headOption
+          outputValues.values.head
         } else {
-          Some(outputValues)
+          outputValues
         }
       }
   }
@@ -141,7 +141,7 @@ class DecisionTableProcessor(
     hitPolicy: HitPolicy,
     aggregator: BuiltinAggregator,
     outputs: List[Output],
-    outputValues: List[Map[String, Any]]): Either[Failure, Option[Any]] = {
+    outputValues: List[Map[String, Any]]): Either[Failure, Any] = {
 
     Option(hitPolicy).getOrElse(HitPolicy.UNIQUE) match {
 
@@ -174,27 +174,28 @@ class DecisionTableProcessor(
       case HitPolicy.RULE_ORDER => Right(multipleOutputValues(outputValues))
 
       case HitPolicy.COLLECT => aggregator match {
-        case BuiltinAggregator.MIN   => singleNumberValues(outputValues).right.map(l => Some(l.min))
-        case BuiltinAggregator.MAX   => singleNumberValues(outputValues).right.map(l => Some(l.max))
-        case BuiltinAggregator.SUM   => singleNumberValues(outputValues).right.map(l => Some(l.sum))
-        case BuiltinAggregator.COUNT => Right(Some(outputValues.size))
+        case BuiltinAggregator.MIN   => singleNumberValues(outputValues).right.map(_.min)
+        case BuiltinAggregator.MAX   => singleNumberValues(outputValues).right.map(_.max)
+        case BuiltinAggregator.SUM   => singleNumberValues(outputValues).right.map(_.sum)
+        case BuiltinAggregator.COUNT => Right(outputValues.size)
         case _ => Right(multipleOutputValues(outputValues))
       }
     }
   }
 
-  private def singleOutputValue(values: List[Map[String, Any]]): Option[Any] = {
+  private def singleOutputValue(values: List[Map[String, Any]]): Any = {
     values
       .headOption
       .map(v => if (v.size == 1) v.values.head else v)
+      .getOrElse(ValNull)
   }
 
-  private def multipleOutputValues(values: List[Map[String, Any]]): Option[Any] = values match {
-    case Nil => None
-    case v :: Nil if (v.size == 1) => Some(v.values.head)
-    case v :: Nil => Some(v)
-    case list if (list.head.size == 1) => Some(list.map(_.values.head))
-    case list => Some(list)
+  private def multipleOutputValues(values: List[Map[String, Any]]): Any = values match {
+    case Nil => ValNull
+    case v :: Nil if (v.size == 1) => v.values.head
+    case v :: Nil => v
+    case list if (list.head.size == 1) => list.map(_.values.head)
+    case list => list
   }
 
   private def sortByPriority(outputValues: List[Map[String, Any]], outputs: List[Output]): List[Map[String, Any]] = {
