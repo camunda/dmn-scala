@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/DMN/20151101/dmn.xsd" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="definitions_16rwaqm" name="definitions" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="income" name="Income">
+	<informationRequirement>
+	    <requiredDecision href="#applicantData"/>
+    </informationRequirement>
+    <informationRequirement>
+	    <requiredDecision href="#monthly"/>
+    </informationRequirement>
+    <context>
+        <contextEntry>
+            <literalExpression>
+                <text><![CDATA[ 
+                	if ApplicantData.EmploymentStatus = "EMPLOYED" 
+                	then Monthly.Income
+					else 0
+                ]]></text>
+            </literalExpression>
+        </contextEntry>
+    </context>
+  </decision>
+  <decision id="applicantData" name="ApplicantData">
+    <context>
+        <contextEntry>
+            <variable name="Age"/>
+            <literalExpression>
+                <text>51</text>
+            </literalExpression>
+        </contextEntry>
+        <contextEntry>
+            <variable name="MaritalStatus"/>
+             <literalExpression>
+                <text>"M"</text>
+            </literalExpression>
+        </contextEntry>
+        <contextEntry>
+            <variable name="EmploymentStatus"/>
+            <literalExpression>
+                <text>"EMPLOYED"</text>
+            </literalExpression>
+        </contextEntry>
+        <contextEntry>
+            <variable name="ExistingCustomer"/>
+            <literalExpression>
+                <text>false</text>
+            </literalExpression>
+        </contextEntry>
+    </context>
+  </decision>
+  <decision id="monthly" name="Monthly">
+    <context>
+        <contextEntry>
+            <variable name="Income"/>
+            <literalExpression>
+                <text>10000.00</text>
+            </literalExpression>
+        </contextEntry>
+        <contextEntry>
+            <variable name="Repayments"/>
+            <literalExpression>
+                <text>2500.00</text>
+            </literalExpression>
+        </contextEntry>
+        <contextEntry>
+            <variable name="Expenses"/>
+            <literalExpression>
+                <text>3000.00</text>
+            </literalExpression>
+        </contextEntry>
+    </context>
+  </decision>
+</definitions>
