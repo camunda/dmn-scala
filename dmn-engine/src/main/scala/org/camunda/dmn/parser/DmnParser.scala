@@ -6,9 +6,11 @@ import java.io.InputStream
 
 import org.camunda.dmn.DmnEngine.Failure
 import org.camunda.bpm.model.dmn._
-import org.camunda.bpm.model.dmn.instance.{Decision, BusinessKnowledgeModel, Invocation, LiteralExpression}
-import org.camunda.bpm.model.dmn.instance.{Decision, DecisionTable, InputEntry, OutputEntry, Output}
+import org.camunda.bpm.model.dmn.instance.{Decision, BusinessKnowledgeModel, Invocation}
+import org.camunda.bpm.model.dmn.instance.{DecisionTable, InputEntry, OutputEntry, Output}
+import org.camunda.bpm.model.dmn.instance.{LiteralExpression, Expression}
 import org.camunda.bpm.model.dmn.instance.{Context, ContextEntry}
+import org.camunda.bpm.model.dmn.instance.{List => DmnList}
 import org.camunda.feel.parser.FeelParser
 import org.camunda.feel.parser.FeelParser.{Success, NoSuccess}
 import org.camunda.feel.ParsedExpression
@@ -69,6 +71,18 @@ class DmnParser {
       case other             => List(Left(Failure(s"unsupported decision expression '$other'")))
     }
   }
+   
+  private def parseBusinessKnowledgeModel(bkm: BusinessKnowledgeModel)(implicit ctx: ParsingContext): ParseResult = {
+    
+    val logic = bkm.getEncapsulatedLogic
+    
+    logic.getExpression match {
+      case dt: DecisionTable => parseDecisionTable(dt)
+      case c: Context        => parseContext(c)
+      case lt: LiteralExpression => parseLiteralExpression(lt)(ctx)
+      case other => List(Left(Failure(s"unsupported business knowledge model logic found '$other'")))
+    }
+  }
   
   private def parseDecisionTable(decisionTable: DecisionTable)(implicit ctx: ParsingContext): ParseResult = {
     
@@ -108,6 +122,20 @@ class DmnParser {
     parsedExpressions ++ parsedUnaryTests
   }
   
+  private def parseLiteralExpression(expression: LiteralExpression)(implicit ctx: ParsingContext): ParseResult = 
+  {
+    val expr = expression.getText.getTextContent
+    
+    if (ctx.parsedExpressions.contains(expr)) 
+    {
+      List.empty
+    }
+    else
+    {
+      List( parseExpression(expr).right.map(expr -> _) )
+    }
+  }
+  
   private def parseInvocation(invocation: Invocation)(implicit ctx: ParsingContext): ParseResult = {
     
     val bindings = invocation.getBindings.asScala
@@ -134,11 +162,23 @@ class DmnParser {
     parsedExpressions ++ failures
   }
   
-  private def parseContext(context: Context)(implicit ctx: ParsingContext): ParseResult = {
-    
+  private def parseContext(context: Context)(implicit ctx: ParsingContext): ParseResult = 
+  {
     val entries = context.getContextEntries.asScala
     val expressions = entries.map(_.getExpression)
     
+    parseExpressions(expressions)
+  }
+  
+  private def parseList(list: DmnList)(implicit ctx: ParsingContext): ParseResult = 
+  {
+    val expressions = list.getExpressions.asScala
+    
+    parseExpressions(expressions)
+  }
+  
+  private def parseExpressions(expressions: Iterable[Expression])(implicit context: ParsingContext): ParseResult = 
+  {
     (List[Either[Failure, (String, ParsedExpression)]]() /: expressions){ case (result, element) => {
       
       val parsedExpressions = result
@@ -146,43 +186,23 @@ class DmnParser {
         .map(_.right.get)
         .toMap
       
-      val ctx = ParsingContext(parsedExpressions)
+      val ctx = ParsingContext(context.parsedExpressions ++ parsedExpressions)
       
-      val p = element match {
-        case lt: LiteralExpression => parseLiteralExpression(lt)(ctx)
-        case dt: DecisionTable     => parseDecisionTable(dt)(ctx)
-        case inv: Invocation       => parseInvocation(inv)(ctx)
-        case c: Context            => parseContext(c)(ctx)
-        case other                 => List( Left(Failure(s"unsupported context entry expression found '$other'")) )
-      }
+      val p = parseAnyExpression(element)
       
       result ++ p
     }}  
   }
   
-  private def parseLiteralExpression(expression: LiteralExpression)(implicit ctx: ParsingContext): ParseResult = 
+  private def parseAnyExpression(expr: Expression)(implicit ctx: ParsingContext): ParseResult = 
   {
-    val expr = expression.getText.getTextContent
-    
-    if (ctx.parsedExpressions.contains(expr)) 
-    {
-      List.empty
-    }
-    else
-    {
-      List( parseExpression(expr).right.map(expr -> _) )
-    }
-  }
-  
-  private def parseBusinessKnowledgeModel(bkm: BusinessKnowledgeModel)(implicit ctx: ParsingContext): ParseResult = {
-    
-    val logic = bkm.getEncapsulatedLogic
-    
-    logic.getExpression match {
-      case dt: DecisionTable => parseDecisionTable(dt)
-      case c: Context        => parseContext(c)
+    expr match {
       case lt: LiteralExpression => parseLiteralExpression(lt)(ctx)
-      case other => List(Left(Failure(s"unsupported business knowledge model logic found '$other'")))
+      case dt: DecisionTable     => parseDecisionTable(dt)(ctx)
+      case inv: Invocation       => parseInvocation(inv)(ctx)
+      case c: Context            => parseContext(c)(ctx)
+      case l: DmnList            => parseList(l)(ctx)
+      case other                 => List( Left(Failure(s"unsupported expression found '$other'")) )
     }
   }
   
@@ -204,5 +224,4 @@ class DmnParser {
       }
     }
   }
-  
 }

@@ -10,6 +10,7 @@ import org.camunda.dmn.evaluation._
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.instance.{Decision, DecisionTable, Expression, BusinessKnowledgeModel, LiteralExpression}
 import org.camunda.bpm.model.dmn.instance.{Invocation, Binding, FormalParameter, Context}
+import org.camunda.bpm.model.dmn.instance.{List => DmnList}
 import org.camunda.feel._
 import org.camunda.feel.{FeelEngine, ParsedExpression}
 import org.camunda.feel.interpreter.ValNull
@@ -53,6 +54,8 @@ class DmnEngine {
   
   val contextEval = new ContextEvaluator(this.evalExpression)
   
+  val listEval = new ListEvaluator(this.evalExpression)
+  
   val invocationEval = new InvocationEvaluator(
     evalExpression = this.evalExpression,
     evalBkm = bkmEval.eval)
@@ -91,11 +94,12 @@ class DmnEngine {
   private def evalExpression(expression: Expression, context: EvalContext): Either[Failure, Any] = 
   {
     expression match {
-      case dt: DecisionTable => decisionTableEval.eval(dt, context)
-      case inv: Invocation   => invocationEval.eval(inv, context)
+      case dt: DecisionTable     => decisionTableEval.eval(dt, context)
+      case inv: Invocation       => invocationEval.eval(inv, context)
       case le: LiteralExpression => literalExpressionEval.evalExpression(le, context)
-      case c: Context          => contextEval.eval(c, context)
-      case _                 => Left(Failure(s"expression of type '${expression.getTypeRef}' is not supported"))
+      case c: Context            => contextEval.eval(c, context)
+      case l: DmnList            => listEval.eval(l, context)
+      case _                     => Left(Failure(s"expression of type '${expression.getTypeRef}' is not supported"))
     }
   }
     
