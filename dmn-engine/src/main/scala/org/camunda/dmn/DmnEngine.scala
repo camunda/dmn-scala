@@ -10,7 +10,7 @@ import org.camunda.dmn.evaluation._
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.instance.{Decision, DecisionTable, Expression, BusinessKnowledgeModel, LiteralExpression}
 import org.camunda.bpm.model.dmn.instance.{Invocation, Binding, FormalParameter, Context}
-import org.camunda.bpm.model.dmn.instance.{List => DmnList}
+import org.camunda.bpm.model.dmn.instance.{List => DmnList, Relation}
 import org.camunda.feel._
 import org.camunda.feel.{FeelEngine, ParsedExpression}
 import org.camunda.feel.interpreter.ValNull
@@ -56,6 +56,8 @@ class DmnEngine {
   
   val listEval = new ListEvaluator(this.evalExpression)
   
+  val relationEval = new RelationEvaluator(this.evalExpression)
+  
   val invocationEval = new InvocationEvaluator(
     evalExpression = this.evalExpression,
     evalBkm = bkmEval.eval)
@@ -99,6 +101,7 @@ class DmnEngine {
       case le: LiteralExpression => literalExpressionEval.evalExpression(le, context)
       case c: Context            => contextEval.eval(c, context)
       case l: DmnList            => listEval.eval(l, context)
+      case rel: Relation         => relationEval.eval(rel, context)
       case _                     => Left(Failure(s"expression of type '${expression.getTypeRef}' is not supported"))
     }
   }

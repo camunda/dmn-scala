@@ -10,7 +10,7 @@ import org.camunda.bpm.model.dmn.instance.{Decision, BusinessKnowledgeModel, Inv
 import org.camunda.bpm.model.dmn.instance.{DecisionTable, InputEntry, OutputEntry, Output}
 import org.camunda.bpm.model.dmn.instance.{LiteralExpression, Expression}
 import org.camunda.bpm.model.dmn.instance.{Context, ContextEntry}
-import org.camunda.bpm.model.dmn.instance.{List => DmnList}
+import org.camunda.bpm.model.dmn.instance.{List => DmnList, Relation}
 import org.camunda.feel.parser.FeelParser
 import org.camunda.feel.parser.FeelParser.{Success, NoSuccess}
 import org.camunda.feel.ParsedExpression
@@ -177,6 +177,18 @@ class DmnParser {
     parseExpressions(expressions)
   }
   
+  private def parseRelation(relation: Relation)(implicit ctx: ParsingContext): ParseResult = 
+  {
+    val columns = relation.getColumns.asScala  
+    val rows = relation.getRows.asScala
+    
+    // TODO verify that each row has same size as columns
+    
+    val expressions = rows.flatMap(_.getExpressions.asScala)
+  
+    parseExpressions(expressions)
+  }
+  
   private def parseExpressions(expressions: Iterable[Expression])(implicit context: ParsingContext): ParseResult = 
   {
     (List[Either[Failure, (String, ParsedExpression)]]() /: expressions){ case (result, element) => {
@@ -202,6 +214,7 @@ class DmnParser {
       case inv: Invocation       => parseInvocation(inv)(ctx)
       case c: Context            => parseContext(c)(ctx)
       case l: DmnList            => parseList(l)(ctx)
+      case rel: Relation         => parseRelation(rel)(ctx)
       case other                 => List( Left(Failure(s"unsupported expression found '$other'")) )
     }
   }

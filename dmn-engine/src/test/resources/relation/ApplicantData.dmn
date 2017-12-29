@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/DMN/20151101/dmn.xsd" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="definitions_16rwaqm" name="definitions" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="applicantData" name="Applicant Data">
+    <context>
+        <contextEntry>
+            <variable name="CreditHistory"/>
+            <relation>
+            	<column name="recordDate" />
+            	<column name="event" />
+            	<column name="weight" />
+            	<row>
+	            	<literalExpression>
+		                <text>date("2008-03-12")</text>
+		            </literalExpression>
+		            <literalExpression>
+		                <text>"home mortgage"</text>
+		            </literalExpression>
+		            <literalExpression>
+		                <text>100</text>
+		            </literalExpression>
+            	</row>
+            	<row>
+	            	<literalExpression>
+		                <text>date("2011-04-01")</text>
+		            </literalExpression>
+		            <literalExpression>
+		                <text>"foreclosure warning"</text>
+		            </literalExpression>
+		            <literalExpression>
+		                <text>150</text>
+		            </literalExpression>
+            	</row>
+            </relation>
+        </contextEntry>
+    </context>
+  </decision>
+</definitions>
