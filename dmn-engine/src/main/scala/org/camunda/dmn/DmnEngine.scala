@@ -10,7 +10,7 @@ import org.camunda.dmn.evaluation._
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.instance.{Decision, DecisionTable, Expression, BusinessKnowledgeModel, LiteralExpression}
 import org.camunda.bpm.model.dmn.instance.{Invocation, Binding, FormalParameter, Context}
-import org.camunda.bpm.model.dmn.instance.{List => DmnList, Relation}
+import org.camunda.bpm.model.dmn.instance.{List => DmnList, Relation, FunctionDefinition}
 import org.camunda.feel._
 import org.camunda.feel.{FeelEngine, ParsedExpression}
 import org.camunda.feel.interpreter.ValNull
@@ -43,10 +43,10 @@ class DmnEngine {
   val feelEngine = new FeelEngine
   
   val decisionEval = new DecisionEvaluator(this.evalExpression)
-  
-  val bkmEval = new BusinessKnowledgeEvaluator(this.evalExpression)
 
   val literalExpressionEval = new LiteralExpressionEvaluator(feelEngine)
+  
+  val functionDefinitionEval = new FunctionDefinitionEvaluator(feelEngine)
   
   val decisionTableEval = new DecisionTableEvaluator(
     eval = literalExpressionEval.evalExpression, 
@@ -58,11 +58,15 @@ class DmnEngine {
   
   val relationEval = new RelationEvaluator(this.evalExpression)
   
+  val bkmEval = new BusinessKnowledgeEvaluator(
+    eval = this.evalExpression,
+    evalFunction = functionDefinitionEval.eval
+  )
+
   val invocationEval = new InvocationEvaluator(
     evalExpression = this.evalExpression,
     evalBkm = bkmEval.eval)
-  
-  
+    
   def eval(stream: InputStream, decisionId: String, context: Map[String, Any]): Either[Failure, EvalResult] = {
     parse(stream).right.flatMap( parsedDmn => eval(parsedDmn, decisionId, context))
   }
@@ -102,6 +106,7 @@ class DmnEngine {
       case c: Context            => contextEval.eval(c, context)
       case l: DmnList            => listEval.eval(l, context)
       case rel: Relation         => relationEval.eval(rel, context)
+      case f: FunctionDefinition => functionDefinitionEval.eval(f, context)
       case _                     => Left(Failure(s"expression of type '${expression.getTypeRef}' is not supported"))
     }
   }

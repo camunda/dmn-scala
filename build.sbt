@@ -4,9 +4,9 @@ lazy val commonSettings = Seq(
   version := "1.0.0-SNAPSHOT",
   scalaVersion := "2.12.4",
 
+  resolvers += Resolver.mavenLocal,
   resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
   resolvers += "camunda-bpm-nexus" at "https://app.camunda.com/nexus/content/groups/public",
-  resolvers += Resolver.mavenLocal,
 
   scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")
 )
@@ -21,7 +21,7 @@ val commonDependencies = Seq(
   "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.9.0" % "test"
 )
 
-val feelVersion = "1.3.0"
+val feelVersion = "1.4.0-SNAPSHOT"
 val camundaVersion = "7.8.0"
 
 lazy val root = (project in file(".")).

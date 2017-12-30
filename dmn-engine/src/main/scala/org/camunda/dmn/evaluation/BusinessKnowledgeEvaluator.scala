@@ -4,9 +4,11 @@ import scala.collection.JavaConverters._
 
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
-import org.camunda.bpm.model.dmn.instance.{BusinessKnowledgeModel, FormalParameter, Expression}
+import org.camunda.bpm.model.dmn.instance.{BusinessKnowledgeModel, FormalParameter, Expression, FunctionDefinition, LiteralExpression}
 
-class BusinessKnowledgeEvaluator(eval: (Expression, EvalContext) => Either[Failure, Any]) {
+class BusinessKnowledgeEvaluator(
+  eval: (Expression, EvalContext) => Either[Failure, Any],
+  evalFunction: (FunctionDefinition, EvalContext) => Either[Failure, Any]) {
   
   def eval(bkm: BusinessKnowledgeModel, context: EvalContext): Either[Failure, Any] = 
   {
@@ -27,7 +29,10 @@ class BusinessKnowledgeEvaluator(eval: (Expression, EvalContext) => Either[Failu
 
     validateParameters(parameters, context)
       .right
-      .flatMap(_ => eval(expression, contextWithImports))
+      .flatMap(_ => expression match {
+        case lt: LiteralExpression => evalFunction(logic, context)
+        case _                     => eval(expression, contextWithImports)
+      })
   }
   
   private def validateParameters(parameters: Iterable[FormalParameter], context: EvalContext): Either[Failure, List[Any]] = 

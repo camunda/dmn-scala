@@ -37,9 +37,9 @@ class InvocationEvaluator(
         {
             val bkmName = le.getText.getTextContent
                     
-                    context.bkms.get(bkmName)
-                    .map(bkm => Right(bkm))
-                    .getOrElse(Left(Failure(s"no BKM found with name '$bkmName'")))
+            context.bkms.get(bkmName)
+              .map(bkm => Right(bkm))
+              .getOrElse(Left(Failure(s"no BKM found with name '$bkmName'")))
         }
         case other => Left(Failure(s"expected invocation with literal expression but found '$other'"))
     }
