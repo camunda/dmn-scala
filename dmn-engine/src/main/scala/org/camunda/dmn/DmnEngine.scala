@@ -25,13 +25,14 @@ object DmnEngine {
   case class Result(value: Any) extends EvalResult
   
   case object NilResult extends EvalResult
-  
+    
   case class EvalContext(
     variables: Map[String, Any],
-    parsedExpressions: Map[String, ParsedExpression],
-    bkms: Map[String, BusinessKnowledgeModel] = Map.empty
+    parsedExpressions: Map[String, ParsedExpression]
   )
   
+  case class BkmInvocation(invoke: EvalContext => Either[Failure, Any])
+
 }
 
 class DmnEngine {
@@ -42,11 +43,11 @@ class DmnEngine {
 
   val feelEngine = new FeelEngine
   
-  val decisionEval = new DecisionEvaluator(this.evalExpression)
+  val decisionEval = new DecisionEvaluator(
+     eval = this.evalExpression,
+     evalBkm = bkmEval.eval)
 
   val literalExpressionEval = new LiteralExpressionEvaluator(feelEngine)
-  
-  val functionDefinitionEval = new FunctionDefinitionEvaluator(feelEngine)
   
   val decisionTableEval = new DecisionTableEvaluator(
     eval = literalExpressionEval.evalExpression, 
@@ -58,14 +59,14 @@ class DmnEngine {
   
   val relationEval = new RelationEvaluator(this.evalExpression)
   
+  val invocationEval = new InvocationEvaluator(this.evalExpression)
+
+  val functionDefinitionEval = new FunctionDefinitionEvaluator(feelEngine)
+
   val bkmEval = new BusinessKnowledgeEvaluator(
     eval = this.evalExpression,
     evalFunction = functionDefinitionEval.eval
   )
-
-  val invocationEval = new InvocationEvaluator(
-    evalExpression = this.evalExpression,
-    evalBkm = bkmEval.eval)
     
   def eval(stream: InputStream, decisionId: String, context: Map[String, Any]): Either[Failure, EvalResult] = {
     parse(stream).right.flatMap( parsedDmn => eval(parsedDmn, decisionId, context))

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/DMN/20151101/dmn.xsd" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="definitions_16rwaqm" name="definitions" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="bkmFunction" name="BKM Function">
+    <knowledgeRequirement>
+      <requiredKnowledge href="#_8xmTAIDNEee-MeWXoLgrYg"/>
+    </knowledgeRequirement>
+    <context>
+        <contextEntry>
+	    	<literalExpression>
+	        	<text>Sum(2, 3)</text>
+	        </literalExpression>	
+        </contextEntry>
+    </context>
+  </decision>
+  <businessKnowledgeModel id="_8xmTAIDNEee-MeWXoLgrYg" name="Sum">
+    <encapsulatedLogic>
+      <formalParameter name="a" />
+      <formalParameter name="b" />
+      <literalExpression>
+        <text>a+b</text>
+      </literalExpression>
+    </encapsulatedLogic>
+    <variable name="Sum" />
+  </businessKnowledgeModel>
+</definitions>
