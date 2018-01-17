@@ -10,15 +10,27 @@ import scala.Right
 class LiteralExpressionEvaluator(feelEngine: FeelEngine) {
   
   def evalUnaryTests(unaryTests: UnaryTests, context: EvalContext): Either[Failure, Any] = 
-    eval(unaryTests.getText.getTextContent, context)
+  {
+    val text = unaryTests.getText.getTextContent
+    val expr = context.parsedUnaryTests.get(text)
+    
+    expr
+      .map(eval(_, context))
+      .getOrElse(Left(Failure(s"no parsed unary-tests found for '$text'")))
+  }
   
   def evalExpression(literalExpression: LiteralExpression, context: EvalContext): Either[Failure, Any] = 
-    eval(literalExpression.getText.getTextContent, context) 
+  {
+    val text = literalExpression.getText.getTextContent
+    val expr = context.parsedExpressions.get(text)
+    
+    expr
+      .map(eval(_, context))
+      .getOrElse(Left(Failure(s"no parsed expression found for '$text'")))
+  }
   
-  private def eval(expr: String, context: EvalContext): Either[Failure, Any] = {
-    
-    val expression = context.parsedExpressions(expr)
-    
+  private def eval(expression: ParsedExpression, context: EvalContext): Either[Failure, Any] = 
+  {
     val functions = context.variables
       .filter{ case (k,v) => v.isInstanceOf[ValFunction]}
       .map{ case (k,f) => k -> List(f.asInstanceOf[ValFunction])}

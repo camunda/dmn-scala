@@ -18,9 +18,21 @@ import org.camunda.feel.parser.ConstBool
 
 class DmnParser {
 
-  type ParseResult = Iterable[Either[Failure, (String, ParsedExpression)]]
+  object ExpressionType extends Enumeration {
+    type ExpressionType = Value
+    val FeelExpression, UnaryTests = Value
+  }
   
-  case class ParsingContext(parsedExpressions: Map[String, ParsedExpression] = Map.empty)
+  import ExpressionType._
+  
+  type ParsedExpressionTuple = (String, (ParsedExpression, ExpressionType))
+  
+  type ParseResult = Iterable[Either[Failure, ParsedExpressionTuple]]
+  
+  case class ParsingContext(
+      parsedExpressions: Map[String, ParsedExpression] = Map.empty,
+      parsedUnaryTest: Map[String, ParsedExpression] = Map.empty
+  )
   
   def parse(stream: InputStream): Either[Failure, ParsedDmn] = {
  
@@ -28,14 +40,14 @@ class DmnParser {
     
     val drgElements = model.getDefinitions.getDrgElements.asScala
     
-    val result: ParseResult = (List[Either[Failure, (String, ParsedExpression)]]() /: drgElements){ case (result, element) => {
+    val result: ParseResult = (List[Either[Failure, ParsedExpressionTuple]]() /: drgElements){ case (result, element) => {
       
       val parsedExpressions = result
         .filter(_.isRight)
         .map(_.right.get)
         .toMap
-      
-      val ctx = ParsingContext(parsedExpressions)
+        
+      val ctx = ParsingContext(getFeelExpressions(parsedExpressions), getUnaryTests(parsedExpressions))
       
       val p = element match {
         case d: Decision                 => parseDecision(d)(ctx)
@@ -45,12 +57,13 @@ class DmnParser {
       
       result ++ p
     }}
+    
       
     result.filter(e => e.isLeft) match {
          case Nil     => {
-           val e = result.map(_.right.get).toMap 
+           val e = result.map(_.right.get)
            
-           Right(ParsedDmn(model, e))
+           Right(ParsedDmn(model, getFeelExpressions(e), getUnaryTests(e)))
          }
          case e  => {
            val errors = e.map(_.left.get)
@@ -60,15 +73,33 @@ class DmnParser {
        }
   }  
   
+  private def getFeelExpressions(expressions: Iterable[ParsedExpressionTuple]): Map[String, ParsedExpression] = 
+  {
+    expressions
+      .filter{ case (expr, (p, t)) => t == FeelExpression }
+      .map{ case (expr, (p, t)) => expr -> p }
+      .toMap
+  }
+  
+  private def getUnaryTests(expressions: Iterable[ParsedExpressionTuple]): Map[String, ParsedExpression] = 
+  {
+    expressions
+      .filter{ case (expr, (p, t)) => t == UnaryTests }
+      .map{ case (expr, (p, t)) => expr -> p }
+      .toMap
+  }
+  
   private def readModel(stream: InputStream): DmnModelInstance = Dmn.readModelFromStream(stream)
   
   private def parseDecision(decision: Decision)(implicit ctx: ParsingContext): ParseResult = {
     
     decision.getExpression match {
-      case dt: DecisionTable => parseDecisionTable(dt)
-      case inv: Invocation   => parseInvocation(inv)
-      case c: Context        => parseContext(c)
-      case other             => List(Left(Failure(s"unsupported decision expression '$other'")))
+      case dt: DecisionTable     => parseDecisionTable(dt)
+      case inv: Invocation       => parseInvocation(inv)
+      case c: Context            => parseContext(c)
+      case r: Relation           => parseRelation(r)
+      case lt: LiteralExpression => parseLiteralExpression(lt)
+      case other                 => List(Left(Failure(s"unsupported decision expression '$other'")))
     }
   }
    
@@ -115,9 +146,8 @@ class DmnParser {
     val parsedUnaryTests = unaryTests
       .toList
       .distinct
-      .filter(!ctx.parsedExpressions.contains(_))
+      .filter(!ctx.parsedUnaryTest.contains(_))
       .map(expr => parseUnaryTests(expr).right.map(expr -> _))
-    
       
     parsedExpressions ++ parsedUnaryTests
   }
@@ -132,7 +162,7 @@ class DmnParser {
     }
     else
     {
-      List( parseExpression(expr).right.map(expr -> _) )
+      List( parseExpression(expr).right.map(expr -> _))
     }
   }
   
@@ -201,14 +231,15 @@ class DmnParser {
   
   private def parseExpressions(expressions: Iterable[Expression])(implicit context: ParsingContext): ParseResult = 
   {
-    (List[Either[Failure, (String, ParsedExpression)]]() /: expressions){ case (result, element) => {
+    (List[Either[Failure, ParsedExpressionTuple]]() /: expressions){ case (result, element) => {
       
       val parsedExpressions = result
         .filter(_.isRight)
         .map(_.right.get)
-        .toMap
-      
-      val ctx = ParsingContext(context.parsedExpressions ++ parsedExpressions)
+     
+      val ctx = ParsingContext(
+          context.parsedExpressions ++ getFeelExpressions(parsedExpressions), 
+          context.parsedUnaryTest ++ getUnaryTests(parsedExpressions))
       
       val p = parseAnyExpression(element)
       
@@ -230,20 +261,20 @@ class DmnParser {
     }
   }
   
-  private def parseExpression(expression: String): Either[Failure, ParsedExpression] = {
+  private def parseExpression(expression: String): Either[Failure, (ParsedExpression, ExpressionType)] = {
     FeelParser.parseExpression(expression) match {
-      case Success(exp, _) => Right(ParsedExpression(exp, expression))
+      case Success(exp, _) => Right(ParsedExpression(exp, expression), FeelExpression)
       case e: NoSuccess    => Left(Failure(s"Failed to parse FEEL expression '$expression':\n$e"))
     }
   }
   
-  private def parseUnaryTests(expression: String): Either[Failure, ParsedExpression] = {
+  private def parseUnaryTests(expression: String): Either[Failure, (ParsedExpression, ExpressionType)] = {
     
     if (expression.isEmpty()) {
-      Right(ParsedExpression(ConstBool(true), expression))
+      Right(ParsedExpression(ConstBool(true), expression), UnaryTests)
     } else {
       FeelParser.parseUnaryTests(expression) match {
-          case Success(exp, _) => Right(ParsedExpression(exp, expression))
+          case Success(exp, _) => Right(ParsedExpression(exp, expression), UnaryTests)
           case e: NoSuccess    => Left(Failure(s"Failed to parse FEEL unary-tests '$expression':\n$e"))
       }
     }

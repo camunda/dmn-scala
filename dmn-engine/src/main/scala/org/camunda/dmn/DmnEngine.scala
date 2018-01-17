@@ -28,7 +28,8 @@ object DmnEngine {
     
   case class EvalContext(
     variables: Map[String, Any],
-    parsedExpressions: Map[String, ParsedExpression]
+    parsedExpressions: Map[String, ParsedExpression],
+    parsedUnaryTests: Map[String, ParsedExpression]
   )
   
   case class BkmInvocation(invoke: EvalContext => Either[Failure, Any])
@@ -75,15 +76,24 @@ class DmnEngine {
   def parse(stream: InputStream): Either[Failure, ParsedDmn] = parser.parse(stream)
   
   def eval(dmn: ParsedDmn, decisionId: String, variables: Map[String, Any]): Either[Failure, EvalResult] = {
-    findDecision(dmn.model, decisionId)
-          .map(evalDecision(_, EvalContext(variables, dmn.expressionsById)))
-          .getOrElse(Left(Failure(s"no decision found with id '$decisionId'")))
+    getDecisions(dmn.model)
+      .find(_.getId == decisionId)
+      .map(evalDecision(_, EvalContext(variables, dmn.expressions, dmn.unaryTests)))
+      .getOrElse(Left(Failure(s"no decision found with id '$decisionId'")))
   }
   
-  private def findDecision(model: DmnModelInstance, decisionId: String): Option[Decision] = {
+  def evalByName(dmn: ParsedDmn, decisionName: String, variables: Map[String, Any]): Either[Failure, EvalResult] = {
+    getDecisions(dmn.model)
+      .find(_.getName == decisionName)
+      .map(evalDecision(_, EvalContext(variables, dmn.expressions, dmn.unaryTests)))
+      .getOrElse(Left(Failure(s"no decision found with name '$decisionName'")))
+  }
+  
+  private def getDecisions(model: DmnModelInstance): Iterable[Decision] = 
+  {
     model.getDefinitions
       .getDrgElements.asScala
-      .find(e => e.isInstanceOf[Decision] && e.getId == decisionId)
+      .filter(e => e.isInstanceOf[Decision])
       .map(_.asInstanceOf[Decision])
   }
 

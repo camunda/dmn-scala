@@ -5,4 +5,5 @@ import org.camunda.feel.ParsedExpression
 
 case class ParsedDmn(
   model: DmnModelInstance, 
-  expressionsById: Map[String, ParsedExpression])
+  expressions: Map[String, ParsedExpression],
+  unaryTests: Map[String, ParsedExpression])
