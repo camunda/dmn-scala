@@ -36,7 +36,7 @@ class DecisionEvaluator(
       evalRequiredKnowledge(knowledgeRequirements, context).right.flatMap(bkms => 
       {
         val decisionEvaluationContext = context.copy(variables = context.variables ++ decisionResults ++ bkms)
-          
+        
         eval(decision.getExpression, decisionEvaluationContext)
           .right
           .map(resultName -> _)            

@@ -20,11 +20,17 @@ object DmnEngine {
   
   case class Failure(message: String)
   
-  sealed trait EvalResult
+  sealed trait EvalResult {
+    val isNil: Boolean
+  }
   
-  case class Result(value: Any) extends EvalResult
+  case class Result(value: Any) extends EvalResult {
+    val isNil = false
+  }
   
-  case object NilResult extends EvalResult
+  case object NilResult extends EvalResult {
+    val isNil = true
+  }
     
   case class EvalContext(
     variables: Map[String, Any],
@@ -104,6 +110,7 @@ class DmnEngine {
       .map(
       {
         case ValNull => NilResult
+        case null    => NilResult
         case r       => Result(r)
       })
   }
