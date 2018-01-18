@@ -110,6 +110,7 @@ class DmnParser {
     logic.getExpression match {
       case dt: DecisionTable     => parseDecisionTable(dt)
       case c: Context            => parseContext(c)
+      case rel: Relation         => parseRelation(rel)(ctx)
       case lt: LiteralExpression => parseLiteralExpression(lt)(ctx)
       case other => List(Left(Failure(s"unsupported business knowledge model logic found '$other'")))
     }

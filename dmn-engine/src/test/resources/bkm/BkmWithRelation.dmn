@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/DMN/20151101/dmn.xsd" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="definitions_16rwaqm" name="definitions" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="relation" name="BKM with Relation">
+    <knowledgeRequirement>
+      <requiredKnowledge href="#_8xmTAIDNEee-MeWXoLgrYg"/>
+    </knowledgeRequirement>
+		<literalExpression>
+	    	<text>Calculation(x, y)</text>
+	    </literalExpression>	
+  </decision>
+  <businessKnowledgeModel id="_8xmTAIDNEee-MeWXoLgrYg" name="Calculation">
+    <encapsulatedLogic>
+      <formalParameter name="a" />
+      <formalParameter name="b" />
+      <relation>
+		<column name="rate" />
+		<column name="fee" />
+		<row>
+	    	<literalExpression>
+	            <text>"A"</text>
+	        </literalExpression>
+	        <literalExpression>
+	            <text>a + b</text>
+	        </literalExpression>
+		</row>
+		<row>
+	    	<literalExpression>
+	            <text>"B"</text>
+	        </literalExpression>
+	        <literalExpression>
+	            <text>(a + b) * 1.5</text>
+	        </literalExpression>
+		</row>
+		<row>
+	    	<literalExpression>
+	            <text>"C"</text>
+	        </literalExpression>
+	        <literalExpression>
+	            <text>(a + b) * 1.75</text>
+	        </literalExpression>
+		</row>
+	  </relation>
+    </encapsulatedLogic>
+    <variable name="Calculation" />
+  </businessKnowledgeModel>
+</definitions>

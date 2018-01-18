@@ -9,7 +9,6 @@ class FunctionDefinitionTest extends FlatSpec with Matchers with DecisionTest {
   
   lazy val applicantData = parse("/functionDefinition/ApplicantData.dmn")
   lazy val userFunction = parse("/functionDefinition/FeelUserFunction.dmn")
-  lazy val bkmFunction = parse("/functionDefinition/BkmWithFunction.dmn")
   
   "A function definition" should "be invoked inside a context" in
   {
@@ -24,11 +23,6 @@ class FunctionDefinitionTest extends FlatSpec with Matchers with DecisionTest {
   "A FEEL user function" should "be invoked inside a context" in 
   {
     eval(userFunction, "userFunction", Map()) should be(Result(5))  
-  }
-  
-  "A function in a BKM" should "be invoked inside a context" in
-  {
-    eval(bkmFunction, "bkmFunction", Map()) should be(Result(5)) 
   }
     
 }
