@@ -4,11 +4,12 @@ import scala.collection.JavaConverters._
 
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
+import org.camunda.feel.interpreter.ValFunction
 import org.camunda.bpm.model.dmn.instance.{Decision, Expression, BusinessKnowledgeModel, KnowledgeRequirement, InformationRequirement}
 
 class DecisionEvaluator(
   eval: (Expression, EvalContext) => Either[Failure, Any], 
-  evalBkm: (BusinessKnowledgeModel, EvalContext) => Either[Failure, (String, Any)]) {
+  evalBkm: (BusinessKnowledgeModel, EvalContext) => Either[Failure, (String, (BkmInvocation, ValFunction))]) {
   
   def eval(decision: Decision, context: EvalContext): Either[Failure, Any] = 
   {
@@ -35,7 +36,12 @@ class DecisionEvaluator(
     {
       evalRequiredKnowledge(knowledgeRequirements, context).right.flatMap(bkms => 
       {
-        val decisionEvaluationContext = context.copy(variables = context.variables ++ decisionResults ++ bkms)
+        val invocations = bkms.map{ case (key, (inv, f)) => key -> inv}
+        val functions = bkms.map{ case (key, (inv, f)) => key -> f}
+        
+        val decisionEvaluationContext = context.copy(
+            variables = context.variables ++ decisionResults ++ functions,
+            bkms = context.bkms ++ invocations)
         
         eval(decision.getExpression, decisionEvaluationContext)
           .right
@@ -53,7 +59,7 @@ class DecisionEvaluator(
     mapEither(requiredDecisions, (d: Decision) => evalDecision(d, context))  
   }
   
-  private def evalRequiredKnowledge(knowledgeRequirements: Iterable[KnowledgeRequirement], context: EvalContext): Either[Failure, List[(String, Any)]] = 
+  private def evalRequiredKnowledge(knowledgeRequirements: Iterable[KnowledgeRequirement], context: EvalContext): Either[Failure, List[(String, (BkmInvocation, ValFunction))]] = 
   {
     mapEither(knowledgeRequirements, (kr: KnowledgeRequirement) => evalBkm(kr.getRequiredKnowledge, context))
   }

@@ -4,13 +4,12 @@ import scala.collection.JavaConverters._
 
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
-import org.camunda.bpm.model.dmn.instance.{BusinessKnowledgeModel, KnowledgeRequirement, FormalParameter, Expression, FunctionDefinition, LiteralExpression}
+import org.camunda.feel.interpreter.{ValFunction, ValError, DefaultValueMapper}
+import org.camunda.bpm.model.dmn.instance.{BusinessKnowledgeModel, KnowledgeRequirement, FormalParameter, Expression, LiteralExpression}
 
-class BusinessKnowledgeEvaluator(
-  eval: (Expression, EvalContext) => Either[Failure, Any],
-  evalFunction: (FunctionDefinition, EvalContext) => Either[Failure, Any]) {
+class BusinessKnowledgeEvaluator(eval: (Expression, EvalContext) => Either[Failure, Any]) {
   
-  def eval(bkm: BusinessKnowledgeModel, context: EvalContext): Either[Failure, (String, Any)] = 
+  def eval(bkm: BusinessKnowledgeModel, context: EvalContext): Either[Failure, (String, (BkmInvocation, ValFunction))] = 
   {
     val name = bkm.getName
     
@@ -20,32 +19,38 @@ class BusinessKnowledgeEvaluator(
     
     val knowledgeRequirements = bkm.getKnowledgeRequirement.asScala
     
-    evalRequiredKnowledge(knowledgeRequirements, context).right.flatMap(bkms => 
+    evalRequiredKnowledge(knowledgeRequirements, context).right.map(bkms => 
     {
-      expression match {
-        case lt: LiteralExpression => 
-        {
-          evalFunction(logic, context.copy(variables = context.variables ++ bkms))
-            .right
-            .map(name -> _)
-        }
-        case _ => Right(name -> createInvocation(expression, parameters, bkms.toMap))
-      }
+      	val invocations = bkms.map{ case (key, (inv, f)) => key -> inv}
+        val functions = bkms.map{ case (key, (inv, f)) => key -> f}
+      
+        val evalContext = context.copy(
+            variables = context.variables ++ functions, 
+            bkms = context.bkms ++ invocations)
+      
+        val invocation = createInvocation(expression, parameters, evalContext)  
+        val function = createFunction(expression, parameters, evalContext)
+      
+        name -> (invocation, function)
     })
   }
   
-  private def evalRequiredKnowledge(knowledgeRequirements: Iterable[KnowledgeRequirement], context: EvalContext): Either[Failure, List[(String, Any)]] = 
+  private def evalRequiredKnowledge(knowledgeRequirements: Iterable[KnowledgeRequirement], context: EvalContext): Either[Failure, List[(String, (BkmInvocation, ValFunction))]] = 
   {
     mapEither(knowledgeRequirements, (kr: KnowledgeRequirement) => eval(kr.getRequiredKnowledge, context))
   }
   
-  private def createInvocation(expression: Expression, parameters: Iterable[FormalParameter], bkms: Map[String, Any]): BkmInvocation = 
+  private def createInvocation(expression: Expression, parameters: Iterable[FormalParameter], context: EvalContext): BkmInvocation = 
   {
     BkmInvocation(ctx => 
     {
+      val evalContext = ctx.copy(
+          variables = ctx.variables ++ context.variables, 
+          bkms = ctx.bkms ++ context.bkms)
+      
       validateParameters(parameters, ctx)
         .right
-        .flatMap(_ => eval(expression, ctx.copy(variables = ctx.variables ++ bkms)))
+        .flatMap(_ => eval(expression, evalContext))
     })
   }
   
@@ -57,6 +62,25 @@ class BusinessKnowledgeEvaluator(
         .map(Right(_))
         .getOrElse(Left(Failure(s"no parameter found with name '${p.getName}'")))
     )  
+  }
+  
+  private def createFunction(expression: Expression, parameters: Iterable[FormalParameter], context: EvalContext): ValFunction = 
+  {
+    val parameterNames = parameters.map(_.getName).toList
+    
+    ValFunction(
+      params = parameterNames,
+      invoke = args => 
+        {
+          // TODO check type of parameters          
+          val arguments = parameterNames.zip(args)
+          
+          eval(expression, context.copy(variables = context.variables ++ arguments)) match {
+            case Right(value) => DefaultValueMapper.instance.toVal(value)
+            case Left(error)  => ValError(error.toString)
+          }
+        } 
+    )
   }
   
 }

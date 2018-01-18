@@ -5,10 +5,9 @@ import scala.collection.JavaConverters._
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
 import org.camunda.bpm.model.dmn.instance.{FunctionDefinition, FormalParameter, Expression, LiteralExpression}
-import org.camunda.feel.{FeelEngine, EvalValue}
 import org.camunda.feel.interpreter.{ValFunction, ValError, DefaultValueMapper}
 
-class FunctionDefinitionEvaluator(feelEngine: FeelEngine) {
+class FunctionDefinitionEvaluator(eval: (LiteralExpression, EvalContext) => Either[Failure, Any]) {
   
   def eval(function: FunctionDefinition, context: EvalContext): Either[Failure, Any] = 
   {
@@ -25,24 +24,16 @@ class FunctionDefinitionEvaluator(feelEngine: FeelEngine) {
   
   private def createFunction(literalExpression: LiteralExpression, parameterNames: List[String], context: EvalContext): ValFunction = 
   {
-    val expr = literalExpression.getText.getTextContent
-    val parsedExpression = context.parsedExpressions(expr)
-    
     ValFunction(
       params = parameterNames,
       invoke = args => 
         {
           // TODO check type of parameters
-          
           val arguments = parameterNames.zip(args)
           
-          feelEngine.eval(parsedExpression, context.variables ++ arguments) match {
-            case EvalValue(value) => 
-            {
-              // TODO avoid unpack and re-pack of result
-              DefaultValueMapper.instance.toVal(value)
-            }
-            case e => ValError(e.toString)
+          eval(literalExpression, context.copy(variables = context.variables ++ arguments)) match {
+            case Right(value) => DefaultValueMapper.instance.toVal(value)
+            case Left(error)  => ValError(error.toString)
           }
         } 
     )

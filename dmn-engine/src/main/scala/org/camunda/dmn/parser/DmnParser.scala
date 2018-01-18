@@ -108,8 +108,8 @@ class DmnParser {
     val logic = bkm.getEncapsulatedLogic
     
     logic.getExpression match {
-      case dt: DecisionTable => parseDecisionTable(dt)
-      case c: Context        => parseContext(c)
+      case dt: DecisionTable     => parseDecisionTable(dt)
+      case c: Context            => parseContext(c)
       case lt: LiteralExpression => parseLiteralExpression(lt)(ctx)
       case other => List(Left(Failure(s"unsupported business knowledge model logic found '$other'")))
     }

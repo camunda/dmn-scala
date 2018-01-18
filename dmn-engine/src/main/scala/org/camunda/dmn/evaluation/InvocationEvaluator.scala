@@ -30,10 +30,10 @@ class InvocationEvaluator(eval: (Expression, EvalContext) => Either[Failure, Any
       case le: LiteralExpression =>
       {
           val bkmName = le.getText.getTextContent
-                  
-          context.variables.get(bkmName)
-            .filter(_.isInstanceOf[BkmInvocation])
-            .map(bkm => Right(bkm.asInstanceOf[BkmInvocation]))
+          
+          context.bkms
+            .get(bkmName)
+            .map(Right(_))
             .getOrElse(Left(Failure(s"no BKM found with name '$bkmName'")))
       }
       case other => Left(Failure(s"expected invocation with literal expression but found '$other'"))

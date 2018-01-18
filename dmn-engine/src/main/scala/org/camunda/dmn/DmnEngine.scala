@@ -34,6 +34,7 @@ object DmnEngine {
     
   case class EvalContext(
     variables: Map[String, Any],
+    bkms: Map[String, BkmInvocation],
     parsedExpressions: Map[String, ParsedExpression],
     parsedUnaryTests: Map[String, ParsedExpression]
   )
@@ -68,12 +69,9 @@ class DmnEngine {
   
   val invocationEval = new InvocationEvaluator(this.evalExpression)
 
-  val functionDefinitionEval = new FunctionDefinitionEvaluator(feelEngine)
+  val functionDefinitionEval = new FunctionDefinitionEvaluator(literalExpressionEval.evalExpression)
 
-  val bkmEval = new BusinessKnowledgeEvaluator(
-    eval = this.evalExpression,
-    evalFunction = functionDefinitionEval.eval
-  )
+  val bkmEval = new BusinessKnowledgeEvaluator(this.evalExpression)
     
   def eval(stream: InputStream, decisionId: String, context: Map[String, Any]): Either[Failure, EvalResult] = {
     parse(stream).right.flatMap( parsedDmn => eval(parsedDmn, decisionId, context))
@@ -84,14 +82,14 @@ class DmnEngine {
   def eval(dmn: ParsedDmn, decisionId: String, variables: Map[String, Any]): Either[Failure, EvalResult] = {
     getDecisions(dmn.model)
       .find(_.getId == decisionId)
-      .map(evalDecision(_, EvalContext(variables, dmn.expressions, dmn.unaryTests)))
+      .map(evalDecision(_, EvalContext(variables, Map(), dmn.expressions, dmn.unaryTests)))
       .getOrElse(Left(Failure(s"no decision found with id '$decisionId'")))
   }
   
   def evalByName(dmn: ParsedDmn, decisionName: String, variables: Map[String, Any]): Either[Failure, EvalResult] = {
     getDecisions(dmn.model)
       .find(_.getName == decisionName)
-      .map(evalDecision(_, EvalContext(variables, dmn.expressions, dmn.unaryTests)))
+      .map(evalDecision(_, EvalContext(variables, Map(), dmn.expressions, dmn.unaryTests)))
       .getOrElse(Left(Failure(s"no decision found with name '$decisionName'")))
   }
   
