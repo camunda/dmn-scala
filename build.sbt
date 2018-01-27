@@ -22,7 +22,7 @@ val commonDependencies = Seq(
 )
 
 val feelVersion = "1.4.0-SNAPSHOT"
-val camundaVersion = "7.8.0"
+val camundaVersion = "7.9.0-SNAPSHOT"
 
 lazy val root = (project in file(".")).
   settings(commonSettings).
@@ -34,6 +34,6 @@ lazy val engine = (project in file("dmn-engine")).
     libraryDependencies ++= commonDependencies,
     libraryDependencies ++= Seq(
       "org.camunda.bpm.extension.feel.scala" % "feel-engine" % feelVersion,
-      "org.camunda.bpm.model" % "camunda-dmn-model" % "7.9.0-SNAPSHOT"
+      "org.camunda.bpm.model" % "camunda-dmn-model" % camundaVersion
     )
   )

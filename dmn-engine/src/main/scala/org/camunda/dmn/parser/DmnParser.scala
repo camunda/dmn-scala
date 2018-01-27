@@ -30,47 +30,53 @@ class DmnParser {
   type ParseResult = Iterable[Either[Failure, ParsedExpressionTuple]]
   
   case class ParsingContext(
+      model: DmnModelInstance,
       parsedExpressions: Map[String, ParsedExpression] = Map.empty,
       parsedUnaryTest: Map[String, ParsedExpression] = Map.empty
   )
   
-  def parse(stream: InputStream): Either[Failure, ParsedDmn] = {
- 
-    val model = readModel(stream)
+  def parse(stream: InputStream): Either[Failure, ParsedDmn] = 
+  {
+    try
+    {
     
-    val drgElements = model.getDefinitions.getDrgElements.asScala
-    
-    val result: ParseResult = (List[Either[Failure, ParsedExpressionTuple]]() /: drgElements){ case (result, element) => {
+      val model = readModel(stream)
       
-      val parsedExpressions = result
-        .filter(_.isRight)
-        .map(_.right.get)
-        .toMap
+      val drgElements = model.getDefinitions.getDrgElements.asScala
+            
+      val result: ParseResult = (List[Either[Failure, ParsedExpressionTuple]]() /: drgElements){ case (result, element) => {
         
-      val ctx = ParsingContext(getFeelExpressions(parsedExpressions), getUnaryTests(parsedExpressions))
-      
-      val p = element match {
-        case d: Decision                 => parseDecision(d)(ctx)
-        case bkm: BusinessKnowledgeModel => parseBusinessKnowledgeModel(bkm)(ctx)
-        case other                       => List.empty // ignore 
-      }
-      
-      result ++ p
-    }}
-    
-      
-    result.filter(e => e.isLeft) match {
-         case Nil     => {
-           val e = result.map(_.right.get)
-           
-           Right(ParsedDmn(model, getFeelExpressions(e), getUnaryTests(e)))
+        val parsedExpressions = result
+          .filter(_.isRight)
+          .map(_.right.get)
+          .toMap
+          
+        val ctx = ParsingContext(model, getFeelExpressions(parsedExpressions), getUnaryTests(parsedExpressions))
+        
+        val p = element match {
+          case d: Decision                 => parseDecision(d)(ctx)
+          case bkm: BusinessKnowledgeModel => parseBusinessKnowledgeModel(bkm)(ctx)
+          case other                       => List.empty // ignore 
+        }
+        
+        result ++ p
+      }}
+        
+      result.filter(e => e.isLeft) match {
+           case Nil     => {
+             val e = result.map(_.right.get)
+             
+             Right(ParsedDmn(model, getFeelExpressions(e), getUnaryTests(e)))
+           }
+           case e  => {
+             val errors = e.map(_.left.get)
+             
+             Left(Failure(errors.mkString("\n")))
+           }
          }
-         case e  => {
-           val errors = e.map(_.left.get)
-           
-           Left(Failure(errors.mkString("\n")))
-         }
-       }
+    } catch {
+      case t: Throwable => Left(Failure(s"Failed to parse DMN: $t"))
+    }
   }  
   
   private def getFeelExpressions(expressions: Iterable[ParsedExpressionTuple]): Map[String, ParsedExpression] = 
@@ -118,7 +124,14 @@ class DmnParser {
   
   private def parseDecisionTable(decisionTable: DecisionTable)(implicit ctx: ParsingContext): ParseResult = {
     
-    // TODO ensure that single hit policy (U, A, P, F) is only used for decision table with one output
+    val failures = if (decisionTable.getOutputs.size > 1 && 
+        decisionTable.getHitPolicy.equals(HitPolicy.COLLECT) && 
+        Option(decisionTable.getAggregation).isEmpty) 
+    {
+      List(Left(Failure("hit policy 'COLLECT' with aggregator is not defined for compound output")))
+    } else {
+      List()
+    }
     
     val rules = decisionTable.getRules.asScala
     
@@ -150,7 +163,7 @@ class DmnParser {
       .filter(!ctx.parsedUnaryTest.contains(_))
       .map(expr => parseUnaryTests(expr).right.map(expr -> _))
       
-    parsedExpressions ++ parsedUnaryTests
+    parsedExpressions ++ parsedUnaryTests ++ failures
   }
   
   private def parseLiteralExpression(expression: LiteralExpression)(implicit ctx: ParsingContext): ParseResult = 
@@ -188,9 +201,26 @@ class DmnParser {
       .filter(!ctx.parsedExpressions.contains(_))
       .map(expr => parseExpression(expr).right.map(expr -> _))
       
-    // TODO validate invocation expression  
+    val invocationFailures = invocation.getExpression match {
+      case lt: LiteralExpression => 
+      {
+        val expression = lt.getText.getTextContent  
+        
+        val bkmNames = ctx.model.getDefinitions.getDrgElements.asScala
+          .filter(_.isInstanceOf[BusinessKnowledgeModel])
+          .map(_.asInstanceOf[BusinessKnowledgeModel].getName)
+          .toList
+        
+        if (!bkmNames.contains(expression)) {
+          List(Left(Failure(s"no BKM found with name '$expression'")))
+        } else {
+          List()
+        } 
+      }
+      case other => List(Left(Failure(s"expected invocation with literal expression but found '$other'")))  
+    }
       
-    parsedExpressions ++ failures
+    parsedExpressions ++ failures ++ invocationFailures
   }
   
   private def parseContext(context: Context)(implicit ctx: ParsingContext): ParseResult = 
@@ -213,11 +243,17 @@ class DmnParser {
     val columns = relation.getColumns.asScala  
     val rows = relation.getRows.asScala
     
-    // TODO verify that each row has same size as columns
+    val failures = (List[Either[Failure, ParsedExpressionTuple]]() /: rows)( (failures, row) => 
+      if (row.getExpressions.size != columns.size) {
+        failures :+ Left(Failure(s"expected row with '${columns.size}' elements but found '${row.getExpressions.size}'"))
+      } else {
+        failures
+      }
+    )
     
     val expressions = rows.flatMap(_.getExpressions.asScala)
   
-    parseExpressions(expressions)
+    parseExpressions(expressions) ++ failures
   }
   
   private def parseFunctionDefinition(functionDefinition: FunctionDefinition)(implicit ctx: ParsingContext): ParseResult = 
@@ -239,6 +275,7 @@ class DmnParser {
         .map(_.right.get)
      
       val ctx = ParsingContext(
+          context.model,
           context.parsedExpressions ++ getFeelExpressions(parsedExpressions), 
           context.parsedUnaryTest ++ getUnaryTests(parsedExpressions))
       

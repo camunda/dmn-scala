@@ -25,6 +25,8 @@ class DecisionEvaluator(
 
     val variable = Option(decision.getVariable)
     
+    val resultType = variable.flatMap(v => Option(v.getTypeRef))
+    
     val resultName = variable.map(_.getName)
       .orElse(decisionName)
       .getOrElse(decisionId)
@@ -44,6 +46,12 @@ class DecisionEvaluator(
             bkms = context.bkms ++ invocations)
         
         eval(decision.getExpression, decisionEvaluationContext)
+          .right
+          .flatMap(r =>
+            resultType
+              .map(t => TypeChecker.isOfType(r, t, context))
+              .getOrElse(Right(r))  
+          )
           .right
           .map(resultName -> _)            
       })
