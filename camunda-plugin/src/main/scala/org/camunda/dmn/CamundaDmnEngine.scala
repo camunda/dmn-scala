@@ -31,6 +31,7 @@ import org.camunda.dmn.parser.ParsedDmn
 import org.camunda.dmn.DmnEngine.EvalResult
 import org.camunda.dmn.DmnEngine.NilResult
 import org.camunda.dmn.DmnEngine.EvalResult
+import org.camunda.bpm.engine.impl.util.ParseUtil
 
 class CamundaDmnEngine(engine: DmnEngine) extends org.camunda.bpm.dmn.engine.DmnEngine {
 
@@ -98,6 +99,8 @@ class CamundaDmnEngine(engine: DmnEngine) extends org.camunda.bpm.dmn.engine.Dmn
       definition.setName(decision.getName)
       definition.setCategory(model.getDefinitions.getNamespace)
       definition.setDecisionLogic(new DmnScalaDecisionLogic(parsedDmn))
+      definition.setHistoryTimeToLive(ParseUtil.parseHistoryTimeToLive(decision.getCamundaHistoryTimeToLiveString))
+      definition.setVersionTag(decision.getVersionTag)
       
       definition: DmnDecision
     })
