@@ -26,7 +26,7 @@ val camundaVersion = "7.9.0-SNAPSHOT"
 
 lazy val root = (project in file(".")).
   settings(commonSettings).
-  aggregate(engine)
+  aggregate(engine, camundaPlugin)
 
 lazy val engine = (project in file("dmn-engine")).
   settings(commonSettings).
@@ -36,4 +36,18 @@ lazy val engine = (project in file("dmn-engine")).
       "org.camunda.bpm.extension.feel.scala" % "feel-engine" % feelVersion,
       "org.camunda.bpm.model" % "camunda-dmn-model" % camundaVersion
     )
+  )
+  
+lazy val camundaPlugin = (project in file("camunda-plugin")).
+  settings(commonSettings).
+  settings(
+    libraryDependencies ++= commonDependencies,
+    libraryDependencies ++= Seq(
+      "org.camunda.bpm" % "camunda-engine" % camundaVersion % "provided",
+
+      "com.h2database" % "h2" % "1.4.193" % "test"
+    )
+  ).
+  dependsOn(
+    engine % "test->test;compile->compile"
   )

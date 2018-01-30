@@ -73,6 +73,8 @@ class DmnEngine {
 
   val bkmEval = new BusinessKnowledgeEvaluator(this.evalExpression)
     
+  ///// public API
+  
   def eval(stream: InputStream, decisionId: String, context: Map[String, Any]): Either[Failure, EvalResult] = {
     parse(stream).right.flatMap( parsedDmn => eval(parsedDmn, decisionId, context))
   }
@@ -93,6 +95,19 @@ class DmnEngine {
       .getOrElse(Left(Failure(s"no decision found with name '$decisionName'")))
   }
   
+  ///// Java public API
+  
+  def eval(stream: InputStream, decisionId: String, context: java.util.Map[String, Any]): Either[Failure, EvalResult] =
+    eval(stream, decisionId, context.asScala.toMap)
+  
+  def eval(dmn: ParsedDmn, decisionId: String, variables: java.util.Map[String, Any]): Either[Failure, EvalResult] = 
+    eval(dmn, decisionId, variables.asScala.toMap)
+    
+  def evalByName(dmn: ParsedDmn, decisionName: String, variables: java.util.Map[String, Any]): Either[Failure, EvalResult] = 
+    evalByName(dmn, decisionName, variables.asScala.toMap)  
+  
+  ///// internal  
+    
   private def getDecisions(model: DmnModelInstance): Iterable[Decision] = 
   {
     model.getDefinitions
