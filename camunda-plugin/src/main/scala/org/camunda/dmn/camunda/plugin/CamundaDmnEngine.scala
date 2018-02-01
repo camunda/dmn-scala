@@ -1,36 +1,21 @@
-package org.camunda.dmn
+package org.camunda.dmn.camunda.plugin
 
 import scala.collection.JavaConverters._
 
 import java.io.InputStream
 import java.util.{List => JList, Map => JMap}
 
-import org.camunda.bpm.dmn.engine.DmnEngineConfiguration
-import org.camunda.bpm.dmn.engine.impl.DefaultDmnEngineConfiguration
-import org.camunda.bpm.dmn.engine.DmnDecision
-import org.camunda.bpm.dmn.engine.DmnDecisionResult
-import org.camunda.bpm.engine.ProcessEngineException
-import org.camunda.bpm.model.dmn.instance.DecisionTable
-import org.camunda.bpm.model.dmn.instance.Decision
-import org.camunda.bpm.model.dmn.instance.LiteralExpression
-import org.camunda.bpm.model.dmn.instance.Context
-import org.camunda.bpm.model.dmn.instance.Invocation
-import org.camunda.bpm.model.dmn.instance.Relation
-import org.camunda.bpm.dmn.engine.impl.DmnDecisionResultImpl
-import org.camunda.dmn.DmnEngine.Result
-import org.camunda.bpm.dmn.engine.impl.DmnDecisionResultEntriesImpl
-import org.camunda.bpm.dmn.engine.DmnDecisionResultEntries
-import org.camunda.bpm.engine.variable.Variables
-import org.camunda.bpm.model.dmn.DmnModelInstance
-import org.camunda.bpm.dmn.engine.DmnDecisionRequirementsGraph
-import org.camunda.bpm.dmn.engine.DmnDecisionTableResult
-import org.camunda.bpm.engine.variable.context.VariableContext
-import org.camunda.bpm.engine.impl.dmn.entity.repository.DecisionRequirementsDefinitionEntity
-import org.camunda.bpm.engine.impl.dmn.entity.repository.DecisionDefinitionEntity
+import org.camunda.dmn.DmnEngine
+import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.parser.ParsedDmn
-import org.camunda.dmn.DmnEngine.EvalResult
-import org.camunda.dmn.DmnEngine.NilResult
-import org.camunda.dmn.DmnEngine.EvalResult
+import org.camunda.bpm.model.dmn.DmnModelInstance
+import org.camunda.bpm.model.dmn.instance.Decision
+import org.camunda.bpm.dmn.engine.{DmnEngineConfiguration, DmnDecisionResult, DmnDecision, DmnDecisionResultEntries, DmnDecisionRequirementsGraph, DmnDecisionTableResult}
+import org.camunda.bpm.dmn.engine.impl.{DefaultDmnEngineConfiguration, DmnDecisionResultImpl, DmnDecisionResultEntriesImpl}
+import org.camunda.bpm.engine.impl.dmn.entity.repository.{DecisionRequirementsDefinitionEntity, DecisionDefinitionEntity}
+import org.camunda.bpm.engine.ProcessEngineException
+import org.camunda.bpm.engine.variable.Variables
+import org.camunda.bpm.engine.variable.context.VariableContext
 import org.camunda.bpm.engine.impl.util.ParseUtil
 
 class CamundaDmnEngine(engine: DmnEngine) extends org.camunda.bpm.dmn.engine.DmnEngine {
@@ -88,10 +73,7 @@ class CamundaDmnEngine(engine: DmnEngine) extends org.camunda.bpm.dmn.engine.Dmn
   {
     val model = parsedDmn.model
     
-    val drgElements = model.getDefinitions.getDrgElements.asScala
-    val decisions = drgElements.filter(_.isInstanceOf[Decision]).map(_.asInstanceOf[Decision])
-    
-    decisions.map(decision => 
+    parsedDmn.decisions.map(decision => 
     {
       val definition = new DecisionDefinitionEntity
       

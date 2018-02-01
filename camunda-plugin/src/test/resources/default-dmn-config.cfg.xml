@@ -15,7 +15,7 @@
 
     <property name="processEnginePlugins">
       <list>
-        <bean class="org.camunda.dmn.CamundaDmnEnginePlugin" />
+        <bean class="org.camunda.dmn.camunda.plugin.CamundaDmnEnginePlugin" />
       </list>
     </property>
 

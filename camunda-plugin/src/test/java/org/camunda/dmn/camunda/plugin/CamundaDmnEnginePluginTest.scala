@@ -1,4 +1,4 @@
-package org.camunda.dmn
+package org.camunda.dmn.camunda.plugin
 
 import org.scalatest._
 import scala.collection.JavaConverters._

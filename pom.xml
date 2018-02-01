@@ -30,6 +30,7 @@
     <modules>
       <module>dmn-engine</module>
       <module>camunda-plugin</module>
+      <module>standalone-engine</module>
     </modules>
 
     <dependencyManagement>

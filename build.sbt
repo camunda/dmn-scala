@@ -26,7 +26,7 @@ val camundaVersion = "7.9.0-SNAPSHOT"
 
 lazy val root = (project in file(".")).
   settings(commonSettings).
-  aggregate(engine, camundaPlugin)
+  aggregate(engine, camundaPlugin, standaloneEngine)
 
 lazy val engine = (project in file("dmn-engine")).
   settings(commonSettings).
@@ -51,3 +51,12 @@ lazy val camundaPlugin = (project in file("camunda-plugin")).
   dependsOn(
     engine % "test->test;compile->compile"
   )
+  
+lazy val standaloneEngine = (project in file("standalone-engine")).
+  settings(commonSettings).
+  settings(
+    libraryDependencies ++= commonDependencies
+  ).
+  dependsOn(
+    engine % "test->test;compile->compile"
+  )  

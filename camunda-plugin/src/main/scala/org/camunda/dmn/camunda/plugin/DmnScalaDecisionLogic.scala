@@ -1,4 +1,4 @@
-package org.camunda.dmn
+package org.camunda.dmn.camunda.plugin
 
 import org.camunda.bpm.dmn.engine.DmnDecisionLogic
 import org.camunda.dmn.parser.ParsedDmn
