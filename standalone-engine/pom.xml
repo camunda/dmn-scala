@@ -9,7 +9,7 @@
 
   <artifactId>standalone-engine</artifactId>
 
-  <name>DMN Scala - Camunda BPM Plugin</name>
+  <name>DMN Scala - Standalone Engine</name>
 
   <dependencies>
 

@@ -6,16 +6,6 @@ import java.io.InputStream
 
 object StandaloneEngine {
   
-  def main(args: Array[String]) 
-  {
-    val repositoryDirectory = args.toList match {
-      case Nil => "decision-repository"
-      case directory :: _ => directory
-    }
-    
-    fileSystemRepository(repositoryDirectory)
-  }
-  
   def fileSystemRepository(directory: String): StandaloneEngine = 
   {
     val engine = new DmnEngine
