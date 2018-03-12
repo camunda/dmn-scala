@@ -17,8 +17,8 @@
     <name>DMN Scala Root</name>
 
     <properties>
-        <feel.version>1.4.0-SNAPSHOT</feel.version>
-        <camunda.version>7.9.0-SNAPSHOT</camunda.version>
+        <feel.version>1.4.0</feel.version>
+        <camunda.version>7.9.0-alpha2</camunda.version>
         <version.java>1.8</version.java>
         <scala.version>2.12.4</scala.version>
         <scala.binary.version>2.12.4</scala.binary.version>
@@ -31,6 +31,7 @@
       <module>dmn-engine</module>
       <module>camunda-plugin</module>
       <module>standalone-engine</module>
+      <module>engine-rest</module>
     </modules>
 
     <dependencyManagement>
@@ -50,11 +51,59 @@
             </dependency>
 
             <dependency>
+              <groupId>org.camunda.bpm.extension.dmn.scala</groupId>
+              <artifactId>standalone-engine</artifactId>
+              <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
               <groupId>org.camunda.bpm.extension.feel.scala</groupId>
               <artifactId>feel-engine</artifactId>
               <version>${feel.version}</version>
             </dependency>
+            
+            <dependency>
+			    <groupId>org.scalatra</groupId>
+			    <artifactId>scalatra_2.12</artifactId>
+			    <version>2.6.2</version>
+			</dependency>
 
+			<dependency>
+			    <groupId>org.scalatra</groupId>
+			    <artifactId>scalatra-json_2.12</artifactId>
+			    <version>2.6.2</version>
+			</dependency>
+
+			<dependency>
+			    <groupId>org.scalatra</groupId>
+			    <artifactId>scalatra-scalatest_2.12</artifactId>
+			    <version>2.6.2</version>
+			</dependency>
+
+			<dependency>
+			    <groupId>org.scalatra</groupId>
+			    <artifactId>scalatra-json_2.12</artifactId>
+			    <version>2.6.2</version>
+			</dependency>
+			
+            <dependency>
+              <groupId>org.json4s</groupId>
+              <artifactId>json4s-jackson_2.12</artifactId>
+              <version>3.5.2</version>
+            </dependency>
+            
+            <dependency>
+              <groupId>org.eclipse.jetty</groupId>
+              <artifactId>jetty-webapp</artifactId>
+              <version>9.4.8.v20171121</version>
+            </dependency>
+            
+            <dependency>
+              <groupId>javax.servlet</groupId>
+              <artifactId>javax.servlet-api</artifactId>
+              <version>3.1.0</version>
+            </dependency>
+            
             <dependency>
               <groupId>org.scalatest</groupId>
               <artifactId>scalatest_2.12</artifactId>

@@ -5,7 +5,7 @@ lazy val commonSettings = Seq(
   scalaVersion := "2.12.4",
 
   resolvers += Resolver.mavenLocal,
-  resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
+  resolvers += Classpaths.typesafeReleases,
   resolvers += "camunda-bpm-nexus" at "https://app.camunda.com/nexus/content/groups/public",
 
   scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")
@@ -21,12 +21,13 @@ val commonDependencies = Seq(
   "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.9.0" % "test"
 )
 
-val feelVersion = "1.4.0-SNAPSHOT"
-val camundaVersion = "7.9.0-SNAPSHOT"
+val feelVersion = "1.4.0"
+val camundaVersion = "7.9.0-alpha2"
+val scalatraVersion = "2.6.2"
 
 lazy val root = (project in file(".")).
   settings(commonSettings).
-  aggregate(engine, camundaPlugin, standaloneEngine)
+  aggregate(engine, camundaPlugin, standaloneEngine, engineRest)
 
 lazy val engine = (project in file("dmn-engine")).
   settings(commonSettings).
@@ -59,4 +60,22 @@ lazy val standaloneEngine = (project in file("standalone-engine")).
   ).
   dependsOn(
     engine % "test->test;compile->compile"
-  )  
+  ) 
+
+lazy val engineRest = (project in file("engine-rest")).
+  settings(commonSettings).
+  settings(
+    libraryDependencies ++= commonDependencies,
+    libraryDependencies ++= Seq(
+	  "org.scalatra" %% "scalatra" % scalatraVersion,
+	  "org.scalatra" %% "scalatra-json" % scalatraVersion,
+	  "org.json4s"   %% "json4s-jackson" % "3.5.2",
+	  "org.eclipse.jetty" % "jetty-webapp" % "9.4.8.v20171121" % "container;compile",
+	  "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided",
+	  
+	  "org.scalatra" %% "scalatra-scalatest" % scalatraVersion % "test"
+  	)
+  ).
+  dependsOn(
+    standaloneEngine % "test->test;compile->compile"
+  ) 

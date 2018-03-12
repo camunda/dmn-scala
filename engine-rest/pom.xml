@@ -7,16 +7,47 @@
     <version>1.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>standalone-engine</artifactId>
+  <artifactId>engine-rest</artifactId>
 
-  <name>DMN Scala - Standalone Engine</name>
+  <name>DMN Scala - Engine REST</name>
 
   <dependencies>
 
     <dependency>
       <groupId>org.camunda.bpm.extension.dmn.scala</groupId>
-      <artifactId>dmn-engine</artifactId>
+      <artifactId>standalone-engine</artifactId>
     </dependency>
+    
+    <dependency>
+	    <groupId>org.scalatra</groupId>
+	    <artifactId>scalatra_2.12</artifactId>
+	</dependency>
+	
+	<dependency>
+	    <groupId>org.scalatra</groupId>
+	    <artifactId>scalatra-json_2.12</artifactId>
+	</dependency>
+	
+	<dependency>
+	    <groupId>org.json4s</groupId>
+	    <artifactId>json4s-jackson_2.12</artifactId>
+	</dependency>
+	
+	<dependency>
+	    <groupId>org.scalatra</groupId>
+	    <artifactId>scalatra-scalatest_2.12</artifactId>
+	    <scope>test</scope>
+	</dependency>
+	
+	<dependency>
+		<groupId>javax.servlet</groupId>
+	    <artifactId>javax.servlet-api</artifactId>
+	</dependency>
+	
+	<dependency>
+		<groupId>org.eclipse.jetty</groupId>
+	    <artifactId>jetty-webapp</artifactId>
+	</dependency>
     
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -32,26 +63,46 @@
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-api</artifactId>
-      <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-core</artifactId>
-      <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-slf4j-impl</artifactId>
-      <scope>test</scope>
     </dependency>
     
   </dependencies>
 
   <build>
     <plugins>
-      
+
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.0.0</version>
+        <configuration>
+          <descriptors>
+            <descriptor>assembly-complete.xml</descriptor>
+          </descriptors>
+          <archive>
+            <manifest>
+              <mainClass>org.camunda.dmn.rest.DmnEngineRestLauncher</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+        <executions>
+          <execution>
+            <id>make-assembly</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.scalatest</groupId>
         <artifactId>scalatest-maven-plugin</artifactId>
