@@ -12,7 +12,6 @@ Run the application with
 
 ```
 java -jar engine-rest-1.0.0.jar
-
 ```
 
 Per default, the application starts on port 8080 and uses the directory 'dmn-repo' as repository. 
@@ -21,18 +20,17 @@ You can change the configuration by using the properties
 
 ```
 java -Dport=8090 -Ddmn.repo=my-repo -jar engine-rest-1.0.0.jar
-
 ```
 
 ### REST Endpoints
 
 
-| method | path | body | description |
--------------------------------
-| GET | /decisions | - | return the deployed decisions |
-| POST | /decisions/:id/eval | variables as JSON document | evaluate the decision with the given id |
-| POST | /decisions | files as multipart/form-data | deploy the given files |
-| DELETE | /decisions/:resource | - | remove all decisions related to the given resource |
+method | path | body | description
+--- | --- | --- | ---
+GET | /decisions | - | return the deployed decisions 
+POST | /decisions/:id/eval | variables as JSON document | evaluate the decision with the given id 
+POST | /decisions | files as multipart/form-data | deploy the given files 
+DELETE | /decisions/:resource | - | remove all decisions related to the given resource
 
 ## How to build it?
 
