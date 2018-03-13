@@ -4,7 +4,8 @@ An engine to execute decisions according to the [DMN 1.1 specification](http://w
 
 **Features:**
 * full support for DMN 1.1 (Compliance Level 3)¹
-* ...
+* evaluation of parsed DMN models
+* extensible by own functions and types
 
 ¹ measured by the DMN TCK: https://dmn-tck.github.io/tck/ (TODO: update results)
 
@@ -21,5 +22,5 @@ Root Elements are
 | Invocation | x | - | x | 
 | Context | x | x | x | 
 | Relation | x | x | x | 
-| List | - | - | x | 
+| List | x | x | x | 
 | Function Definition | - | - | x | 

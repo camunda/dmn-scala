@@ -1,8 +1,10 @@
 package org.camunda.dmn
 
 import scala.collection.JavaConverters._
+import scala.reflect.{ClassTag, classTag}
 
 import java.io.InputStream
+import java.util.ServiceLoader
 
 import org.camunda.dmn.FunctionalHelper._
 import org.camunda.dmn.parser._
@@ -13,8 +15,8 @@ import org.camunda.bpm.model.dmn.instance.{Invocation, Binding, FormalParameter,
 import org.camunda.bpm.model.dmn.instance.{List => DmnList, Relation, FunctionDefinition}
 import org.camunda.feel._
 import org.camunda.feel.{FeelEngine, ParsedExpression}
-import org.camunda.feel.interpreter.ValNull
-import org.camunda.dmn.parser.ParsedDmn
+import org.camunda.feel.interpreter.{ValNull, FunctionProvider, ValueMapper, DefaultValueMapper}
+import org.camunda.feel.spi.{CustomValueMapper, CustomFunctionProvider}
 
 object DmnEngine {
   
@@ -47,10 +49,14 @@ class DmnEngine {
   
   import DmnEngine._
   
+  val valueMapper = loadValueMapper()
+  
+  val feelEngine = new FeelEngine(
+    functionProvider = loadFunctionProvider(),
+    valueMapper = valueMapper)
+  
   val parser = new DmnParser
 
-  val feelEngine = new FeelEngine
-  
   val decisionEval = new DecisionEvaluator(
      eval = this.evalExpression,
      evalBkm = bkmEval.eval)
@@ -77,7 +83,7 @@ class DmnEngine {
   
   def eval(stream: InputStream, decisionId: String, context: Map[String, Any]): Either[Failure, EvalResult] = {
     parse(stream).right.flatMap( parsedDmn => eval(parsedDmn, decisionId, context))
-  }
+  }  
   
   def parse(stream: InputStream): Either[Failure, ParsedDmn] = parser.parse(stream)
   
@@ -141,5 +147,57 @@ class DmnEngine {
       case _                     => Left(Failure(s"expression of type '${expression.getTypeRef}' is not supported"))
     }
   }
+  
+  private def loadValueMapper(): ValueMapper = 
+  {
+    loadServiceProvider[CustomValueMapper]() match {
+      case Nil       => DefaultValueMapper.instance
+      case m :: Nil  => 
+      {
+        logger.info("Found custom value mapper: {}", m)
+        m  
+      }
+      case mappers   => 
+      {
+        logger.warn("Found more than one custom value mapper: {}. Use the first one.", mappers)  
+        mappers.head
+      }
+    }
+  }
+
+  private def loadFunctionProvider(): FunctionProvider = 
+  {
+    loadServiceProvider[CustomFunctionProvider]() match {
+      case Nil => FunctionProvider.EmptyFunctionProvider
+      case f :: Nil => 
+      {
+        logger.info("Found custom function provider: {}", f)
+        f
+      }
+      case fs => 
+      {
+        logger.info("Found custom function providers: {}", fs)
+        new FunctionProvider.CompositeFunctionProvider(fs)  
+      }
+    }
+  }
+
+  private def loadServiceProvider[T: ClassTag](): List[T] = 
+  {
+    try 
+    {
+      val runtimeClass = classTag[T].runtimeClass.asInstanceOf[Class[T]]
+      val loader = ServiceLoader.load(runtimeClass)
+      
+      loader.iterator.asScala.toList
     
+    } catch {
+      case t: Throwable =>
+      {
+        logger.error(s"Failed to load service provider: ${classTag[T].runtimeClass.getSimpleName}", t)
+        List.empty
+      }
+    }
+  }
+  
 }

@@ -17,7 +17,7 @@
     <name>DMN Scala Root</name>
 
     <properties>
-        <feel.version>1.4.0</feel.version>
+        <feel.version>1.5.0-SNAPSHOT</feel.version>
         <camunda.version>7.9.0-alpha2</camunda.version>
         <version.java>1.8</version.java>
         <scala.version>2.12.4</scala.version>

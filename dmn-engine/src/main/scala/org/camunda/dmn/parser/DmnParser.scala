@@ -38,33 +38,14 @@ class DmnParser {
   def parse(stream: InputStream): Either[Failure, ParsedDmn] = 
   {
     try
-    {
-    
+    {    
       val model = readModel(stream)
       
-      val drgElements = model.getDefinitions.getDrgElements.asScala
-            
-      val result: ParseResult = (List[Either[Failure, ParsedExpressionTuple]]() /: drgElements){ case (result, element) => {
+      val parseResult = parseModel(model)      
         
-        val parsedExpressions = result
-          .filter(_.isRight)
-          .map(_.right.get)
-          .toMap
-          
-        val ctx = ParsingContext(model, getFeelExpressions(parsedExpressions), getUnaryTests(parsedExpressions))
-        
-        val p = element match {
-          case d: Decision                 => parseDecision(d)(ctx)
-          case bkm: BusinessKnowledgeModel => parseBusinessKnowledgeModel(bkm)(ctx)
-          case other                       => List.empty // ignore 
-        }
-        
-        result ++ p
-      }}
-        
-      result.filter(e => e.isLeft) match {
+      parseResult.filter(e => e.isLeft) match {
            case Nil     => {
-             val e = result.map(_.right.get)
+             val e = parseResult.map(_.right.get)
              
              Right(ParsedDmn(model, getFeelExpressions(e), getUnaryTests(e)))
            }
@@ -78,6 +59,31 @@ class DmnParser {
       case t: Throwable => Left(Failure(s"Failed to parse DMN: $t"))
     }
   }  
+    
+  private def readModel(stream: InputStream): DmnModelInstance = Dmn.readModelFromStream(stream)  
+  
+  private def parseModel(model: DmnModelInstance): ParseResult =
+  {
+    val drgElements = model.getDefinitions.getDrgElements.asScala
+            
+    (List[Either[Failure, ParsedExpressionTuple]]() /: drgElements){ case (result, element) => {
+      
+      val parsedExpressions = result
+        .filter(_.isRight)
+        .map(_.right.get)
+        .toMap
+        
+      val ctx = ParsingContext(model, getFeelExpressions(parsedExpressions), getUnaryTests(parsedExpressions))
+      
+      val p = element match {
+        case d: Decision                 => parseDecision(d)(ctx)
+        case bkm: BusinessKnowledgeModel => parseBusinessKnowledgeModel(bkm)(ctx)
+        case other                       => List.empty // ignore 
+      }
+      
+      result ++ p
+    }}
+  }
   
   private def getFeelExpressions(expressions: Iterable[ParsedExpressionTuple]): Map[String, ParsedExpression] = 
   {
@@ -95,8 +101,6 @@ class DmnParser {
       .toMap
   }
   
-  private def readModel(stream: InputStream): DmnModelInstance = Dmn.readModelFromStream(stream)
-  
   private def parseDecision(decision: Decision)(implicit ctx: ParsingContext): ParseResult = {
     
     decision.getExpression match {
@@ -104,6 +108,7 @@ class DmnParser {
       case inv: Invocation       => parseInvocation(inv)
       case c: Context            => parseContext(c)
       case r: Relation           => parseRelation(r)
+      case l: DmnList            => parseList(l)
       case lt: LiteralExpression => parseLiteralExpression(lt)
       case other                 => List(Left(Failure(s"unsupported decision expression '$other'")))
     }
@@ -116,8 +121,9 @@ class DmnParser {
     logic.getExpression match {
       case dt: DecisionTable     => parseDecisionTable(dt)
       case c: Context            => parseContext(c)
-      case rel: Relation         => parseRelation(rel)(ctx)
-      case lt: LiteralExpression => parseLiteralExpression(lt)(ctx)
+      case rel: Relation         => parseRelation(rel)
+      case l: DmnList            => parseList(l)
+      case lt: LiteralExpression => parseLiteralExpression(lt)
       case other => List(Left(Failure(s"unsupported business knowledge model logic found '$other'")))
     }
   }
@@ -288,12 +294,12 @@ class DmnParser {
   private def parseAnyExpression(expr: Expression)(implicit ctx: ParsingContext): ParseResult = 
   {
     expr match {
-      case lt: LiteralExpression => parseLiteralExpression(lt)(ctx)
       case dt: DecisionTable     => parseDecisionTable(dt)(ctx)
       case inv: Invocation       => parseInvocation(inv)(ctx)
       case c: Context            => parseContext(c)(ctx)
-      case l: DmnList            => parseList(l)(ctx)
       case rel: Relation         => parseRelation(rel)(ctx)
+      case l: DmnList            => parseList(l)(ctx)
+      case lt: LiteralExpression => parseLiteralExpression(lt)(ctx)
       case f: FunctionDefinition => parseFunctionDefinition(f)(ctx)
       case other                 => List( Left(Failure(s"unsupported expression found '$other'")) )
     }

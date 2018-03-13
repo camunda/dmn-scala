@@ -21,7 +21,7 @@ val commonDependencies = Seq(
   "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.9.0" % "test"
 )
 
-val feelVersion = "1.4.0"
+val feelVersion = "1.5.0-SNAPSHOT"
 val camundaVersion = "7.9.0-alpha2"
 val scalatraVersion = "2.6.2"
 

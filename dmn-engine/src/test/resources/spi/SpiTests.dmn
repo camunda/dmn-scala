@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/DMN/20151101/dmn.xsd" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="definitions_16rwaqm" name="definitions" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="varInput" name="Transform Input">
+   	<literalExpression>
+        <text>in</text>
+    </literalExpression>
+  </decision>
+  <decision id="varOutput" name="Transform Output">
+   <literalExpression>
+        <text>"foobar"</text>
+    </literalExpression>
+  </decision>
+  <decision id="invFunction" name="Invoke custom function">
+    <literalExpression>
+        <text>incr(x)</text>
+    </literalExpression>
+  </decision>
+</definitions>

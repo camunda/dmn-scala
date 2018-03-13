@@ -6,6 +6,7 @@ import org.camunda.feel.interpreter.{RootContext, ValFunction}
 import org.camunda.bpm.model.dmn.instance.{LiteralExpression, UnaryTests}
 import scala.Left
 import scala.Right
+import org.camunda.feel.interpreter.DefaultContext
 
 class LiteralExpressionEvaluator(feelEngine: FeelEngine) {
   
@@ -35,9 +36,9 @@ class LiteralExpressionEvaluator(feelEngine: FeelEngine) {
       .filter{ case (k,v) => v.isInstanceOf[ValFunction]}
       .map{ case (k,f) => k -> List(f.asInstanceOf[ValFunction])}
     
-    val evalContext = RootContext(
+    val evalContext = DefaultContext(
       variables = context.variables,
-      additionalFunctions = functions)
+      functions = functions)
     
     feelEngine.eval(expression, evalContext) match {
         case EvalValue(value) => Right(value)
