@@ -25,7 +25,7 @@ class FileSystemRepository(val dmnEngine: DmnEngine, directory: String) extends 
   
   private def scanDirectory 
   {
-    logger.debug(s"Scan directory for decisions '$directory'")
+    logger.debug(s"Scan directory for decisions '${path.toAbsolutePath}'")
     
     deployedDecisions.clear()
     
@@ -41,7 +41,7 @@ class FileSystemRepository(val dmnEngine: DmnEngine, directory: String) extends 
             .map(f => logger.warn(f.toString))
         })
     } catch {
-      case e: IOException => logger.warn(s"Fail to scan directory: $directory", e)
+      case e: IOException => logger.warn(s"Fail to scan directory", e)
     }
   }
 

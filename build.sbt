@@ -78,4 +78,5 @@ lazy val engineRest = (project in file("engine-rest")).
   ).
   dependsOn(
     standaloneEngine % "test->test;compile->compile"
-  ) 
+  )
+  

@@ -1,0 +1,6 @@
+zeebe:
+  topic: default-topic
+  lockOwner: worker-name
+
+dmn: 
+  repo: target/test-classes/repository
