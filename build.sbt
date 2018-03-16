@@ -27,7 +27,7 @@ val scalatraVersion = "2.6.2"
 
 lazy val root = (project in file(".")).
   settings(commonSettings).
-  aggregate(engine, camundaPlugin, standaloneEngine, engineRest)
+  aggregate(engine, camundaPlugin, standaloneEngine, engineRest, benchmark)
 
 lazy val engine = (project in file("dmn-engine")).
   settings(commonSettings).
@@ -79,4 +79,17 @@ lazy val engineRest = (project in file("engine-rest")).
   dependsOn(
     standaloneEngine % "test->test;compile->compile"
   )
+  
+lazy val benchmark = (project in file("engine-benchmark")).
+  settings(commonSettings).
+  settings(
+    libraryDependencies ++= Seq(
+	  "org.apache.logging.log4j" % "log4j-api" % "2.9.0",
+	  "org.apache.logging.log4j" % "log4j-core" % "2.9.0",
+	  "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.9.0"
+	)
+  ).
+  dependsOn(
+    engine % "test->test;compile->compile"
+  )   
   

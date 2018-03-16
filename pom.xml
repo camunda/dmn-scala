@@ -35,6 +35,7 @@
       <module>standalone-engine</module>
       <module>engine-rest</module>
       <module>zeebe-worker</module>
+      <module>engine-benchmark</module>
     </modules>
 
     <dependencyManagement>
