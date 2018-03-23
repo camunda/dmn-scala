@@ -4,13 +4,13 @@ An engine to evaluate DMN decisions written in Scala.
 
 ## How to use it?
 
-Add the DMN engine to your project by copying the [jar file](https://github.com/saig0/dmn-scala/releases) _(dmn-engine-${project.version}.jar)_ or adding the project as dependency.
+Add the DMN engine to your project by copying the [jar file](https://github.com/camunda/dmn-scala/releases) _(dmn-engine-${version}.jar)_ or adding the project as dependency.
 
 ```xml
 <dependency>
   <groupId>org.camunda.bpm.extension.dmn.scala</groupId>
   <artifactId>dmn-engine</artifactId>
-  <version>${project.version}</version>
+  <version>${version}</version>
 </dependency>
 ```
 
@@ -22,14 +22,15 @@ object MyProgram {
   
   val engine = new DmnEngine
   
-  def feel(expression: String, context: Map[String, Any]) {
+  def dmn(stream: InputStream, decisionId: String, context: Map[String, Any]) {
     
-    val result: EvalResult = engine.evalSimpleUnaryTests(expression, context)
+    val result = engine.parse(stream)
+    					  .flatMap(dmn => engine.eval(dmn, decisionId, context))
     
     result match {
-      case EvalValue(value)   =>  // ...
-      case EvalFailure(error) =>  // ...
-      case ParseFailure(error) => // ...
+      case Left(failure)		=> // ...
+      case Right(NilResult)	=> // ...
+      case Right(r)			=> // ...
     }
   }  
 }

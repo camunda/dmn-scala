@@ -9,15 +9,15 @@ The engine uses the [Camunda DMN model api](https://github.com/camunda/camunda-d
 * evaluation of parsed DMN models
 * extensible by own functions and types
 
-¹ measured by the DMN TCK: https://dmn-tck.github.io/tck/ (TODO: update results)
+¹ measured by the DMN TCK: https://dmn-tck.github.io/tck/ 
 
 ## How to use it?
 
 You can use the DMN engine in different ways 
 
-* [embedded](https://github.com/saig0/dmn-scala/tree/master/dmn-engine#how-to-use-it) as a library into your application
-* [standalone](https://github.com/saig0/dmn-scala/tree/master/standalone-engine#how-to-use-it) via REST endpoint
-* [integrated into the Camunda BPM engine](https://github.com/saig0/dmn-scala/tree/master/camunda-plugin#how-to-use-it) via process engine plugin
+* [embedded](https://github.com/camunda/dmn-scala/tree/master/dmn-engine#how-to-use-it) as a library into your application
+* [standalone](https://github.com/camunda/dmn-scala/tree/master/standalone-engine#how-to-use-it) via REST endpoint
+* [integrated into the Camunda BPM engine](https://github.com/camunda/dmn-scala/tree/master/camunda-plugin#how-to-use-it) via process engine plugin
 * [as a worker for Zeebe](https://github.com/camunda/dmn-scala/tree/master/zeebe-worker#how-to-use-it)
 
 ## Supported DMN Elements
@@ -56,9 +56,9 @@ If you need to transform custom types or change the result types then you can im
 
 ## Contribution
 
-Found a bug? Please report it using [Github Issues](https://github.com/saig0/dmn-scala/issues).
+Found a bug? Please report it using [Github Issues](https://github.com/camunda/dmn-scala/issues).
 
-Want to extend, improve or fix a bug? [Pull Requests](https://github.com/saig0/dmn-scala/pulls) are very welcome.
+Want to extend, improve or fix a bug? [Pull Requests](https://github.com/camunda/dmn-scala/pulls) are very welcome.
 
 Want to discuss something? The [Camunda Forum](https://forum.camunda.org/c/community-extensions) might be the best place for it.
 

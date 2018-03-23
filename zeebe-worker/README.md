@@ -6,7 +6,7 @@ The application uses the [Spring-Zeebe integration](https://github.com/zeebe-io/
 
 ## How to use it?
 
-Download the JAR file `dmn-engine-zeebe-worker-${VERSION}.jar`.
+Download the [JAR file](https://github.com/camunda/dmn-scala/releases) `dmn-engine-zeebe-worker-${VERSION}.jar`.
 
 Create a repository for your decisions (default is 'dmn-repo').
 

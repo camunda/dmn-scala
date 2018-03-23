@@ -11,7 +11,7 @@ Current limitation:
 
 **Using Camunda Tomcat Distribution**
 
-Download the [plugin JAR](https://github.com/camunda/dmn-scala/releases) _(dmn-engine-camunda-plugin-${project.version}.jar)_. 
+Download the [plugin JAR](https://github.com/camunda/dmn-scala/releases) _(dmn-engine-camunda-plugin-${version}.jar)_. 
 
 Copy the JAR in the tomcat lib folder (_server/apache-tomcat-8.0.47/lib/_).
 
@@ -35,13 +35,13 @@ Start the Tomcat server.
 
 **Using Camunda Embedded Engine**
 
-Add the plugin including the DMN engine to your project by copying the [jar file](https://github.com/camunda/feel-scala/releases) _(camunda-plugin-${project.version}.jar)_ or adding the project as dependency.
+Add the plugin including the DMN engine to your project by copying the [jar file](https://github.com/camunda/feel-scala/releases) _(camunda-plugin-${version}.jar)_ or adding the project as dependency.
 
 ```xml
 <dependency>
   <groupId>org.camunda.bpm.extension.dmn.scala</groupId>
   <artifactId>camunda-plugin</artifactId>
-  <version>${project.version}</version>
+  <version>${version}</version>
 </dependency>
 ```
 
