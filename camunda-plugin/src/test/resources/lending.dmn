@@ -32,7 +32,7 @@
 	</itemDefinition>
 	<itemDefinition name="tBureauData" isCollection="false">
 		<itemComponent name="CreditScore" isCollection="false">
-			<typeRef>feel:number</typeRef>
+			<typeRef>number</typeRef>
 			<allowedValues>
 				<text>[0..999], null</text>
 			</allowedValues>
@@ -50,17 +50,17 @@
 	<itemDefinition name="tApplicantData" isCollection="false">
 		<itemComponent name="Monthly" isCollection="false">
 			<itemComponent name="Income" isCollection="false">
-				<typeRef>feel:number</typeRef>
+				<typeRef>number</typeRef>
 			</itemComponent>
 			<itemComponent name="Expenses" isCollection="false">
-				<typeRef>feel:number</typeRef>
+				<typeRef>number</typeRef>
 			</itemComponent>
 			<itemComponent name="Repayments" isCollection="false">
-				<typeRef>feel:number</typeRef>
+				<typeRef>number</typeRef>
 			</itemComponent>
 		</itemComponent>
 		<itemComponent name="Age" isCollection="false">
-			<typeRef>feel:number</typeRef>
+			<typeRef>number</typeRef>
 		</itemComponent>
 		<itemComponent name="ExistingCustomer" isCollection="false">
 			<typeRef>feel:boolean</typeRef>
@@ -86,13 +86,13 @@
 			</allowedValues>
 		</itemComponent>
 		<itemComponent name="Amount" isCollection="false">
-			<typeRef>feel:number</typeRef>
+			<typeRef>number</typeRef>
 		</itemComponent>
 		<itemComponent name="Rate" isCollection="false">
-			<typeRef>feel:number</typeRef>
+			<typeRef>number</typeRef>
 		</itemComponent>
 		<itemComponent name="Term" isCollection="false">
-			<typeRef>feel:number</typeRef>
+			<typeRef>number</typeRef>
 		</itemComponent>
 	</itemDefinition>
 	<decision id="d_BureauCallType" name="BureauCallType">
@@ -288,7 +288,7 @@
 		</invocation>
 	</decision>
 	<decision id="d_ApplicationRiskScore" name="ApplicationRiskScore">
-		<variable name="ApplicationRiskScore" typeRef="feel:number"/>
+		<variable name="ApplicationRiskScore" typeRef="number"/>
 		<informationRequirement>
 			<requiredInput href="#i_ApplicantData"/>
 		</informationRequirement>
@@ -420,7 +420,7 @@
 		</invocation>
 	</decision>
 	<decision id="d_RequiredMonthlyInstallment" name="RequiredMonthlyInstallment">
-		<variable name="RequiredMonthlyInstallment" typeRef="feel:number"/>
+		<variable name="RequiredMonthlyInstallment" typeRef="number"/>
 		<informationRequirement>
 			<requiredInput href="#i_RequestedProduct"/>
 		</informationRequirement>
@@ -518,20 +518,20 @@
 	</decision>
 	<businessKnowledgeModel id="b_AffordabilityCalculation" name="AffordabilityCalculation">
 		<encapsulatedLogic>
-			<formalParameter name="MonthlyIncome" typeRef="feel:number"/>
-			<formalParameter name="MonthlyRepayments" typeRef="feel:number"/>
-			<formalParameter name="MonthlyExpenses" typeRef="feel:number"/>
+			<formalParameter name="MonthlyIncome" typeRef="number"/>
+			<formalParameter name="MonthlyRepayments" typeRef="number"/>
+			<formalParameter name="MonthlyExpenses" typeRef="number"/>
 			<formalParameter name="RiskCategory" typeRef="tns:tRiskCategory"/>
-			<formalParameter name="RequiredMonthlyInstallment" typeRef="feel:number"/>
+			<formalParameter name="RequiredMonthlyInstallment" typeRef="number"/>
 			<context>
 				<contextEntry>
-					<variable name="DisposableIncome" typeRef="feel:number"/>
+					<variable name="DisposableIncome" typeRef="number"/>
 					<literalExpression>
 						<text>MonthlyIncome - (MonthlyExpenses + MonthlyRepayments)</text>
 					</literalExpression>
 				</contextEntry>
 				<contextEntry>
-					<variable name="CreditContingencyFactor" typeRef="feel:number"/>
+					<variable name="CreditContingencyFactor" typeRef="number"/>
 					<invocation>
 						<literalExpression>
 							<text>CreditContingencyFactorTable</text>
@@ -601,13 +601,13 @@
 				</rule>
 			</decisionTable>
 		</encapsulatedLogic>
-		<variable name="CreditContingencyFactorTable" typeRef="feel:number"/>
+		<variable name="CreditContingencyFactorTable" typeRef="number"/>
 	</businessKnowledgeModel>
 	<businessKnowledgeModel id="b_EligibilityRules" name="EligibilityRules">
 		<encapsulatedLogic>
 			<formalParameter name="Pre_bureauRiskCategory" typeRef="tns:tRiskCategory"/>
 			<formalParameter name="Pre_bureauAffordability" typeRef="feel:boolean"/>
-			<formalParameter name="Age" typeRef="feel:number"/>
+			<formalParameter name="Age" typeRef="number"/>
 			<decisionTable hitPolicy="PRIORITY" outputLabel="EligibilityRules" preferredOrientation="Rule-as-Row">
 				<input id="_2bc2f208-6c1d-4411-8a19-c5b424fb8fa9" label="Pre_bureauRiskCategory">
 					<inputExpression typeRef="feel:string">
@@ -620,7 +620,7 @@
 					</inputExpression>
 				</input>
 				<input id="_876096bc-7329-444a-830b-7bd2a06a7982" label="Age">
-					<inputExpression typeRef="feel:number">
+					<inputExpression typeRef="number">
 						<text>Age</text>
 					</inputExpression>
 				</input>
@@ -730,7 +730,7 @@
 	<businessKnowledgeModel id="b_Pre_bureauRiskCategoryTable" name="Pre_bureauRiskCategoryTable">
 		<encapsulatedLogic>
 			<formalParameter name="ExistingCustomer" typeRef="feel:boolean"/>
-			<formalParameter name="ApplicationRiskScore" typeRef="feel:number"/>
+			<formalParameter name="ApplicationRiskScore" typeRef="number"/>
 			<decisionTable hitPolicy="UNIQUE" outputLabel="Pre_bureauRiskCategoryTable" preferredOrientation="Rule-as-Row">
 				<input id="_6f7fbf13-3fa6-44f5-afe4-7c1e688e76a9" label="ExistingCustomer">
 					<inputExpression typeRef="feel:string">
@@ -838,8 +838,8 @@
 	<businessKnowledgeModel id="b_Post_bureauRiskCategoryTable" name="Post_bureauRiskCategoryTable">
 		<encapsulatedLogic>
 			<formalParameter name="ExistingCustomer" typeRef="feel:boolean"/>
-			<formalParameter name="ApplicationRiskScore" typeRef="feel:number"/>
-			<formalParameter name="CreditScore" typeRef="feel:number"/>
+			<formalParameter name="ApplicationRiskScore" typeRef="number"/>
+			<formalParameter name="CreditScore" typeRef="number"/>
 			<decisionTable hitPolicy="UNIQUE" outputLabel="Post_bureauRiskCategoryTable" preferredOrientation="Rule-as-Row">
 				<input id="_0859d2fc-bb13-4eaa-bebf-4bf8f0866c49" label="ExistingCustomer">
 					<inputExpression typeRef="feel:string">
@@ -1045,12 +1045,12 @@
 	</businessKnowledgeModel>
 	<businessKnowledgeModel id="b_ApplicationRiskScoreModel" name="ApplicationRiskScoreModel">
 		<encapsulatedLogic>
-			<formalParameter name="Age" typeRef="feel:number"/>
+			<formalParameter name="Age" typeRef="number"/>
 			<formalParameter name="MaritalStatus" typeRef="feel:string"/>
 			<formalParameter name="EmploymentStatus" typeRef="feel:string"/>
 			<decisionTable hitPolicy="COLLECT" outputLabel="ApplicationRiskScoreModel" aggregation="SUM" preferredOrientation="Rule-as-Row">
 				<input id="_dc6c54d5-80a0-4b78-aa83-0a33802de55c" label="Age">
-					<inputExpression typeRef="feel:number">
+					<inputExpression typeRef="number">
 						<text>Age</text>
 					</inputExpression>
 					<inputValues>
@@ -1230,23 +1230,23 @@
 				</rule>
 			</decisionTable>
 		</encapsulatedLogic>
-		<variable name="ApplicationRiskScoreModel" typeRef="feel:number"/>
+		<variable name="ApplicationRiskScoreModel" typeRef="number"/>
 	</businessKnowledgeModel>
 	<businessKnowledgeModel id="b_InstallmentCalculation" name="InstallmentCalculation">
 		<encapsulatedLogic>
 			<formalParameter name="ProductType" typeRef="feel:string"/>
-			<formalParameter name="Rate" typeRef="feel:number"/>
-			<formalParameter name="Term" typeRef="feel:number"/>
-			<formalParameter name="Amount" typeRef="feel:number"/>
+			<formalParameter name="Rate" typeRef="number"/>
+			<formalParameter name="Term" typeRef="number"/>
+			<formalParameter name="Amount" typeRef="number"/>
 			<context>
 				<contextEntry>
-					<variable name="MonthlyFee" typeRef="feel:number"/>
+					<variable name="MonthlyFee" typeRef="number"/>
 					<literalExpression>
 						<text>if ProductType ="STANDARD LOAN" then 20.00 else if ProductType ="SPECIAL LOAN" then 25.00 else null</text>
 					</literalExpression>
 				</contextEntry>
 				<contextEntry>
-					<variable name="MonthlyRepayment" typeRef="feel:number"/>
+					<variable name="MonthlyRepayment" typeRef="number"/>
 					<literalExpression>
 						<text>(Amount *Rate/12) / (1 - (1 + Rate/12)**-Term)</text>
 					</literalExpression>
@@ -1258,14 +1258,14 @@
 				</contextEntry>
 			</context>
 		</encapsulatedLogic>
-		<variable name="InstallmentCalculation" typeRef="feel:number"/>
+		<variable name="InstallmentCalculation" typeRef="number"/>
 	</businessKnowledgeModel>
 	<businessKnowledgeModel id="b_RoutingRules" name="RoutingRules">
 		<encapsulatedLogic>
 			<formalParameter name="Post_bureauRiskCategory" typeRef="tns:tRiskCategory"/>
 			<formalParameter name="Post_bureauAffordability" typeRef="feel:boolean"/>
 			<formalParameter name="Bankrupt" typeRef="feel:boolean"/>
-			<formalParameter name="CreditScore" typeRef="feel:number"/>
+			<formalParameter name="CreditScore" typeRef="number"/>
 			<decisionTable hitPolicy="PRIORITY" outputLabel="RoutingRules" preferredOrientation="Rule-as-Row">
 				<input id="_e4d34fbe-9d83-4126-a268-6ff44d6d33c0" label="Post_bureauRiskCategory">
 					<inputExpression typeRef="feel:string">

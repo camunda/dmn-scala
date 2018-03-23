@@ -8,7 +8,7 @@
 		<version>1.0.0-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>zeebe-worker</artifactId>
+	<artifactId>dmn-engine-zeebe-worker</artifactId>
 
 	<name>DMN Scala - Zeebe Worker</name>
 
@@ -16,7 +16,7 @@
 
 		<dependency>
 			<groupId>org.camunda.bpm.extension.dmn.scala</groupId>
-			<artifactId>standalone-engine</artifactId>
+			<artifactId>dmn-engine-standalone</artifactId>
 		</dependency>
 
 		<dependency>

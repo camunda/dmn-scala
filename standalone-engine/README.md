@@ -1,6 +1,6 @@
-# DMN engine - REST
+# DMN engine - Standalone
 
-A standalone DMN engine with a REST endpoint.
+A standalone DMN engine without any external API. This is a base for other applications  
 
 ## How to use it?
 

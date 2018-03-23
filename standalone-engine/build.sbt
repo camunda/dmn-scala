@@ -1,1 +1,1 @@
-name := "standalone-engine"
+name := "dmn-engine-standalone"

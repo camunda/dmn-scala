@@ -44,6 +44,7 @@ lazy val camundaPlugin = (project in file("camunda-plugin")).
   settings(
     libraryDependencies ++= commonDependencies,
     libraryDependencies ++= Seq(
+      "org.camunda.bpm.extension.feel.scala" % "feel-engine-factory" % feelVersion,
       "org.camunda.bpm" % "camunda-engine" % camundaVersion % "provided",
 
       "com.h2database" % "h2" % "1.4.193" % "test"

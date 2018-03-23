@@ -6,14 +6,14 @@ The application uses the [Spring-Zeebe integration](https://github.com/zeebe-io/
 
 ## How to use it?
 
-Download the JAR file `engine-worker-1.0.0.jar`.
+Download the JAR file `dmn-engine-zeebe-worker-${VERSION}.jar`.
 
 Create a repository for your decisions (default is 'dmn-repo').
 
 Run the application with
 
 ```
-java -Dzeebe.topic=default-topic -Dzeebe.lockOwner=dmn-scala -jar zeebe-worker-1.0.0.jar 
+java -Dzeebe.topic=default-topic -Dzeebe.lockOwner=dmn-scala -jar dmn-engine-zeebe-worker-${VERSION}.jar 
 ```
 
 Per default, the application uses the directory 'dmn-repo' as repository. 
@@ -21,7 +21,7 @@ Per default, the application uses the directory 'dmn-repo' as repository.
 You can change the configuration by using the properties
 
 ```
-java -Ddmn.repo=my-repo -Dzeebe.topic=my-topic -Dzeebe.lockOwner=my-owner -jar zeebe-worker-1.0.0.jar 
+java -Ddmn.repo=my-repo -Dzeebe.topic=my-topic -Dzeebe.lockOwner=my-owner -jar dmn-engine-zeebe-worker-${VERSION}.jar 
 ```
 
 You can also set the configuration in a 'application.yaml' or 'application.properties' file.

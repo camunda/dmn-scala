@@ -1,3 +1,3 @@
-name := "engine-benchmark"
+name := "dmn-engine-benchmark"
 
 enablePlugins(JmhPlugin)

@@ -1,3 +1,3 @@
-name := "camunda-plugin"
+name := "dmn-engine-camunda-plugin"
 
-assemblyJarName in assembly :=  s"${name.value}-${version.value}.jar"
+assemblyJarName in assembly :=  s"${name.value}-${version.value}-full.jar"

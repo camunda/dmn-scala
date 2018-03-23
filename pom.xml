@@ -56,13 +56,19 @@
 
             <dependency>
               <groupId>org.camunda.bpm.extension.dmn.scala</groupId>
-              <artifactId>standalone-engine</artifactId>
+              <artifactId>dmn-engine-standalone</artifactId>
               <version>${project.version}</version>
             </dependency>
 
             <dependency>
               <groupId>org.camunda.bpm.extension.feel.scala</groupId>
               <artifactId>feel-engine</artifactId>
+              <version>${feel.version}</version>
+            </dependency>
+            
+            <dependency>
+              <groupId>org.camunda.bpm.extension.feel.scala</groupId>
+              <artifactId>feel-engine-factory</artifactId>
               <version>${feel.version}</version>
             </dependency>
             
@@ -229,6 +235,35 @@
               <filereports>TestSuite.txt</filereports>
             </configuration>
           </plugin>
+          
+          <!-- <plugin>
+			  <groupId>org.apache.maven.plugins</groupId>
+			  <artifactId>maven-resources-plugin</artifactId>
+			  <version>3.0.1</version>
+			  <executions>
+			    <execution>
+			      <id>readme-md</id>
+			      <phase>process-resources</phase>
+			      <goals>
+			        <goal>copy-resources</goal>
+			      </goals>
+			      <configuration>
+			        <outputDirectory>${project.basedir}</outputDirectory>
+			        <resources>                                        
+			          <resource>
+			            <directory>${project.basedir}</directory>
+			            <includes>
+			              <include>README.md</include>
+			            </includes>
+			            <filtering>true</filtering>
+			          </resource>
+			        </resources>
+			        <encoding>UTF-8</encoding>
+			      </configuration>            
+			    </execution>
+			  </executions>
+			</plugin> -->
+          
         </plugins>
 
     </build>

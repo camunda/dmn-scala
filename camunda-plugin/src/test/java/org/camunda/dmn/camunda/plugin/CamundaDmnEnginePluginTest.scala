@@ -78,7 +78,7 @@ class CamundaDmnEnginePluginTest extends FlatSpec with Matchers with BeforeAndAf
 		  .variables(Map("age" -> 58, "yearsOfService" -> 31).asJava.asInstanceOf[JMap[String,Object]])
 		  .evaluate()
 
-		result.collectEntries("Holidays") should be(List(22,5,3).asJava)
+		result.collectEntries("Holidays") should be(List(22.longValue, 5.longValue, 3.longValue).asJava)
 	}
   
   it should "evaluate a decision table with compound result" in {
@@ -127,7 +127,7 @@ class CamundaDmnEnginePluginTest extends FlatSpec with Matchers with BeforeAndAf
 		  .variables(variables.asJava.asInstanceOf[JMap[String,Object]])
 		  .evaluate()
 
-		result.getSingleEntry[Any] should be(BigDecimal("1680.880325608634796819003637073109"))
+		result.getSingleEntry[Any] should be(1680.8803256086348)
 	}
   
   it should "evaluate a decision by id" in {
