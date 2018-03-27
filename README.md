@@ -16,7 +16,7 @@ The engine uses the [Camunda DMN model api](https://github.com/camunda/camunda-d
 You can use the DMN engine in different ways 
 
 * [embedded](https://github.com/camunda/dmn-scala/tree/master/dmn-engine#how-to-use-it) as a library into your application
-* [standalone](https://github.com/camunda/dmn-scala/tree/master/standalone-engine#how-to-use-it) via REST endpoint
+* [standalone](https://github.com/camunda/dmn-scala/tree/master/engine-rest#how-to-use-it) via REST endpoint
 * [integrated into the Camunda BPM engine](https://github.com/camunda/dmn-scala/tree/master/camunda-plugin#how-to-use-it) via process engine plugin
 * [as a worker for Zeebe](https://github.com/camunda/dmn-scala/tree/master/zeebe-worker#how-to-use-it)
 
