@@ -35,7 +35,7 @@ class DmnEngineTest extends FlatSpec with Matchers {
     
     val failure = parseResult.left.get
     
-    failure.message should include ("Failed to parse FEEL unary-tests '>>> 10'")
+    failure.message should include ("Failed to parse FEEL unary-tests '> 10L'")
   }
   
   it should "report parse failures on evaluation" in {
@@ -46,7 +46,7 @@ class DmnEngineTest extends FlatSpec with Matchers {
     
     val failure = result.left.get
     
-    failure.message should include ("Failed to parse FEEL unary-tests '>>> 10'")
+    failure.message should include ("Failed to parse FEEL unary-tests '> 10L'")
   }
   
   it should "report an evaluation failure" in {

@@ -23,7 +23,7 @@
         <description></description>
         <inputEntry id="UnaryTests_1nz4a49">        <text><![CDATA["Business"]]></text>
 </inputEntry>
-        <inputEntry id="UnaryTests_13nukij">        <text><![CDATA[>>> 10]]></text>
+        <inputEntry id="UnaryTests_13nukij">        <text><![CDATA[> 10L]]></text>
 </inputEntry>
         <outputEntry id="LiteralExpression_15ipzxo">        <text>0.15</text>
 </outputEntry>
