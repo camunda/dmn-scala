@@ -47,7 +47,8 @@ lazy val camundaPlugin = (project in file("camunda-plugin")).
       "org.camunda.bpm.extension.feel.scala" % "feel-engine-factory" % feelVersion,
       "org.camunda.bpm" % "camunda-engine" % camundaVersion % "provided",
 
-      "com.h2database" % "h2" % "1.4.193" % "test"
+      "com.h2database" % "h2" % "1.4.193" % "test",
+      "org.camunda.spin" % "camunda-spin-dataformat-all" % "1.5.0" % "test"
     )
   ).
   dependsOn(

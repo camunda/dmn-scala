@@ -20,16 +20,16 @@ class DecisionEvaluator(
   
   private def evalDecision(decision: Decision, context: EvalContext): Either[Failure, (String, Any)] = 
   {
-    val decisionId = decision.getId
-    val decisionName = Option(decision.getName)
+    val decisionId = Option(decision.getId)
+    val decisionName = decision.getName
 
     val variable = Option(decision.getVariable)
     
     val resultType = variable.flatMap(v => Option(v.getTypeRef))
     
     val resultName = variable.map(_.getName)
-      .orElse(decisionName)
-      .getOrElse(decisionId)
+      .orElse(decisionId)
+      .getOrElse(decisionName)
 
     val knowledgeRequirements = decision.getKnowledgeRequirements.asScala
     val informationRequirements = decision.getInformationRequirements.asScala
