@@ -16,7 +16,7 @@ class LiteralExpressionTest extends FlatSpec with Matchers with DecisionTest {
   
   it should "fail when result doesn't match type" in 
   {
-    engine.eval(typeMismatch, "greeting", Map("name" -> "Frank")) should be(Left(Failure("expected 'feel:number' but found 'Hello Frank'"))) 
+    engine.eval(typeMismatch, "greeting", Map("name" -> "Frank")) should be(Left(Failure("expected 'number' but found 'Hello Frank'"))) 
   }
     
 }
