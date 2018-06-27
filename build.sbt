@@ -21,8 +21,8 @@ val commonDependencies = Seq(
   "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.9.0" % "test"
 )
 
-val feelVersion = "1.5.0-SNAPSHOT"
-val camundaVersion = "7.9.0-alpha2"
+val feelVersion = "1.5.0"
+val camundaVersion = "7.9.0"
 val scalatraVersion = "2.6.2"
 
 lazy val root = (project in file(".")).
@@ -38,7 +38,7 @@ lazy val engine = (project in file("dmn-engine")).
       "org.camunda.bpm.model" % "camunda-dmn-model" % camundaVersion
     )
   )
-  
+
 lazy val camundaPlugin = (project in file("camunda-plugin")).
   settings(commonSettings).
   settings(
@@ -54,7 +54,7 @@ lazy val camundaPlugin = (project in file("camunda-plugin")).
   dependsOn(
     engine % "test->test;compile->compile"
   )
-  
+
 lazy val standaloneEngine = (project in file("standalone-engine")).
   settings(commonSettings).
   settings(
@@ -62,7 +62,7 @@ lazy val standaloneEngine = (project in file("standalone-engine")).
   ).
   dependsOn(
     engine % "test->test;compile->compile"
-  ) 
+  )
 
 lazy val engineRest = (project in file("engine-rest")).
   settings(commonSettings).
@@ -74,14 +74,14 @@ lazy val engineRest = (project in file("engine-rest")).
 	  "org.json4s"   %% "json4s-jackson" % "3.5.2",
 	  "org.eclipse.jetty" % "jetty-webapp" % "9.4.8.v20171121" % "container;compile",
 	  "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided",
-	  
+
 	  "org.scalatra" %% "scalatra-scalatest" % scalatraVersion % "test"
   	)
   ).
   dependsOn(
     standaloneEngine % "test->test;compile->compile"
   )
-  
+
 lazy val benchmark = (project in file("engine-benchmark")).
   settings(commonSettings).
   settings(
@@ -93,5 +93,4 @@ lazy val benchmark = (project in file("engine-benchmark")).
   ).
   dependsOn(
     engine % "test->test;compile->compile"
-  )   
-  
+  )
