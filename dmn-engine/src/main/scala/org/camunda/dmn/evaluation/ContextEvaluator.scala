@@ -5,46 +5,42 @@ import scala.collection.JavaConverters._
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
 import org.camunda.feel.FeelEngine
-import org.camunda.bpm.model.dmn.instance.{Context, ContextEntry, Expression}
+import org.camunda.bpm.model.dmn.instance.{ Context, ContextEntry, Expression }
+import org.camunda.dmn.parser.ParsedContext
+import org.camunda.dmn.parser.ParsedDecisionLogic
+import org.camunda.dmn.parser.ParsedDecisionLogic
+import org.camunda.dmn.parser.ParsedDecisionLogic
 
-class ContextEvaluator(eval: (Expression, EvalContext) => Either[Failure, Any]) {
-  
-  def eval(context: Context, ctx: EvalContext): Either[Failure, Any] = {
-  
-    val entries = context.getContextEntries.asScala
-    val lastEntry = entries.last
-    
-    val hasFinalResult = Option(lastEntry.getVariable) == None
-    
-    if (hasFinalResult)
-    {
-      evalContextEntries(entries.take(entries.size - 1), ctx)
+class ContextEvaluator(eval: (ParsedDecisionLogic, EvalContext) => Either[Failure, Any]) {
+
+  def eval(context: ParsedContext, ctx: EvalContext): Either[Failure, Any] = {
+
+    context.aggregationEntry
+      .map(expr => {
+        evalContextEntries(context.entries, ctx)
           .right
-          .flatMap(results => 
-          {
+          .flatMap(results => {
             val context = ctx.copy(variables = ctx.variables ++ results)
-          
-            eval(lastEntry.getExpression, context)
+
+            eval(expr, context)
           })
-    }
-    else 
+      }).getOrElse {
+        evalContextEntries(context.entries, ctx)
+      }
+  }
+
+  private def evalContextEntries(entries: Iterable[(String, ParsedDecisionLogic)], ctx: EvalContext): Either[Failure, Map[String, Any]] =
     {
-      evalContextEntries(entries, ctx)
+      foldEither[(String, ParsedDecisionLogic), Map[String, Any]](Map[String, Any](), entries, {
+        case (result, (name, expr)) =>
+
+          // a context entry must be able to access the result of previous entries
+          val context = ctx.copy(variables = ctx.variables ++ result)
+
+          eval(expr, context)
+            .right
+            .map(v => result + (name -> v))
+      })
     }
-  }
-  
-  private def evalContextEntries(entries: Iterable[ContextEntry], ctx: EvalContext): Either[Failure, Map[String, Any]] = 
-  {
-    foldEither[ContextEntry, Map[String, Any]](Map[String, Any](), entries, { case (result, entry) => 
-          
-      val varName = entry.getVariable.getName
-      // a context entry must be able to access the result of previous entries
-      val context = ctx.copy(variables = ctx.variables ++ result)
-          
-      eval(entry.getExpression, context)
-        .right
-        .map(v => result + (varName -> v))        
-      }) 
-  }
-  
+
 }

@@ -4,93 +4,74 @@ import scala.collection.JavaConverters._
 
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
-import org.camunda.feel.interpreter.{ValFunction, ValError, DefaultValueMapper, Val}
-import org.camunda.bpm.model.dmn.instance.{BusinessKnowledgeModel, KnowledgeRequirement, FormalParameter, Expression, LiteralExpression}
+import org.camunda.feel.interpreter.{ ValFunction, ValError, DefaultValueMapper, Val }
+import org.camunda.bpm.model.dmn.instance.{ BusinessKnowledgeModel, KnowledgeRequirement, FormalParameter, Expression, LiteralExpression }
+import org.camunda.dmn.parser.ParsedDecisionLogic
+import org.camunda.dmn.parser.ParsedBusinessKnowledgeModel
+import org.camunda.dmn.parser.ParsedDecisionLogic
 
-class BusinessKnowledgeEvaluator(eval: (Expression, EvalContext) => Either[Failure, Any]) {
-  
-  def eval(bkm: BusinessKnowledgeModel, context: EvalContext): Either[Failure, (String, (BkmInvocation, ValFunction))] = 
-  {
-    val name = bkm.getName
-    
-    val logic = bkm.getEncapsulatedLogic
-    val parameters = logic.getFormalParameters.asScala
-    val expression = logic.getExpression
-    
-    val knowledgeRequirements = bkm.getKnowledgeRequirement.asScala
-    
-    evalRequiredKnowledge(knowledgeRequirements, context).right.map(bkms => 
-    {
-      	val invocations = bkms.map{ case (key, (inv, f)) => key -> inv}
-        val functions = bkms.map{ case (key, (inv, f)) => key -> f}
-      
-        val evalContext = context.copy(
-            variables = context.variables ++ functions, 
-            bkms = context.bkms ++ invocations)
-      
-        val invocation = createInvocation(expression, parameters, evalContext)  
-        val function = createFunction(expression, parameters, evalContext)
-      
-        name -> (invocation, function)
-    })
-  }
-  
-  private def evalRequiredKnowledge(knowledgeRequirements: Iterable[KnowledgeRequirement], context: EvalContext): Either[Failure, List[(String, (BkmInvocation, ValFunction))]] = 
-  {
-    mapEither(knowledgeRequirements, (kr: KnowledgeRequirement) => eval(kr.getRequiredKnowledge, context))
-  }
-  
-  private def createInvocation(expression: Expression, parameters: Iterable[FormalParameter], context: EvalContext): BkmInvocation = 
-  {
-    BkmInvocation(ctx => 
-    {
-      val evalContext = ctx.copy(
-          variables = ctx.variables ++ context.variables, 
-          bkms = ctx.bkms ++ context.bkms)
-      
-      validateParameters(parameters, ctx)
+class BusinessKnowledgeEvaluator(eval: (ParsedDecisionLogic, EvalContext) => Either[Failure, Any]) {
+
+  def eval(bkm: ParsedBusinessKnowledgeModel, context: EvalContext): Either[Failure, Any] = {
+
+    evalRequiredKnowledge(bkm.requiredBkms, context).right.flatMap(functions => {
+
+      val evalContext = context.copy(variables = context.variables ++ functions)
+
+      validateParameters(bkm.parameters, evalContext)
         .right
-        .flatMap(_ => eval(expression, evalContext))
+        .flatMap(_ => eval(bkm.logic, evalContext))
     })
   }
-  
-  private def validateParameters(parameters: Iterable[FormalParameter], context: EvalContext): Either[Failure, List[Any]] = 
-  {
-    mapEither(parameters, (p: FormalParameter) => 
-      context.variables.get(p.getName)
-        .map(v => TypeChecker.isOfType(v, p.getTypeRef, context))
-        .getOrElse(Left(Failure(s"no parameter found with name '${p.getName}'")))
-    )  
+
+  def createFunction(bkm: ParsedBusinessKnowledgeModel, context: EvalContext): Either[Failure, (String, ValFunction)] = {
+
+    evalRequiredKnowledge(bkm.requiredBkms, context).right.map(functions => {
+
+      val evalContext = context.copy(variables = context.variables ++ functions)
+
+      val function = createFunction(bkm.logic, bkm.parameters, evalContext)
+
+      bkm.name -> function
+    })
   }
-  
-  private def createFunction(expression: Expression, parameters: Iterable[FormalParameter], context: EvalContext): ValFunction = 
-  {
-    val parameterWithTypes = parameters.map(p => p.getName -> p.getTypeRef).toMap
-    val parameterNames = parameterWithTypes.keys.toList
-    
+
+  private def evalRequiredKnowledge(knowledgeRequirements: Iterable[ParsedBusinessKnowledgeModel], context: EvalContext): Either[Failure, List[(String, ValFunction)]] = {
+    mapEither(knowledgeRequirements, (bkm: ParsedBusinessKnowledgeModel) => createFunction(bkm, context))
+  }
+
+  private def validateArguments(parameters: Iterable[(String, String)], args: List[Val], context: EvalContext): Either[Failure, List[(String, Val)]] = {
+    mapEither[((String, String), Val), (String, Val)](parameters.zip(args), {
+      case ((name, typeRef), arg) =>
+        TypeChecker.isOfType(arg, typeRef, context)
+          .right
+          .map(name -> _)
+    })
+  }
+
+  private def validateParameters(parameters: Iterable[(String, String)], context: EvalContext): Either[Failure, List[Any]] = {
+    mapEither[(String, String), Any](parameters, {
+      case (name, typeRef) =>
+        context.variables.get(name)
+          .map(v => TypeChecker.isOfType(v, typeRef, context))
+          .getOrElse(Left(Failure(s"no parameter found with name '${name}'")))
+    })
+  }
+
+  private def createFunction(expression: ParsedDecisionLogic, parameters: Iterable[(String, String)], context: EvalContext): ValFunction = {
+    val parameterNames = parameters.map(_._1).toList
+
     ValFunction(
       params = parameterNames,
-      invoke = args => 
-        {
-          val result = validateArguments(parameterWithTypes, args, context).right.flatMap(arguments => 
-            eval(expression, context.copy(variables = context.variables ++ arguments)) 
-          )
-            
-          result match {
-            case Right(value) => DefaultValueMapper.instance.toVal(value)
-            case Left(error)  => ValError(error.toString)
-          }
-        } 
-    )
+      invoke = args => {
+        val result = validateArguments(parameters, args, context).right.flatMap(arguments =>
+          eval(expression, context.copy(variables = context.variables ++ arguments)))
+
+        result match {
+          case Right(value) => DefaultValueMapper.instance.toVal(value)
+          case Left(error)  => ValError(error.toString)
+        }
+      })
   }
-  
-  private def validateArguments(parameters: Map[String, String], args: List[Val], context: EvalContext): Either[Failure, List[(String, Val)]] = 
-  {
-    mapEither[((String, String), Val), (String, Val)](parameters.zip(args), { case ((name, typeRef), arg) => 
-      TypeChecker.isOfType(arg, typeRef, context)
-        .right
-        .map(name -> _)
-    })
-  }
-  
+
 }
