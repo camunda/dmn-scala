@@ -9,13 +9,18 @@ trait DecisionRepository {
 
   val dmnEngine: DmnEngine
 
-  def parseDecision(stream: InputStream, resource: String): Either[Failure, List[(String, DeployedDecision)]] =
-    {
-      dmnEngine.parse(stream) match {
-        case Left(f)    => Left(Failure(s"Fail to parse file '$resource': $f"))
-        case Right(dmn) => Right(dmn.decisions.map(d => d.id -> DeployedDecision(dmn, d.id, d.name, resource)).toList)
-      }
+  def parseDecision(
+      stream: InputStream,
+      resource: String): Either[Failure, List[(String, DeployedDecision)]] = {
+    dmnEngine.parse(stream) match {
+      case Left(f) => Left(Failure(s"Fail to parse file '$resource': $f"))
+      case Right(dmn) =>
+        Right(
+          dmn.decisions
+            .map(d => d.id -> DeployedDecision(dmn, d.id, d.name, resource))
+            .toList)
     }
+  }
 
   def init: Unit
 
@@ -25,7 +30,8 @@ trait DecisionRepository {
 
   def getDecisionByName(name: String): Option[DeployedDecision]
 
-  def insertDecisions(stream: InputStream, resource: String): Either[Failure, List[DeployedDecision]]
+  def insertDecisions(stream: InputStream,
+                      resource: String): Either[Failure, List[DeployedDecision]]
 
   def removeResource(resource: String): Either[Failure, List[DeployedDecision]]
 

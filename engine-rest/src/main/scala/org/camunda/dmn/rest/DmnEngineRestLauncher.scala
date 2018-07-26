@@ -6,9 +6,8 @@ import org.eclipse.jetty.webapp.WebAppContext
 import org.scalatra.servlet.ScalatraListener
 
 object DmnEngineRestLauncher {
-  
-  def main(args: Array[String]) 
-  {
+
+  def main(args: Array[String]) {
     val port = System.getProperty("port", "8080").toInt
 
     val server = new Server(port)
@@ -23,5 +22,5 @@ object DmnEngineRestLauncher {
     server.start
     server.join
   }
-  
+
 }

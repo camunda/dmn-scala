@@ -10,13 +10,13 @@ import org.camunda.bpm.dmn.engine.DmnEngineConfiguration
 import org.camunda.bpm.dmn.engine.impl.DefaultDmnEngineConfiguration
 
 class CamundaDmnEnginePlugin extends AbstractProcessEnginePlugin {
-  
+
   override def preInit(config: ProcessEngineConfigurationImpl) {
-    
+
     val dmnEngine = new CamundaDmnEngine(new DmnEngine)
-    
+
     // replace the default Camunda DMN engine
     config.setDmnEngine(dmnEngine)
   }
-  
+
 }

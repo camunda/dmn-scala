@@ -1,1 +1,0 @@
-name := "dmn-engine-standalone"
