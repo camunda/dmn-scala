@@ -6,13 +6,12 @@ import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
 import org.camunda.bpm.model.dmn.instance.{ FunctionDefinition, FormalParameter, Expression, LiteralExpression }
 import org.camunda.feel.interpreter.{ ValFunction, ValError, DefaultValueMapper, Val }
-import org.camunda.dmn.parser.ParsedLiteralExpression
-import org.camunda.dmn.parser.ParsedFunctionDefinition
+import org.camunda.dmn.parser.{ ParsedLiteralExpression, ParsedFunctionDefinition }
 import org.camunda.feel.ParsedExpression
 
-class FunctionDefinitionEvaluator(eval: (ParsedExpression, EvalContext) => Either[Failure, Any]) {
+class FunctionDefinitionEvaluator(eval: (ParsedExpression, EvalContext) => Either[Failure, Val]) {
 
-  def eval(function: ParsedFunctionDefinition, context: EvalContext): Either[Failure, Any] = {
+  def eval(function: ParsedFunctionDefinition, context: EvalContext): Either[Failure, Val] = {
     Right(createFunction(function.expression, function.parameters, context))
   }
 
@@ -26,8 +25,8 @@ class FunctionDefinitionEvaluator(eval: (ParsedExpression, EvalContext) => Eithe
           eval(expression, context.copy(variables = context.variables ++ arguments)))
 
         result match {
-          case Right(value) => DefaultValueMapper.instance.toVal(value)
-          case Left(error)  => ValError(error.toString)
+          case Right(value)  => value
+          case Left(failure) => ValError(failure.message)
         }
       })
   }
@@ -35,7 +34,7 @@ class FunctionDefinitionEvaluator(eval: (ParsedExpression, EvalContext) => Eithe
   private def validateArguments(parameters: Iterable[(String, String)], args: List[Val], context: EvalContext): Either[Failure, List[(String, Val)]] = {
     mapEither[((String, String), Val), (String, Val)](parameters.zip(args), {
       case ((name, typeRef), arg) =>
-        TypeChecker.isOfType(arg, typeRef, context)
+        TypeChecker.isOfType(arg, typeRef)
           .right
           .map(name -> _)
     })

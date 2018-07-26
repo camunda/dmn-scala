@@ -17,6 +17,7 @@ import org.camunda.bpm.engine.ProcessEngineException
 import org.camunda.bpm.engine.variable.Variables
 import org.camunda.bpm.engine.variable.context.VariableContext
 import org.camunda.bpm.engine.impl.util.ParseUtil
+import java.util.stream.Collectors
 
 class CamundaDmnEngine(engine: DmnEngine) extends org.camunda.bpm.dmn.engine.DmnEngine {
 
@@ -91,7 +92,7 @@ class CamundaDmnEngine(engine: DmnEngine) extends org.camunda.bpm.dmn.engine.Dmn
         val id = decision.getKey
         val name = decision.getName
 
-        engine.eval(dmn, id, variables.asScala.toMap) match {
+        engine.eval(dmn, id, variables) match {
           case Left(failure) => throw new ProcessEngineException(failure.toString)
           case Right(result) => createDecisionResult(result, decision)
         }
@@ -109,58 +110,56 @@ class CamundaDmnEngine(engine: DmnEngine) extends org.camunda.bpm.dmn.engine.Dmn
     evaluateDecision(decision, vars)
   }
 
-  override def evaluateDecision(decisionKey: String, inputStream: InputStream, variables: JMap[String, Object]): DmnDecisionResult =
-    {
-      val decision = parseDecision(decisionKey, inputStream)
+  override def evaluateDecision(decisionKey: String, inputStream: InputStream, variables: JMap[String, Object]): DmnDecisionResult = {
+    val decision = parseDecision(decisionKey, inputStream)
 
-      evaluateDecision(decision, variables)
-    }
+    evaluateDecision(decision, variables)
+  }
 
-  override def evaluateDecision(decisionKey: String, inputStream: InputStream, variables: VariableContext): DmnDecisionResult =
-    {
-      val decision = parseDecision(decisionKey, inputStream)
+  override def evaluateDecision(decisionKey: String, inputStream: InputStream, variables: VariableContext): DmnDecisionResult = {
+    val decision = parseDecision(decisionKey, inputStream)
 
-      evaluateDecision(decision, variables)
-    }
+    evaluateDecision(decision, variables)
+  }
 
-  private def createDecisionResult(result: EvalResult, evaluatedDecision: DmnDecision): DmnDecisionResult =
-    {
-      result match {
-        case NilResult => null
-        case Result(value) => value match {
-          case list: List[_] =>
-            {
-              val entries = list.map(item => createDecisionResultEntries(item, evaluatedDecision))
-              new DmnDecisionResultImpl(entries.asJava)
-            }
-          case _ =>
-            {
-              val entries = createDecisionResultEntries(value, evaluatedDecision)
-              new DmnDecisionResultImpl(List[DmnDecisionResultEntries](entries).asJava)
-            }
+  private def createDecisionResult(result: EvalResult, evaluatedDecision: DmnDecision): DmnDecisionResult = {
+    result match {
+      case NilResult => null
+      case Result(value) => value match {
+        case list: List[_] => {
+          val entries = list.map(item => createDecisionResultEntries(item, evaluatedDecision))
+          new DmnDecisionResultImpl(entries.asJava)
+        }
+        case list: JList[_] => {
+          val entries = list.stream().map[DmnDecisionResultEntries](item => createDecisionResultEntries(item, evaluatedDecision)).collect(Collectors.toList())
+          new DmnDecisionResultImpl(entries)
+        }
+        case _ => {
+          val entries = createDecisionResultEntries(value, evaluatedDecision)
+          new DmnDecisionResultImpl(List[DmnDecisionResultEntries](entries).asJava)
         }
       }
     }
+  }
 
-  private def createDecisionResultEntries(value: Any, evaluatedDecision: DmnDecision): DmnDecisionResultEntries =
-    {
-      val entry = new DmnDecisionResultEntriesImpl()
+  private def createDecisionResultEntries(value: Any, evaluatedDecision: DmnDecision): DmnDecisionResultEntries = {
+    val entry = new DmnDecisionResultEntriesImpl()
 
-      value match {
-        case m: Map[String, Any] => m.map { case (k, v) => entry.putValue(k, Variables.untypedValue(v)) }
-        case _                   => entry.putValue(evaluatedDecision.getName, Variables.untypedValue(value))
-      }
-
-      entry
+    value match {
+      case m: Map[_, _]  => m.map { case (k, v) => entry.putValue(k.toString, Variables.untypedValue(v)) }
+      case m: JMap[_, _] => m.forEach { case (k, v) => entry.putValue(k.toString, Variables.untypedValue(v)) }
+      case _             => entry.putValue(evaluatedDecision.getName, Variables.untypedValue(value))
     }
 
-  override def getConfiguration: DmnEngineConfiguration =
-    {
-      val config = DmnEngineConfiguration.createDefaultDmnEngineConfiguration().asInstanceOf[DefaultDmnEngineConfiguration]
+    entry
+  }
 
-      // by replacing the transformer, the DMN deployers use the DMN engine to parse a DMN
-      config.transformer(new DmnScalaTransformer(this))
-    }
+  override def getConfiguration: DmnEngineConfiguration = {
+    val config = DmnEngineConfiguration.createDefaultDmnEngineConfiguration().asInstanceOf[DefaultDmnEngineConfiguration]
+
+    // by replacing the transformer, the DMN deployers use the DMN engine to parse a DMN
+    config.transformer(new DmnScalaTransformer(this))
+  }
 
   ///// not supported
 

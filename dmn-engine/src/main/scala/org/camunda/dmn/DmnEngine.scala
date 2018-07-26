@@ -15,7 +15,7 @@ import org.camunda.bpm.model.dmn.instance.{ Invocation, Binding, FormalParameter
 import org.camunda.bpm.model.dmn.instance.{ List => DmnList, Relation, FunctionDefinition }
 import org.camunda.feel._
 import org.camunda.feel.{ FeelEngine, ParsedExpression }
-import org.camunda.feel.interpreter.{ ValNull, FunctionProvider, ValueMapper, DefaultValueMapper }
+import org.camunda.feel.interpreter.{ Val, ValNull, FunctionProvider, ValueMapper, DefaultValueMapper }
 import org.camunda.feel.spi.{ CustomValueMapper, CustomFunctionProvider }
 
 object DmnEngine {
@@ -48,7 +48,7 @@ class DmnEngine {
 
   val feelEngine = new FeelEngine(
     functionProvider = loadFunctionProvider(),
-    valueMapper = valueMapper)
+    valueMapper = new NoUnpackValueMapper(valueMapper))
 
   val parser = new DmnParser
 
@@ -60,7 +60,7 @@ class DmnEngine {
 
   val decisionTableEval = new DecisionTableEvaluator(literalExpressionEval.evalExpression)
 
-  val bkmEval = new BusinessKnowledgeEvaluator(this.evalExpression)
+  val bkmEval = new BusinessKnowledgeEvaluator(this.evalExpression, valueMapper)
 
   val contextEval = new ContextEvaluator(this.evalExpression)
 
@@ -96,13 +96,13 @@ class DmnEngine {
 
   ///// Java public API
 
-  def eval(stream: InputStream, decisionId: String, context: java.util.Map[String, Any]): Either[Failure, EvalResult] =
+  def eval(stream: InputStream, decisionId: String, context: java.util.Map[String, Object]): Either[Failure, EvalResult] =
     eval(stream, decisionId, context.asScala.toMap)
 
-  def eval(dmn: ParsedDmn, decisionId: String, variables: java.util.Map[String, Any]): Either[Failure, EvalResult] =
+  def eval(dmn: ParsedDmn, decisionId: String, variables: java.util.Map[String, Object]): Either[Failure, EvalResult] =
     eval(dmn, decisionId, variables.asScala.toMap)
 
-  def evalByName(dmn: ParsedDmn, decisionName: String, variables: java.util.Map[String, Any]): Either[Failure, EvalResult] =
+  def evalByName(dmn: ParsedDmn, decisionName: String, variables: java.util.Map[String, Object]): Either[Failure, EvalResult] =
     evalByName(dmn, decisionName, variables.asScala.toMap)
 
   ///// internal
@@ -113,12 +113,11 @@ class DmnEngine {
       .map(
         {
           case ValNull => NilResult
-          case null    => NilResult
-          case r       => Result(r)
+          case result  => Result(valueMapper.unpackVal(result))
         })
   }
 
-  private def evalExpression(expression: ParsedDecisionLogic, context: EvalContext): Either[Failure, Any] = {
+  private def evalExpression(expression: ParsedDecisionLogic, context: EvalContext): Either[Failure, Val] = {
     expression match {
       case dt: ParsedDecisionTable     => decisionTableEval.eval(dt, context)
       case inv: ParsedInvocation       => invocationEval.eval(inv, context)

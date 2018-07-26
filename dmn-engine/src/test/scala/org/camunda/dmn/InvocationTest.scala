@@ -33,7 +33,7 @@ class InvocationTest extends FlatSpec with Matchers with DecisionTest {
 
   it should "fail if parameter has the wrong type" in
     {
-      engine.eval(discountDecision, "discount", Map("Customer" -> "Business", "OrderSize" -> "foo")) should be(Left(Failure("expected 'number' but found 'foo'")))
+      engine.eval(discountDecision, "discount", Map("Customer" -> "Business", "OrderSize" -> "foo")) should be(Left(Failure("expected 'number' but found 'ValString(foo)'")))
     }
 
   it should "fail if knowledge requirement is missing" in

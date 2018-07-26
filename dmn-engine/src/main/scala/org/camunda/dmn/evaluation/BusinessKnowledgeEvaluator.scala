@@ -4,15 +4,15 @@ import scala.collection.JavaConverters._
 
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
-import org.camunda.feel.interpreter.{ ValFunction, ValError, DefaultValueMapper, Val }
+import org.camunda.feel.interpreter.{ ValFunction, ValError, ValueMapper, DefaultValueMapper, Val }
 import org.camunda.bpm.model.dmn.instance.{ BusinessKnowledgeModel, KnowledgeRequirement, FormalParameter, Expression, LiteralExpression }
-import org.camunda.dmn.parser.ParsedDecisionLogic
-import org.camunda.dmn.parser.ParsedBusinessKnowledgeModel
-import org.camunda.dmn.parser.ParsedDecisionLogic
+import org.camunda.dmn.parser.{ ParsedDecisionLogic, ParsedBusinessKnowledgeModel }
 
-class BusinessKnowledgeEvaluator(eval: (ParsedDecisionLogic, EvalContext) => Either[Failure, Any]) {
+class BusinessKnowledgeEvaluator(
+  eval:        (ParsedDecisionLogic, EvalContext) => Either[Failure, Val],
+  valueMapper: ValueMapper) {
 
-  def eval(bkm: ParsedBusinessKnowledgeModel, context: EvalContext): Either[Failure, Any] = {
+  def eval(bkm: ParsedBusinessKnowledgeModel, context: EvalContext): Either[Failure, Val] = {
 
     evalRequiredKnowledge(bkm.requiredBkms, context).right.flatMap(functions => {
 
@@ -43,7 +43,7 @@ class BusinessKnowledgeEvaluator(eval: (ParsedDecisionLogic, EvalContext) => Eit
   private def validateArguments(parameters: Iterable[(String, String)], args: List[Val], context: EvalContext): Either[Failure, List[(String, Val)]] = {
     mapEither[((String, String), Val), (String, Val)](parameters.zip(args), {
       case ((name, typeRef), arg) =>
-        TypeChecker.isOfType(arg, typeRef, context)
+        TypeChecker.isOfType(arg, typeRef)
           .right
           .map(name -> _)
     })
@@ -53,7 +53,7 @@ class BusinessKnowledgeEvaluator(eval: (ParsedDecisionLogic, EvalContext) => Eit
     mapEither[(String, String), Any](parameters, {
       case (name, typeRef) =>
         context.variables.get(name)
-          .map(v => TypeChecker.isOfType(v, typeRef, context))
+          .map(v => TypeChecker.isOfType(valueMapper.toVal(v), typeRef))
           .getOrElse(Left(Failure(s"no parameter found with name '${name}'")))
     })
   }
@@ -68,8 +68,8 @@ class BusinessKnowledgeEvaluator(eval: (ParsedDecisionLogic, EvalContext) => Eit
           eval(expression, context.copy(variables = context.variables ++ arguments)))
 
         result match {
-          case Right(value) => DefaultValueMapper.instance.toVal(value)
-          case Left(error)  => ValError(error.toString)
+          case Right(value)  => value
+          case Left(failure) => ValError(failure.message)
         }
       })
   }

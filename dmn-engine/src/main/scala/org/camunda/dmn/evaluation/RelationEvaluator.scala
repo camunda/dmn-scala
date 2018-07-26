@@ -4,25 +4,22 @@ import scala.collection.JavaConverters._
 
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
-import org.camunda.bpm.model.dmn.instance.{ Relation, Row, Expression }
-import org.camunda.dmn.parser.ParsedDecisionLogic
-import org.camunda.dmn.parser.ParsedRelation
-import org.camunda.dmn.parser.ParsedRelationRow
-import org.camunda.dmn.parser.ParsedDecisionLogic
-import org.camunda.dmn.parser.ParsedDecisionLogic
+import org.camunda.dmn.parser.{ ParsedDecisionLogic, ParsedRelation, ParsedRelationRow }
+import org.camunda.feel.interpreter.{ Val, ValContext, DefaultContext, ValList }
 
-class RelationEvaluator(eval: (ParsedDecisionLogic, EvalContext) => Either[Failure, Any]) {
+class RelationEvaluator(eval: (ParsedDecisionLogic, EvalContext) => Either[Failure, Val]) {
 
-  def eval(relation: ParsedRelation, context: EvalContext): Either[Failure, Any] =
+  def eval(relation: ParsedRelation, context: EvalContext): Either[Failure, Val] =
     {
       mapEither(relation.rows, (row: ParsedRelationRow) => {
-        mapEither[(String, ParsedDecisionLogic), (String, Any)](row.columns, {
+        mapEither[(String, ParsedDecisionLogic), (String, Val)](row.columns, {
           case (column, expr) => eval(expr, context)
             .right
             .map(r => column -> r)
         })
-          .right.map(_.toMap)
+          .right.map(r => ValContext(DefaultContext(r.toMap)))
       })
+        .right.map(r => ValList(r))
     }
 
 }

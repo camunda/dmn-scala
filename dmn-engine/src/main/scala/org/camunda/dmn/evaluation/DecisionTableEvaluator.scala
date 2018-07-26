@@ -5,16 +5,14 @@ import scala.collection.JavaConverters._
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
 import org.camunda.feel._
-import org.camunda.feel.interpreter.{ RootContext, ValNull }
+import org.camunda.feel.interpreter.{ RootContext, Val, ValNull, ValContext, DefaultContext, ValList, ValNumber, ValBoolean, ValString }
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.instance.{ Decision, DecisionTable, InputEntry, OutputEntry, Output, Rule, Input, LiteralExpression, UnaryTests }
-import org.camunda.dmn.parser.ParsedDecisionTable
-import org.camunda.dmn.parser.ParsedRule
-import org.camunda.dmn.parser.ParsedOutput
+import org.camunda.dmn.parser.{ ParsedDecisionTable, ParsedRule, ParsedOutput }
 
-class DecisionTableEvaluator(eval: (ParsedExpression, EvalContext) => Either[Failure, Any]) {
+class DecisionTableEvaluator(eval: (ParsedExpression, EvalContext) => Either[Failure, Val]) {
 
-  def eval(decisionTable: ParsedDecisionTable, context: EvalContext): Either[Failure, Any] = {
+  def eval(decisionTable: ParsedDecisionTable, context: EvalContext): Either[Failure, Val] = {
     implicit val ctx = context
 
     evalInputExpressions(decisionTable.inputs).right.flatMap { inputValues =>
@@ -58,23 +56,23 @@ class DecisionTableEvaluator(eval: (ParsedExpression, EvalContext) => Either[Fai
           .right
           .flatMap { result =>
             result match {
-              case false => Right(false)
-              case true  => evalInputEntries(is)
-              case other => Left(Failure(s"input entry must return true or false, but found '$other'"))
+              case ValBoolean(false) => Right(false)
+              case ValBoolean(true)  => evalInputEntries(is)
+              case other             => Left(Failure(s"input entry must return true or false, but found '$other'"))
             }
           }
       }
     }
   }
 
-  private def evalInputEntry(entry: ParsedExpression, inputValue: Any)(implicit context: EvalContext): Either[Failure, Any] = {
+  private def evalInputEntry(entry: ParsedExpression, inputValue: Any)(implicit context: EvalContext): Either[Failure, Val] = {
 
     val variablesWithInput = context.variables + (RootContext.defaultInputVariable -> inputValue)
 
     eval(entry, context.copy(variables = variablesWithInput))
   }
 
-  private def applyDefaultOutputEntries(outputs: Iterable[ParsedOutput])(implicit context: EvalContext): Either[Failure, Any] = {
+  private def applyDefaultOutputEntries(outputs: Iterable[ParsedOutput])(implicit context: EvalContext): Either[Failure, Val] = {
 
     evalDefaultOutputEntries(outputs)
       .right
@@ -86,12 +84,12 @@ class DecisionTableEvaluator(eval: (ParsedExpression, EvalContext) => Either[Fai
         } else if (outputValues.size == 1) {
           outputValues.values.head
         } else {
-          outputValues
+          ValContext(DefaultContext(outputValues))
         }
       }
   }
 
-  private def evalDefaultOutputEntries(outputs: Iterable[ParsedOutput])(implicit context: EvalContext): Either[Failure, List[Option[(String, Any)]]] = {
+  private def evalDefaultOutputEntries(outputs: Iterable[ParsedOutput])(implicit context: EvalContext): Either[Failure, List[Option[(String, Val)]]] = {
     mapEither(outputs, (output: ParsedOutput) => {
 
       output.defaultValue.map(expr =>
@@ -101,11 +99,11 @@ class DecisionTableEvaluator(eval: (ParsedExpression, EvalContext) => Either[Fai
     })
   }
 
-  private def evalOutputValues(rules: Iterable[ParsedRule])(implicit context: EvalContext): Either[Failure, List[Map[String, Any]]] = {
+  private def evalOutputValues(rules: Iterable[ParsedRule])(implicit context: EvalContext): Either[Failure, List[Map[String, Val]]] = {
 
     mapEither(rules, (rule: ParsedRule) => {
 
-      mapEither[(String, ParsedExpression), (String, Any)](rule.outputEntries, {
+      mapEither[(String, ParsedExpression), (String, Val)](rule.outputEntries, {
         case (name, expr) =>
           eval(expr, context)
             .right
@@ -119,7 +117,7 @@ class DecisionTableEvaluator(eval: (ParsedExpression, EvalContext) => Either[Fai
     hitPolicy:    HitPolicy,
     aggregator:   BuiltinAggregator,
     outputs:      Iterable[ParsedOutput],
-    outputValues: List[Map[String, Any]]): Either[Failure, Any] = {
+    outputValues: List[Map[String, Val]]): Either[Failure, Val] = {
 
     Option(hitPolicy).getOrElse(HitPolicy.UNIQUE) match {
 
@@ -152,31 +150,31 @@ class DecisionTableEvaluator(eval: (ParsedExpression, EvalContext) => Either[Fai
       case HitPolicy.RULE_ORDER   => Right(multipleOutputValues(outputValues))
 
       case HitPolicy.COLLECT => aggregator match {
-        case BuiltinAggregator.MIN   => singleNumberValues(outputValues).right.map(_.min)
-        case BuiltinAggregator.MAX   => singleNumberValues(outputValues).right.map(_.max)
-        case BuiltinAggregator.SUM   => singleNumberValues(outputValues).right.map(_.sum)
-        case BuiltinAggregator.COUNT => Right(outputValues.size)
+        case BuiltinAggregator.MIN   => singleNumberValues(outputValues).right.map(r => ValNumber(r.min))
+        case BuiltinAggregator.MAX   => singleNumberValues(outputValues).right.map(r => ValNumber(r.max))
+        case BuiltinAggregator.SUM   => singleNumberValues(outputValues).right.map(r => ValNumber(r.sum))
+        case BuiltinAggregator.COUNT => Right(ValNumber(outputValues.size))
         case _                       => Right(multipleOutputValues(outputValues))
       }
     }
   }
 
-  private def singleOutputValue(values: List[Map[String, Any]]): Any = {
+  private def singleOutputValue(values: List[Map[String, Val]]): Val = {
     values
       .headOption
-      .map(v => if (v.size == 1) v.values.head else v)
+      .map(v => if (v.size == 1) v.values.head else ValContext(DefaultContext(v)))
       .getOrElse(ValNull)
   }
 
-  private def multipleOutputValues(values: List[Map[String, Any]]): Any = values match {
+  private def multipleOutputValues(values: List[Map[String, Val]]): Val = values match {
     case Nil                           => ValNull
     case v :: Nil if (v.size == 1)     => v.values.head
-    case v :: Nil                      => v
-    case list if (list.head.size == 1) => list.map(_.values.head)
-    case list                          => list
+    case v :: Nil                      => ValContext(DefaultContext(v))
+    case list if (list.head.size == 1) => ValList(list.map(_.values.head))
+    case list                          => ValList(list.map(m => ValContext(DefaultContext(m))))
   }
 
-  private def sortByPriority(outputValues: List[Map[String, Any]], outputs: Iterable[ParsedOutput]): List[Map[String, Any]] = {
+  private def sortByPriority(outputValues: List[Map[String, Val]], outputs: Iterable[ParsedOutput]): List[Map[String, Val]] = {
 
     val priorities: Iterable[(String, Map[String, Int])] = outputs.map { output =>
 
@@ -192,27 +190,26 @@ class DecisionTableEvaluator(eval: (ParsedExpression, EvalContext) => Either[Fai
 
       val valuePriorities = priorities.map {
         case (output, priority) =>
-          val value = values(output).toString
-
-          priority
-            .get(value)
-            .map(_.toString)
-            .getOrElse("")
+          values(output) match {
+            case ValString(value) => priority.get(value).map(_.toString).getOrElse("_")
+            case ValNumber(value) => priority.get(value.toString).map(_.toString).getOrElse("_")
+            case _                => "_" // priority doesn't work for other types
+          }
       }
 
       valuePriorities.reduce(_ + _)
     }
   }
 
-  private def singleNumberValues(values: List[Map[String, Any]]): Either[Failure, List[Number]] = values match {
+  private def singleNumberValues(values: List[Map[String, Val]]): Either[Failure, List[Number]] = values match {
     case Nil                           => Right(Nil)
     case list if (list.head.size == 1) => mapEither(list.map(_.values.head), numberValue)
     case list                          => Left(Failure(s"multiple values aren't allowed. found: $list"))
   }
 
-  private def numberValue(value: Any): Either[Failure, Number] = value match {
-    case n: Number => Right(n)
-    case o         => Left(Failure(s"expected number but found '$o'"))
+  private def numberValue(value: Val): Either[Failure, Number] = value match {
+    case n: ValNumber => Right(n.value)
+    case o            => Left(Failure(s"expected number but found '$o'"))
   }
 
 }
