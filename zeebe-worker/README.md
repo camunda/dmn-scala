@@ -2,8 +2,6 @@
 
 A [Zeebe](https://zeebe.io/) worker for decision evaluation (e.g. Business Rule Tasks).
 
-The application uses the [Spring-Zeebe integration](https://github.com/zeebe-io/spring-zeebe) (based on Spring Boot) to connect the DMN engine with Zeebe.
-
 ## How to use it?
 
 Download the [JAR file](https://github.com/camunda/dmn-scala/releases) `dmn-engine-zeebe-worker-${VERSION}.jar`.
@@ -13,18 +11,16 @@ Create a repository for your decisions (default is 'dmn-repo').
 Run the application with
 
 ```
-java -Dzeebe.topic=default-topic -Dzeebe.lockOwner=dmn-scala -jar dmn-engine-zeebe-worker-${VERSION}.jar 
+java -jar dmn-engine-zeebe-worker-${VERSION}.jar 
 ```
 
 Per default, the application uses the directory 'dmn-repo' as repository. 
 
-You can change the configuration by using the properties
+You can change the configuration by the following environment variables:
 
-```
-java -Ddmn.repo=my-repo -Dzeebe.topic=my-topic -Dzeebe.lockOwner=my-owner -jar dmn-engine-zeebe-worker-${VERSION}.jar 
-```
-
-You can also set the configuration in a 'application.yaml' or 'application.properties' file.
+* `dmn.repo` - the directory the repository
+* `zeebe.client.broker.contactPoint` - the Zeebe connection
+* `zeebe.client.topic` - the Zeebe topic to work on
 
 ### Zeebe Task Definition
 
@@ -48,14 +44,30 @@ You can also set the configuration in a 'application.yaml' or 'application.prope
 
 ## How to build it?
 
-You can build the project with [Maven](http://maven.apache.org).
+You can build the project with [SBT](http://www.scala-sbt.org) or [Maven](http://maven.apache.org).
+
+### Using SBT
+
+In the root directory:
+
+Run the tests with
+```
+sbt zeebeWorker/test
+```
+
+Build the jar including all dependencies with
+```
+sbt zeebeWorker/assembly
+```
+
+### Using Maven
 
 Run the tests with
 ```
 mvn test
 ```
 
-Build the jar with
+Build the jar including all dependencies with
 ```
 mvn install
 ```

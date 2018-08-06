@@ -2,97 +2,76 @@ package org.camunda.dmn.zeebe
 
 import org.camunda.dmn._
 
-import scala.collection.JavaConversions._
-import org.springframework.boot.autoconfigure.SpringBootApplication
-import io.zeebe.spring.client.EnableZeebeClient
-import org.json4s._
-import org.json4s.jackson.Serialization
-import org.json4s.jackson.Serialization.{read, write}
-import org.json4s.jackson.JsonMethods._
-import org.springframework.boot.SpringApplication
-import io.zeebe.client.TasksClient
-import io.zeebe.client.event.TaskEvent
-import io.zeebe.spring.client.annotation.ZeebeTaskListener
-import javax.annotation.PostConstruct
 import org.camunda.dmn.standalone.StandaloneEngine
 import org.camunda.dmn.DmnEngine._
-import org.springframework.beans.factory.annotation.Value
+import io.zeebe.client.ZeebeClient
+import java.time.Duration
+import java.util.Scanner
+import java.util.concurrent.CountDownLatch
 
 object ZeebeDmnWorkerApplication {
-  
+
   def main(args: Array[String]) {
-    SpringApplication.run(classOf[ZeebeDmnWorkerApplication], args: _*)
+
+    val repository: String =
+      Option(System.getenv("dmn.repo")).getOrElse("dmn-repo")
+
+    val app = new ZeebeDmnWorkerApplication(repository)
+
+    sys.addShutdownHook(app.stop)
+
+    app.start
   }
-  
+
 }
 
-@SpringBootApplication
-@EnableZeebeClient
-class ZeebeDmnWorkerApplication {
-  
-  implicit val formats = DefaultFormats
+class ZeebeDmnWorkerApplication(repository: String) {
 
-  case class DecisionResult(result: Any)
-  
-  
-  @Value("${dmn.repo:dmn-repo}")
-  var repository: String = _
-  
-  lazy val engine = StandaloneEngine.fileSystemRepository(repository)
-  
-  @PostConstruct
-  def init() 
-  {
-    // init the engine on startup
-    
-    val deployedDecisions = engine
-      .getDecisions
+  var openLatch = new CountDownLatch(1)
+
+  lazy val zeebeClient: ZeebeClient = {
+
+    val builder = ZeebeClient
+      .newClientBuilder()
+      .defaultJobWorkerName("script-worker")
+      .defaultJobTimeout(Duration.ofSeconds(10))
+
+    Option(System.getenv("zeebe.client.broker.contactPoint"))
+      .map(builder.brokerContactPoint)
+    Option(System.getenv("zeebe.client.topic")).map(builder.defaultTopic)
+
+    builder.build
+  }
+
+  lazy val dmnEngine = StandaloneEngine.fileSystemRepository(repository)
+
+  def start {
+    logger.info("start Zeebe worker")
+
+    val deployedDecisions = dmnEngine.getDecisions
       .map(d => s"${d.decisionId} (${d.resource})")
-    
-    logger.trace("Deployed decisions: {}", deployedDecisions)
+
+    logger.info(s"deployed decisions: $deployedDecisions")
+
+    val handler = new DmnJobHandler(dmnEngine)
+    zeebeClient
+      .topicClient()
+      .jobClient()
+      .newWorker()
+      .jobType("DMN")
+      .handler(handler)
+      .open()
+
+    openLatch.await();
   }
-  
-  @ZeebeTaskListener(taskType = "DMN")
-  def handleDmnWorkItem(implicit client: TasksClient, task: TaskEvent) 
-  {
-    logger.trace("Received {}", task)
-    
-    Option(task.getCustomHeaders.get("decisionRef")).map(_.toString) match {
-      case None              => error("missing task header 'decisionRef'")
-      case Some(decisionId)  => 
-      {
-        val variables = Option(task.getPayload)
-          .filterNot(s => s.isEmpty || s == "null")
-          .map(p => parse(p).extract[Map[String, Any]])
-          .getOrElse(Map.empty)
-        
-        evalDecision(decisionId, variables)
-      }
-    }    
-  }
-  
-  private def evalDecision(decisionId: String, variables: Map[String, Any])(implicit client: TasksClient, task: TaskEvent)
-  {
-    engine.evalDecisionById(decisionId, variables) match {
-      case Left(Failure(msg)) => error(s"Fail to evaluate decision '$decisionId': $msg")
-      case Right(NilResult)   => completeTask(null)
-      case Right(Result(r))   => completeTask(r)
+
+  def stop {
+    if (openLatch.getCount == 1) {
+      openLatch.countDown
+
+      logger.info("stop Zeebe worker")
+      zeebeClient.close()
     }
   }
-  
-  private def completeTask(result: Any) (implicit client: TasksClient, task: TaskEvent)
-  {
-    val json = write(DecisionResult(result))
 
-    client.complete(task)
-      .payload(json)
-      .execute()
-  }
-  
-  private def error(failure: String) 
-  {
-    // the exception mark the task as failed
-    throw new RuntimeException(failure)
-  }
-  
 }

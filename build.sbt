@@ -19,11 +19,17 @@ val commonDependencies = Seq(
 
 val feelVersion = "1.5.0"
 val camundaVersion = "7.9.0"
+val zeebeVersion = "0.11.0"
 val scalatraVersion = "2.6.2"
 
 lazy val root = (project in file("."))
   .settings(shared)
-  .aggregate(engine, camundaPlugin, standaloneEngine, engineRest, benchmark)
+  .aggregate(engine,
+             camundaPlugin,
+             standaloneEngine,
+             engineRest,
+             zeebeWorker,
+             benchmark)
 
 lazy val engine = (project in file("dmn-engine"))
   .settings(
@@ -88,6 +94,26 @@ lazy val engineRest = (project in file("engine-rest"))
     standaloneEngine % "test->test;compile->compile"
   )
 
+lazy val zeebeWorker = (project in file("zeebe-worker"))
+  .enablePlugins(AssemblyPlugin)
+  .settings(
+    shared,
+    name := "dmn-engine-zeebe-worker",
+    description := "Zeebe worker for the DMN engine",
+    libraryDependencies ++= commonDependencies,
+    libraryDependencies ++= Seq(
+      "io.zeebe" % "zeebe-client-java" % zeebeVersion,
+      "org.apache.logging.log4j" % "log4j-api" % "2.9.0",
+      "org.apache.logging.log4j" % "log4j-core" % "2.9.0",
+      "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.9.0",
+      "io.zeebe" % "zeebe-test" % zeebeVersion % "test",
+      "io.zeebe" % "zeebe-broker-core" % zeebeVersion % "test"
+    )
+  )
+  .dependsOn(
+    standaloneEngine % "test->test;compile->compile"
+  )
+
 lazy val benchmark = (project in file("engine-benchmark"))
   .enablePlugins(JmhPlugin)
   .settings(
@@ -102,23 +128,4 @@ lazy val benchmark = (project in file("engine-benchmark"))
   )
   .dependsOn(
     engine % "test->test;compile->compile"
-  )
-  
-lazy val zeebeWorker = (project in file("zeebe-worker"))
-  .settings(
-    shared,
-    name := "dmn-engine-zeebe-worker",
-    description := "Zeebe worker for the DMN engine",
-    libraryDependencies ++= commonDependencies,
-    libraryDependencies ++= Seq(
-      "io.zeebe.spring" % "spring-zeebe-starter" % "0.2.0",
-      "org.json4s" %% "json4s-jackson" % "3.5.2",
-      
-      "io.zeebe" % "zeebe-test" % "0.7.0" % "test",
-      "io.zeebe" % "zeebe-broker-core" % "0.7.0" % "test",
-      "org.springframework.boot" % "spring-boot-starter-test" % "1.5.9.RELEASE" % "test"
-    )
-  )
-  .dependsOn(
-    standaloneEngine % "test->test;compile->compile"
   )

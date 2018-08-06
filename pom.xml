@@ -20,7 +20,7 @@
 	<properties>
 		<feel.version>1.5.0</feel.version>
 		<camunda.version>7.9.0</camunda.version>
-		<zeebe.version>0.7.0</zeebe.version>
+		<zeebe.version>0.11.0</zeebe.version>
 		<spring.version>1.5.8.RELEASE</spring.version>
 		<version.java>1.8</version.java>
 		<scala.version>2.12.4</scala.version>
@@ -116,12 +116,6 @@
 			</dependency>
 
 			<dependency>
-				<groupId>io.zeebe.spring</groupId>
-				<artifactId>spring-zeebe-starter</artifactId>
-				<version>0.2.0</version>
-			</dependency>
-
-			<dependency>
 				<groupId>org.scalatest</groupId>
 				<artifactId>scalatest_2.12</artifactId>
 				<version>3.0.4</version>
@@ -162,7 +156,7 @@
 				<artifactId>zeebe-test</artifactId>
 				<version>${zeebe.version}</version>
 			</dependency>
-
+			
 			<dependency>
 				<groupId>io.zeebe</groupId>
 				<artifactId>zeebe-broker-core</artifactId>
@@ -170,9 +164,9 @@
 			</dependency>
 
 			<dependency>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-starter-test</artifactId>
-				<version>1.5.9.RELEASE</version>
+				<groupId>io.zeebe</groupId>
+				<artifactId>zeebe-client-java</artifactId>
+				<version>${zeebe.version}</version>
 			</dependency>
 
 		</dependencies>
