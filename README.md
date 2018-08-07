@@ -9,7 +9,7 @@ The engine uses the [Camunda DMN model api](https://github.com/camunda/camunda-d
 * evaluation of parsed DMN models
 * extensible by own functions and types
 
-¹ measured by the DMN TCK: https://dmn-tck.github.io/tck/ 
+¹ the DMN coverage is measured by the [DMN TCK](https://dmn-tck.github.io/tck/overview_Camunda%20BPM_7.8.0.html)
 
 ## How to use it?
 
