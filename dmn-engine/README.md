@@ -22,15 +22,17 @@ object MyProgram {
   
   val engine = new DmnEngine
   
-  def dmn(stream: InputStream, decisionId: String, context: Map[String, Any]) {
+  def evaluate(stream: InputStream, decisionId: String, context: Map[String, Any]) {
     
-    val result = engine.parse(stream)
-    					  .flatMap(dmn => engine.eval(dmn, decisionId, context))
-    
+  val result = 
+    engine
+      .parse(stream)
+      .flatMap(dmn => engine.eval(dmn, decisionId, context))
+        
     result match {
-      case Left(failure)		=> // ...
-      case Right(NilResult)	=> // ...
-      case Right(r)			=> // ...
+      case Left(failure)    => // ...
+      case Right(NilResult) => // ...
+      case Right(r)         => // ...
     }
   }  
 }
