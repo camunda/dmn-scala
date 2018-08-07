@@ -18,23 +18,7 @@ You can use the DMN engine in different ways
 * [embedded](https://github.com/camunda/dmn-scala/tree/master/dmn-engine#how-to-use-it) as a library into your application
 * [standalone](https://github.com/camunda/dmn-scala/tree/master/engine-rest#how-to-use-it) via REST endpoint
 * [integrated into the Camunda BPM engine](https://github.com/camunda/dmn-scala/tree/master/camunda-plugin#how-to-use-it) via process engine plugin
-* [as a worker for Zeebe](https://github.com/camunda/dmn-scala/tree/master/zeebe-worker#how-to-use-it)
-
-## Supported DMN Elements
-
-Root Elements are
-* Decision
-* Business Knowledge Model
-
-| ↓ element can be used for → | Decision | Business Knowledge Model | Context Entry |
-| --- | --- | --- | --- |
-| Decision Table | x | x | x | 
-| Literal Expression | x | x | x | 
-| Invocation | x | - | x | 
-| Context | x | x | x | 
-| Relation | x | x | x | 
-| List | x | x | x | 
-| Function Definition | - | - | x | 
+* [integrated into Zeebe as job worker](https://github.com/camunda/dmn-scala/tree/master/zeebe-worker#how-to-use-it)
 
 ## Extensions
 
