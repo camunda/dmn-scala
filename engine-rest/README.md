@@ -4,14 +4,14 @@ A standalone DMN engine with a REST endpoint.
 
 ## How to use it?
 
-Download the JAR file `engine-rest-${VERSION}-full.jar`.
+Download the [jar file](https://github.com/camunda/dmn-scala/releases) _(dmn-engine-rest-${version}-full.jar)_.
 
 Create a repository for your decisions (default is 'dmn-repo').
 
 Run the application with
 
 ```
-java -jar engine-rest-${VERSION}-full.jar
+java -jar dmn-engine-rest-${VERSION}-full.jar
 ```
 
 Per default, the application starts on port 8080 and uses the directory 'dmn-repo' as repository. 
@@ -19,7 +19,7 @@ Per default, the application starts on port 8080 and uses the directory 'dmn-rep
 You can change the configuration by using the properties
 
 ```
-java -Dport=8090 -Ddmn.repo=my-repo -jar engine-rest-${VERSION}-full.jar
+java -Dport=8090 -Ddmn.repo=my-repo -jar dmn-engine-rest-${VERSION}-full.jar
 ```
 
 ### REST Endpoints
