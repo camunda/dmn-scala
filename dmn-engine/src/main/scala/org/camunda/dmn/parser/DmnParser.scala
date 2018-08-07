@@ -167,7 +167,7 @@ class DmnParser {
 
     if (decisionTable.getOutputs.size > 1 &&
         decisionTable.getHitPolicy.equals(HitPolicy.COLLECT) &&
-        Option(decisionTable.getAggregation).isEmpty) {
+        Option(decisionTable.getAggregation).isDefined) {
       ctx.failures += Failure(
         "hit policy 'COLLECT' with aggregator is not defined for compound output")
     }

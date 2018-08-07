@@ -11,7 +11,7 @@
 </inputExpression>
       </input>
       <output id="output1" label="Applicant Risk Rating" name="applicantRiskRating" typeRef="string">
-        <outputValues>        <text>High, Medium, Low</text>
+        <outputValues>        <text>"High", "Medium", "Low"</text>
 </outputValues>
       </output>
       <rule id="row-723033347-10">

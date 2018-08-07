@@ -63,13 +63,14 @@ class DecisionTableEvaluator(
   }
 
   private def evalInputExpressions(inputs: Iterable[ParsedExpression])(
-      implicit context: EvalContext): Either[Failure, List[Any]] = {
+      implicit
+      context: EvalContext): Either[Failure, List[Any]] = {
     mapEither(inputs, (input: ParsedExpression) => eval(input, context))
   }
 
   private def checkRules(rules: Iterable[ParsedRule], inputValues: List[Any])(
-      implicit context: EvalContext)
-    : Either[Failure, List[Option[ParsedRule]]] = {
+      implicit
+      context: EvalContext): Either[Failure, List[Option[ParsedRule]]] = {
     mapEither(rules, (rule: ParsedRule) => {
 
       evalInputEntries(rule.inputEntries.zip(inputValues)).right
@@ -78,7 +79,8 @@ class DecisionTableEvaluator(
   }
 
   private def evalInputEntries(inputEntries: Iterable[(ParsedExpression, Any)])(
-      implicit context: EvalContext): Either[Failure, Boolean] = {
+      implicit
+      context: EvalContext): Either[Failure, Boolean] = {
 
     inputEntries match {
       case Nil => Right(true)
@@ -99,7 +101,8 @@ class DecisionTableEvaluator(
   }
 
   private def evalInputEntry(entry: ParsedExpression, inputValue: Any)(
-      implicit context: EvalContext): Either[Failure, Val] = {
+      implicit
+      context: EvalContext): Either[Failure, Val] = {
 
     val variablesWithInput = context.variables + (RootContext.defaultInputVariable -> inputValue)
 
@@ -107,7 +110,8 @@ class DecisionTableEvaluator(
   }
 
   private def applyDefaultOutputEntries(outputs: Iterable[ParsedOutput])(
-      implicit context: EvalContext): Either[Failure, Val] = {
+      implicit
+      context: EvalContext): Either[Failure, Val] = {
 
     evalDefaultOutputEntries(outputs).right
       .map(_.flatten.toMap)
@@ -123,8 +127,8 @@ class DecisionTableEvaluator(
   }
 
   private def evalDefaultOutputEntries(outputs: Iterable[ParsedOutput])(
-      implicit context: EvalContext)
-    : Either[Failure, List[Option[(String, Val)]]] = {
+      implicit
+      context: EvalContext): Either[Failure, List[Option[(String, Val)]]] = {
     mapEither(outputs, (output: ParsedOutput) => {
 
       output.defaultValue
@@ -136,8 +140,8 @@ class DecisionTableEvaluator(
   }
 
   private def evalOutputValues(rules: Iterable[ParsedRule])(
-      implicit context: EvalContext)
-    : Either[Failure, List[Map[String, Val]]] = {
+      implicit
+      context: EvalContext): Either[Failure, List[Map[String, Val]]] = {
 
     mapEither(
       rules,
@@ -217,8 +221,6 @@ class DecisionTableEvaluator(
   private def multipleOutputValues(values: List[Map[String, Val]]): Val =
     values match {
       case Nil                           => ValNull
-      case v :: Nil if (v.size == 1)     => v.values.head
-      case v :: Nil                      => ValContext(DefaultContext(v))
       case list if (list.head.size == 1) => ValList(list.map(_.values.head))
       case list                          => ValList(list.map(m => ValContext(DefaultContext(m))))
     }
@@ -230,7 +232,7 @@ class DecisionTableEvaluator(
     val priorities: Iterable[(String, Map[String, Int])] = outputs.map {
       output =>
         val values = output.value
-          .map(_.split(",").map(_.trim))
+          .map(_.split(",").map(_.trim.replaceAll("\"|'", ""))) // remove string quotes and whitespaces
           .map(_.toList)
           .getOrElse(List())
 

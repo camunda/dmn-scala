@@ -15,11 +15,11 @@
 </inputExpression>
       </input>
       <output id="output1" label="Routing" name="routing" typeRef="string">
-        <outputValues>        <text>DECLINE,REFER,ACCEPT</text>
+        <outputValues>        <text>"DECLINE","REFER","ACCEPT"</text>
 </outputValues>
       </output>
       <output id="OutputClause_1ruez0y" label="Review level" name="reviewLevel" typeRef="string">
-        <outputValues>        <text>LEVEL 2,LEVEL 1, NONE</text>
+        <outputValues>        <text>"LEVEL 2","LEVEL 1", "NONE"</text>
 </outputValues>
       </output>
       <output id="OutputClause_1arovxe" label="Reason" name="reason" typeRef="string" />
