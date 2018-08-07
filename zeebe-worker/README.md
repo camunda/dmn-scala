@@ -4,14 +4,14 @@ A [Zeebe](https://zeebe.io/) worker for decision evaluation (e.g. Business Rule 
 
 ## How to use it?
 
-Download the [JAR file](https://github.com/camunda/dmn-scala/releases) `dmn-engine-zeebe-worker-${VERSION}.jar`.
+Download the [jar file](https://github.com/camunda/dmn-scala/releases) _(dmn-engine-zeebe-worker-${version}-full.jar)_.
 
 Create a repository for your decisions (default is 'dmn-repo').
 
 Run the application with
 
 ```
-java -jar dmn-engine-zeebe-worker-${VERSION}.jar 
+java -jar dmn-engine-zeebe-worker-${VERSION}-full.jar 
 ```
 
 Per default, the application uses the directory 'dmn-repo' as repository. 
@@ -24,9 +24,9 @@ You can change the configuration by the following environment variables:
 
 ### Zeebe Task Definition
 
-* register for tasks of type 'DMN'
-* required task header 'decisionRef' => id of the decision to evaluate
-* completes task with payload 'result' which contains the complete decision result
+* register for jobs of type `DMN`
+* required task header `decisionRef` => id of the decision to evaluate
+* completes job with payload `result` which contains the complete decision result
 
 ```xml
 <bpmn:serviceTask id="decisionTask" name="Eval DMN decision">
