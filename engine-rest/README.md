@@ -43,7 +43,7 @@ In the root directory:
 Run the server for development with
 
 ```
-~;engineRest/jetty:stop;jetty:star
+~;engineRest/jetty:stop;jetty:start
 ```
 
 Run the tests with
