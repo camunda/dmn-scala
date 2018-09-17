@@ -5,7 +5,15 @@ An engine to execute decisions according to the [DMN 1.1 specification](http://w
 The engine uses the [Camunda DMN model api](https://github.com/camunda/camunda-dmn-model) for parsing DMN files and the [FEEL-Scala engine](https://github.com/camunda/feel-scala) to evaluate FEEL expressions.
 
 **Features:**
-* full support for DMN 1.1 (Compliance Level 3)¹
+* support for DMN 1.1 (Compliance Level 3)¹
+  * Decision Table
+  * Business Knowledge Model
+  * Context
+  * Literal Expression
+  * List
+  * Relation
+  * Function Definition
+  * Invocation
 * evaluation of parsed DMN models
 * extensible by own functions and types
 
