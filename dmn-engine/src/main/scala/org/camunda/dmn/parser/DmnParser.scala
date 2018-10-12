@@ -35,10 +35,16 @@ import org.camunda.feel.parser.{ConstBool, ConstNull}
 import org.camunda.feel.interpreter.ValError
 import scala.util.Try
 import scala.collection.mutable
+import org.camunda.bpm.model.dmn.instance.InputData
+import org.camunda.bpm.model.dmn.instance.DrgElement
+import org.camunda.bpm.model.dmn.impl.DmnModelConstants
+import org.camunda.bpm.model.dmn.instance.Variable
 
 class DmnParser {
 
   case class ParsingContext(model: DmnModelInstance) {
+
+    val namesWithSpaces = getNamesWithSpaces(model)
 
     val parsedExpressions = mutable.Map[String, ParsedExpression]()
     val parsedUnaryTest = mutable.Map[String, ParsedExpression]()
@@ -84,7 +90,8 @@ class DmnParser {
   }
 
   private def parseDecision(decision: Decision)(
-      implicit ctx: ParsingContext): ParsedDecision = {
+      implicit
+      ctx: ParsingContext): ParsedDecision = {
 
     // TODO be aware of loops
     val informationRequirements = decision.getInformationRequirements.asScala
@@ -129,7 +136,8 @@ class DmnParser {
   }
 
   private def parseBusinessKnowledgeModel(bkm: BusinessKnowledgeModel)(
-      implicit ctx: ParsingContext): ParsedBusinessKnowledgeModel = {
+      implicit
+      ctx: ParsingContext): ParsedBusinessKnowledgeModel = {
 
     // TODO be aware of loops
     val knowledgeRequirements = bkm.getKnowledgeRequirement.asScala
@@ -163,7 +171,8 @@ class DmnParser {
   }
 
   private def parseDecisionTable(decisionTable: DecisionTable)(
-      implicit ctx: ParsingContext): ParsedDecisionTable = {
+      implicit
+      ctx: ParsingContext): ParsedDecisionTable = {
 
     if (decisionTable.getOutputs.size > 1 &&
         decisionTable.getHitPolicy.equals(HitPolicy.COLLECT) &&
@@ -212,14 +221,16 @@ class DmnParser {
   }
 
   private def parseLiteralExpression(expression: LiteralExpression)(
-      implicit ctx: ParsingContext): ParsedLiteralExpression = {
+      implicit
+      ctx: ParsingContext): ParsedLiteralExpression = {
     val expr = parseFeelExpression(expression)
 
     ParsedLiteralExpression(expr)
   }
 
   private def parseContext(context: Context)(
-      implicit ctx: ParsingContext): ParsedContext = {
+      implicit
+      ctx: ParsingContext): ParsedContext = {
     val entries = context.getContextEntries.asScala
     val lastEntry = entries.last
 
@@ -239,8 +250,8 @@ class DmnParser {
     }
   }
 
-  private def parseList(list: DmnList)(
-      implicit ctx: ParsingContext): ParsedList = {
+  private def parseList(list: DmnList)(implicit
+                                       ctx: ParsingContext): ParsedList = {
     val entries = list.getExpressions.asScala
       .map(parseAnyExpression)
 
@@ -248,7 +259,8 @@ class DmnParser {
   }
 
   private def parseRelation(relation: Relation)(
-      implicit ctx: ParsingContext): ParsedRelation = {
+      implicit
+      ctx: ParsingContext): ParsedRelation = {
     val rows = relation.getRows.asScala
     val columns = relation.getColumns.asScala
     val columNames = columns.map(_.getName)
@@ -272,7 +284,8 @@ class DmnParser {
   }
 
   private def parseFunctionDefinition(functionDefinition: FunctionDefinition)(
-      implicit ctx: ParsingContext): ParsedDecisionLogic = {
+      implicit
+      ctx: ParsingContext): ParsedDecisionLogic = {
     val expression = functionDefinition.getExpression
     val parameters = functionDefinition.getFormalParameters.asScala
 
@@ -292,7 +305,8 @@ class DmnParser {
   }
 
   private def parseInvocation(invocation: Invocation)(
-      implicit ctx: ParsingContext): ParsedDecisionLogic = {
+      implicit
+      ctx: ParsingContext): ParsedDecisionLogic = {
 
     val bindings = invocation.getBindings.asScala
       .map(b =>
@@ -331,7 +345,8 @@ class DmnParser {
   }
 
   private def parseAnyExpression(expr: Expression)(
-      implicit ctx: ParsingContext): ParsedDecisionLogic = {
+      implicit
+      ctx: ParsingContext): ParsedDecisionLogic = {
     expr match {
       case dt: DecisionTable     => parseDecisionTable(dt)(ctx)
       case inv: Invocation       => parseInvocation(inv)(ctx)
@@ -348,14 +363,18 @@ class DmnParser {
   }
 
   private def parseFeelExpression(lt: LiteralExpression)(
-      implicit ctx: ParsingContext): ParsedExpression = {
+      implicit
+      ctx: ParsingContext): ParsedExpression = {
     // TODO check the expression language
     val expression = lt.getText.getTextContent
 
     ctx.parsedExpressions.getOrElseUpdate(
       expression, {
 
-        FeelParser.parseExpression(expression) match {
+        var escapedExpression =
+          escapeNamesWithSpaces(expression, ctx.namesWithSpaces)
+
+        FeelParser.parseExpression(escapedExpression) match {
           case Success(exp, _) => ParsedExpression(exp, expression)
           case e: NoSuccess => {
             ctx.failures += Failure(
@@ -368,7 +387,8 @@ class DmnParser {
   }
 
   private def parseUnaryTests(unaryTests: UnaryTests)(
-      implicit ctx: ParsingContext): ParsedExpression = {
+      implicit
+      ctx: ParsingContext): ParsedExpression = {
     // TODO check the expression language
     val expression = unaryTests.getText.getTextContent
 
@@ -378,7 +398,11 @@ class DmnParser {
         if (expression.isEmpty()) {
           ParsedExpression(ConstBool(true), expression)
         } else {
-          FeelParser.parseUnaryTests(expression) match {
+
+          var escapedExpression =
+            escapeNamesWithSpaces(expression, ctx.namesWithSpaces)
+
+          FeelParser.parseUnaryTests(escapedExpression) match {
             case Success(exp, _) => ParsedExpression(exp, expression)
             case e: NoSuccess => {
               ctx.failures += Failure(
@@ -389,6 +413,47 @@ class DmnParser {
         }
       }
     )
+  }
+
+  private def escapeNamesWithSpaces(
+      expression: String,
+      namesWithSpaces: Iterable[String]): String = {
+
+    (expression /: namesWithSpaces)(
+      (e, name) =>
+        e.replaceAll("""([(,.]|\s|^)(""" + name + """)([(),.]|\s|$)""",
+                     "$1'$2'$3"))
+  }
+
+  private def getNamesWithSpaces(model: DmnModelInstance): Iterable[String] = {
+    val elements = model.getDefinitions.getDrgElements.asScala
+
+    val elementsWithSpaces = elements.filter(_ match {
+      case d: Decision                 => d.getName.contains(" ")
+      case bkm: BusinessKnowledgeModel => bkm.getName.contains(" ")
+      case i: InputData                => i.getName.contains(" ")
+      case _                           => false
+    })
+
+    val namesWithSpaces = elementsWithSpaces.map(_.getName)
+
+    val variables = model.getModelElementsByType(classOf[Variable])
+    val variableNamesWithSpaces =
+      variables.asScala.filter(_.getName.contains(" ")).map(_.getName)
+
+    // because of a bug in the model API - this is the only way to get input data elements
+    val inputDataType = model.getModel.getType(classOf[InputData])
+    val inputNamesWithSpaces = model
+      .getModelElementsByType(inputDataType)
+      .asScala
+      .map(i =>
+        Option(i.getAttributeValue(DmnModelConstants.DMN_ATTRIBUTE_NAME)))
+      .filter(_.contains(" "))
+      .flatten
+
+    (namesWithSpaces ++ inputNamesWithSpaces ++ variableNamesWithSpaces).toList.distinct
+      .sortBy(_.length)
+      .reverse
   }
 
 }
