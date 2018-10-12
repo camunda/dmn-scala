@@ -7,7 +7,12 @@ import org.camunda.dmn.FunctionalHelper._
 import org.camunda.feel.FeelEngine
 import org.camunda.bpm.model.dmn.instance.{Context, ContextEntry, Expression}
 import org.camunda.dmn.parser.{ParsedContext, ParsedDecisionLogic}
-import org.camunda.feel.interpreter.{Val, ValContext, DefaultContext}
+import org.camunda.feel.interpreter.{
+  Val,
+  ValContext,
+  ValFunction,
+  DefaultContext
+}
 
 class ContextEvaluator(
     eval: (ParsedDecisionLogic, EvalContext) => Either[Failure, Val]) {
@@ -25,7 +30,14 @@ class ContextEvaluator(
       })
       .getOrElse {
         evalContextEntries(context.entries, ctx).right
-          .map(r => ValContext(DefaultContext(r)))
+          .map(results => {
+            val functions = results
+              .filter { case (k, v) => v.isInstanceOf[ValFunction] }
+              .map { case (k, f) => k -> List(f.asInstanceOf[ValFunction]) }
+
+            ValContext(
+              DefaultContext(variables = results, functions = functions))
+          })
       }
   }
 
