@@ -57,9 +57,13 @@ object DmnEngine {
 
   case class EvalContext(dmn: ParsedDmn, variables: Map[String, Any])
 
+  case class Configuration(escapeNamesWithSpaces: Boolean = false,
+                           escapeNamesWithDashes: Boolean = false)
+
 }
 
-class DmnEngine {
+class DmnEngine(
+    configuration: DmnEngine.Configuration = DmnEngine.Configuration()) {
 
   import DmnEngine._
 
@@ -69,7 +73,7 @@ class DmnEngine {
                                   valueMapper =
                                     new NoUnpackValueMapper(valueMapper))
 
-  val parser = new DmnParser
+  val parser = new DmnParser(configuration)
 
   val decisionEval = new DecisionEvaluator(eval = this.evalExpression,
                                            evalBkm = bkmEval.createFunction)
