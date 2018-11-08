@@ -22,16 +22,16 @@ import org.camunda.bpm.model.dmn.instance.{
   Expression,
   UnaryTests
 }
-import org.camunda.bpm.model.dmn.instance.{ Context, ContextEntry }
+import org.camunda.bpm.model.dmn.instance.{Context, ContextEntry}
 import org.camunda.bpm.model.dmn.instance.{
   List => DmnList,
   Relation,
   FunctionDefinition
 }
 import org.camunda.feel.parser.FeelParser
-import org.camunda.feel.parser.FeelParser.{ Success, NoSuccess }
+import org.camunda.feel.parser.FeelParser.{Success, NoSuccess}
 import org.camunda.feel.ParsedExpression
-import org.camunda.feel.parser.{ ConstBool, ConstNull }
+import org.camunda.feel.parser.{ConstBool, ConstNull}
 import org.camunda.feel.interpreter.ValError
 import scala.util.Try
 import scala.collection.mutable
@@ -65,7 +65,7 @@ class DmnParser(configuration: Configuration) {
   }
 
   object ParsingFailure
-    extends ParsedLiteralExpression(ParsedExpression(ConstNull, "failure"))
+      extends ParsedLiteralExpression(ParsedExpression(ConstNull, "failure"))
 
   def parse(stream: InputStream): Either[Failure, ParsedDmn] = {
 
@@ -79,7 +79,7 @@ class DmnParser(configuration: Configuration) {
   }
 
   private def parseModel(
-    model: DmnModelInstance): Either[Iterable[Failure], ParsedDmn] = {
+      model: DmnModelInstance): Either[Iterable[Failure], ParsedDmn] = {
 
     val ctx = ParsingContext(model)
 
@@ -99,8 +99,8 @@ class DmnParser(configuration: Configuration) {
   }
 
   private def parseDecision(decision: Decision)(
-    implicit
-    ctx: ParsingContext): ParsedDecision = {
+      implicit
+      ctx: ParsingContext): ParsedDecision = {
 
     // TODO be aware of loops
     val informationRequirements = decision.getInformationRequirements.asScala
@@ -135,19 +135,18 @@ class DmnParser(configuration: Configuration) {
       .orElse(Option(decision.getId))
       .getOrElse(decision.getName)
 
-    ParsedDecision(
-      decision.getId,
-      decision.getName,
-      logic,
-      resultName,
-      resultType,
-      requiredDecisions,
-      requiredBkms)
+    ParsedDecision(decision.getId,
+                   decision.getName,
+                   logic,
+                   resultName,
+                   resultType,
+                   requiredDecisions,
+                   requiredBkms)
   }
 
   private def parseBusinessKnowledgeModel(bkm: BusinessKnowledgeModel)(
-    implicit
-    ctx: ParsingContext): ParsedBusinessKnowledgeModel = {
+      implicit
+      ctx: ParsingContext): ParsedBusinessKnowledgeModel = {
 
     // TODO be aware of loops
     val knowledgeRequirements = bkm.getKnowledgeRequirement.asScala
@@ -173,21 +172,20 @@ class DmnParser(configuration: Configuration) {
     val parameters = bkm.getEncapsulatedLogic.getFormalParameters.asScala
       .map(f => f.getName -> f.getTypeRef)
 
-    ParsedBusinessKnowledgeModel(
-      bkm.getId,
-      bkm.getName,
-      logic,
-      parameters,
-      requiredBkms)
+    ParsedBusinessKnowledgeModel(bkm.getId,
+                                 bkm.getName,
+                                 logic,
+                                 parameters,
+                                 requiredBkms)
   }
 
   private def parseDecisionTable(decisionTable: DecisionTable)(
-    implicit
-    ctx: ParsingContext): ParsedDecisionTable = {
+      implicit
+      ctx: ParsingContext): ParsedDecisionTable = {
 
     if (decisionTable.getOutputs.size > 1 &&
-      decisionTable.getHitPolicy.equals(HitPolicy.COLLECT) &&
-      Option(decisionTable.getAggregation).isDefined) {
+        decisionTable.getHitPolicy.equals(HitPolicy.COLLECT) &&
+        Option(decisionTable.getAggregation).isDefined) {
       ctx.failures += Failure(
         "hit policy 'COLLECT' with aggregator is not defined for compound output")
     }
@@ -224,25 +222,24 @@ class DmnParser(configuration: Configuration) {
       ParsedRule(inputEntries, outputNames.zip(outputEntries))
     })
 
-    ParsedDecisionTable(
-      inputExpressions,
-      parsedOutputs,
-      parsedRules,
-      decisionTable.getHitPolicy,
-      decisionTable.getAggregation)
+    ParsedDecisionTable(inputExpressions,
+                        parsedOutputs,
+                        parsedRules,
+                        decisionTable.getHitPolicy,
+                        decisionTable.getAggregation)
   }
 
   private def parseLiteralExpression(expression: LiteralExpression)(
-    implicit
-    ctx: ParsingContext): ParsedLiteralExpression = {
+      implicit
+      ctx: ParsingContext): ParsedLiteralExpression = {
     val expr = parseFeelExpression(expression)
 
     ParsedLiteralExpression(expr)
   }
 
   private def parseContext(context: Context)(
-    implicit
-    ctx: ParsingContext): ParsedContext = {
+      implicit
+      ctx: ParsingContext): ParsedContext = {
     val entries = context.getContextEntries.asScala
     val lastEntry = entries.last
 
@@ -262,7 +259,8 @@ class DmnParser(configuration: Configuration) {
     }
   }
 
-  private def parseList(list: DmnList)(implicit ctx: ParsingContext): ParsedList = {
+  private def parseList(list: DmnList)(
+      implicit ctx: ParsingContext): ParsedList = {
     val entries = list.getExpressions.asScala
       .map(parseAnyExpression)
 
@@ -270,8 +268,8 @@ class DmnParser(configuration: Configuration) {
   }
 
   private def parseRelation(relation: Relation)(
-    implicit
-    ctx: ParsingContext): ParsedRelation = {
+      implicit
+      ctx: ParsingContext): ParsedRelation = {
     val rows = relation.getRows.asScala
     val columns = relation.getColumns.asScala
     val columNames = columns.map(_.getName)
@@ -295,8 +293,8 @@ class DmnParser(configuration: Configuration) {
   }
 
   private def parseFunctionDefinition(functionDefinition: FunctionDefinition)(
-    implicit
-    ctx: ParsingContext): ParsedDecisionLogic = {
+      implicit
+      ctx: ParsingContext): ParsedDecisionLogic = {
     val expression = functionDefinition.getExpression
     val parameters = functionDefinition.getFormalParameters.asScala
 
@@ -316,8 +314,8 @@ class DmnParser(configuration: Configuration) {
   }
 
   private def parseInvocation(invocation: Invocation)(
-    implicit
-    ctx: ParsingContext): ParsedDecisionLogic = {
+      implicit
+      ctx: ParsingContext): ParsedDecisionLogic = {
 
     val bindings = invocation.getBindings.asScala
       .map(b =>
@@ -330,7 +328,7 @@ class DmnParser(configuration: Configuration) {
 
             None
           }
-        })
+      })
       .flatten
 
     invocation.getExpression match {
@@ -356,8 +354,8 @@ class DmnParser(configuration: Configuration) {
   }
 
   private def parseAnyExpression(expr: Expression)(
-    implicit
-    ctx: ParsingContext): ParsedDecisionLogic = {
+      implicit
+      ctx: ParsingContext): ParsedDecisionLogic = {
     expr match {
       case dt: DecisionTable     => parseDecisionTable(dt)(ctx)
       case inv: Invocation       => parseInvocation(inv)(ctx)
@@ -374,8 +372,8 @@ class DmnParser(configuration: Configuration) {
   }
 
   private def parseFeelExpression(lt: LiteralExpression)(
-    implicit
-    ctx: ParsingContext): ParsedExpression = {
+      implicit
+      ctx: ParsingContext): ParsedExpression = {
 
     val expression = lt.getText.getTextContent
 
@@ -390,24 +388,25 @@ class DmnParser(configuration: Configuration) {
       ctx.parsedExpressions.getOrElseUpdate(
         expression, {
 
-        var escapedExpression =
-          escapeNamesInExpression(expression, ctx.namesToEscape)
+          var escapedExpression =
+            escapeNamesInExpression(expression, ctx.namesToEscape)
 
-        FeelParser.parseExpression(escapedExpression) match {
-          case Success(exp, _) => ParsedExpression(exp, expression)
-          case e: NoSuccess => {
-            ctx.failures += Failure(
-              s"Failed to parse FEEL expression '$expression':\n$e")
-            ParsedExpression(ConstNull, expression)
+          FeelParser.parseExpression(escapedExpression) match {
+            case Success(exp, _) => ParsedExpression(exp, expression)
+            case e: NoSuccess => {
+              ctx.failures += Failure(
+                s"Failed to parse FEEL expression '$expression':\n$e")
+              ParsedExpression(ConstNull, expression)
+            }
           }
         }
-      })
+      )
     }
   }
 
   private def parseUnaryTests(unaryTests: UnaryTests)(
-    implicit
-    ctx: ParsingContext): ParsedExpression = {
+      implicit
+      ctx: ParsingContext): ParsedExpression = {
 
     val expression = unaryTests.getText.getTextContent
 
@@ -423,35 +422,35 @@ class DmnParser(configuration: Configuration) {
       ctx.parsedUnaryTest.getOrElseUpdate(
         expression, {
 
-        if (expression.isEmpty()) {
-          ParsedExpression(ConstBool(true), expression)
-        } else {
+          if (expression.isEmpty()) {
+            ParsedExpression(ConstBool(true), expression)
+          } else {
 
-          var escapedExpression =
-            escapeNamesInExpression(expression, ctx.namesToEscape)
+            var escapedExpression =
+              escapeNamesInExpression(expression, ctx.namesToEscape)
 
-          FeelParser.parseUnaryTests(escapedExpression) match {
-            case Success(exp, _) => ParsedExpression(exp, expression)
-            case e: NoSuccess => {
-              ctx.failures += Failure(
-                s"Failed to parse FEEL unary-tests '$expression':\n$e")
-              ParsedExpression(ConstNull, expression)
+            FeelParser.parseUnaryTests(escapedExpression) match {
+              case Success(exp, _) => ParsedExpression(exp, expression)
+              case e: NoSuccess => {
+                ctx.failures += Failure(
+                  s"Failed to parse FEEL unary-tests '$expression':\n$e")
+                ParsedExpression(ConstNull, expression)
+              }
             }
           }
         }
-      })
+      )
     }
   }
 
   private def escapeNamesInExpression(
-    expression:      String,
-    namesWithSpaces: Iterable[String]): String = {
+      expression: String,
+      namesWithSpaces: Iterable[String]): String = {
 
     (expression /: namesWithSpaces)(
       (e, name) =>
-        e.replaceAll(
-          """([(,.]|\s|^)(""" + name + """)([(),.]|\s|$)""",
-          "$1'$2'$3"))
+        e.replaceAll("""([(,.]|\s|^)(""" + name + """)([(),.]|\s|$)""",
+                     "$1'$2'$3"))
   }
 
   private def getNamesToEscape(model: DmnModelInstance): Iterable[String] = {

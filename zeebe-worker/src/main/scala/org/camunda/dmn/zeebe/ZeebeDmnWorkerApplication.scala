@@ -16,7 +16,11 @@ object ZeebeDmnWorkerApplication {
     val repository: String =
       Option(System.getenv("dmn.repo")).getOrElse("dmn-repo")
 
-    val app = new ZeebeDmnWorkerApplication(repository)
+    val brokerContractPoint: String =
+      Option(System.getenv("zeebe.client.broker.contactPoint"))
+        .getOrElse("127.0.0.1:26500")
+
+    val app = new ZeebeDmnWorkerApplication(repository, brokerContractPoint)
 
     sys.addShutdownHook(app.stop)
 
@@ -25,20 +29,18 @@ object ZeebeDmnWorkerApplication {
 
 }
 
-class ZeebeDmnWorkerApplication(repository: String) {
+class ZeebeDmnWorkerApplication(repository: String,
+                                brokerContactPoint: String) {
 
-  var openLatch = new CountDownLatch(1)
+  val openLatch = new CountDownLatch(1)
 
   lazy val zeebeClient: ZeebeClient = {
 
     val builder = ZeebeClient
       .newClientBuilder()
+      .brokerContactPoint(brokerContactPoint)
       .defaultJobWorkerName("script-worker")
       .defaultJobTimeout(Duration.ofSeconds(10))
-
-    Option(System.getenv("zeebe.client.broker.contactPoint"))
-      .map(builder.brokerContactPoint)
-    Option(System.getenv("zeebe.client.topic")).map(builder.defaultTopic)
 
     builder.build
   }
@@ -55,7 +57,6 @@ class ZeebeDmnWorkerApplication(repository: String) {
 
     val handler = new DmnJobHandler(dmnEngine)
     zeebeClient
-      .topicClient()
       .jobClient()
       .newWorker()
       .jobType("DMN")

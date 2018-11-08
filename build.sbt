@@ -1,6 +1,6 @@
 val shared = Seq(
   organization := "org.camunda.bpm.extension.dmn.scala",
-  version := "1.0.0-SNAPSHOT",
+  version := "1.1.0-SNAPSHOT",
   scalaVersion := "2.12.4",
   resolvers += Resolver.mavenLocal,
   resolvers += Classpaths.typesafeReleases,
@@ -17,9 +17,9 @@ val commonDependencies = Seq(
   "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.9.0" % "test"
 )
 
-val feelVersion = "1.5.0"
+val feelVersion = "1.6.0"
 val camundaVersion = "7.9.0"
-val zeebeVersion = "0.11.0"
+val zeebeVersion = "0.13.0"
 val scalatraVersion = "2.6.2"
 
 lazy val root = (project in file("."))

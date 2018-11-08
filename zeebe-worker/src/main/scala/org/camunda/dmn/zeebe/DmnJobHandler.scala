@@ -9,10 +9,11 @@ import io.zeebe.client.api.subscription.JobHandler
 import io.zeebe.client.api.clients.JobClient
 import io.zeebe.client.api.events.JobEvent
 import java.util.Collections
+import io.zeebe.client.api.response.ActivatedJob
 
 class DmnJobHandler(engine: StandaloneEngine) extends JobHandler {
 
-  override def handle(client: JobClient, job: JobEvent) {
+  override def handle(client: JobClient, job: ActivatedJob) {
     Option(job.getCustomHeaders.get("decisionRef")).map(_.toString) match {
       case None => error("missing custom header 'decisionRef'")
       case Some(decisionId) => {
@@ -28,8 +29,11 @@ class DmnJobHandler(engine: StandaloneEngine) extends JobHandler {
     }
   }
 
-  private def complete(client: JobClient, job: JobEvent, result: Any) {
-    client.newCompleteCommand(job).payload(s"""{"result":$result}""").send()
+  private def complete(client: JobClient, job: ActivatedJob, result: Any) {
+    client
+      .newCompleteCommand(job.getKey)
+      .payload(s"""{"result":$result}""")
+      .send()
   }
 
   private def error(failure: String) {

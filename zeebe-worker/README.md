@@ -20,7 +20,6 @@ You can change the configuration by the following environment variables:
 
 * `dmn.repo` - the directory the repository
 * `zeebe.client.broker.contactPoint` - the Zeebe connection
-* `zeebe.client.topic` - the Zeebe topic to work on
 
 ### Zeebe Task Definition
 

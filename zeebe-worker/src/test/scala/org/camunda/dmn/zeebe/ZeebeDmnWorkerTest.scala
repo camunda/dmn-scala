@@ -12,16 +12,18 @@ import scala.annotation.meta.getter
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import io.zeebe.client.api.events.JobState
 import io.zeebe.test.ZeebeTestRule
 import io.zeebe.model.bpmn.Bpmn
 import java.util.Properties
-import io.zeebe.client.api.clients.TopicClient
 import org.camunda.dmn.zeebe.ZeebeDmnWorkerApplication
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.junit.After
 import java.io.ByteArrayInputStream
+import io.zeebe.client.ZeebeClient
+import io.zeebe.test.util.record.RecordingExporter
+import io.zeebe.protocol.intent.JobIntent
+import io.zeebe.exporter.record.value.job.Headers
 
 class ZeebeDmnWorkerTest extends JUnitSuite with Matchers {
 
@@ -30,51 +32,39 @@ class ZeebeDmnWorkerTest extends JUnitSuite with Matchers {
   @(Rule @getter)
   val testRule = new ZeebeTestRule()
 
-  val worker = new ZeebeDmnWorkerApplication(repository)
+  var worker: ZeebeDmnWorkerApplication = _
 
-  var client: TopicClient = _
-
-  var payload: String = _
+  var client: ZeebeClient = _
 
   @Before def init {
 
-    payload = ""
+    worker = new ZeebeDmnWorkerApplication(repository, testRule.getClient.getConfiguration.getBrokerContactPoint)
 
     Future {
       worker.start
     }
 
-    val workflow = Bpmn.createExecutableWorkflow("wf")
+    val workflow = Bpmn.createExecutableProcess("wf")
       .startEvent()
       .serviceTask("dmn-task", t => t
-        .taskType("DMN")
-        .taskHeader("decisionRef", "discount"))
+        .zeebeTaskType("DMN")
+        .zeebeTaskHeader("decisionRef", "discount"))
       .endEvent()
       .done()
 
-    client = testRule.getClient.topicClient
+    client = testRule.getClient
 
     client.workflowClient()
       .newDeployCommand()
       .addWorkflowModel(workflow, "wf.bpmn")
       .send()
       .join()
-
-    // util to get the task result
-    testRule.getClient()
-      .topicClient()
-      .newSubscription()
-      .name("test")
-      .jobEventHandler(job => {
-        if (job.getState == JobState.COMPLETED) {
-          payload = job.getPayload
-        }
-      })
-      .open()
   }
 
   @After def cleanUp {
     worker.stop
+
+    RecordingExporter.reset()
   }
 
   @Test def shouldReturnDecisionResult {
@@ -86,9 +76,11 @@ class ZeebeDmnWorkerTest extends JUnitSuite with Matchers {
       .send()
       .join()
 
-    testRule.waitUntilWorkflowInstanceCompleted(workflowInstance.getWorkflowInstanceKey())
+    val jobRecord = RecordingExporter
+      .jobRecords(JobIntent.COMPLETED)
+      .getFirst
 
-    payload should be("""{"result":0.15}""")
+    jobRecord.getValue.getPayload should be("""{"result":0.15}""")
   }
 
   @Test def shouldReturnNilResult {
@@ -100,8 +92,10 @@ class ZeebeDmnWorkerTest extends JUnitSuite with Matchers {
       .send()
       .join()
 
-    testRule.waitUntilWorkflowInstanceCompleted(workflowInstance.getWorkflowInstanceKey())
+    val jobRecord = RecordingExporter
+      .jobRecords(JobIntent.COMPLETED)
+      .getFirst
 
-    payload should be("""{"result":null}""")
+    jobRecord.getValue.getPayload should be("""{"result":null}""")
   }
 }
