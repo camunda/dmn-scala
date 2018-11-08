@@ -61,7 +61,7 @@ Add the the project as dependency.
 ```xml
 <dependency>
   <groupId>org.camunda.bpm.extension.dmn.scala</groupId>
-  <artifactId>camunda-plugin</artifactId>
+  <artifactId>dmn-engine-camunda-plugin</artifactId>
   <version>${version}</version>
 </dependency>
 ```
