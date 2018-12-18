@@ -39,7 +39,7 @@ class ZeebeDmnWorkerApplication(repository: String,
     val builder = ZeebeClient
       .newClientBuilder()
       .brokerContactPoint(brokerContactPoint)
-      .defaultJobWorkerName("script-worker")
+      .defaultJobWorkerName("dmn-scala-worker")
       .defaultJobTimeout(Duration.ofSeconds(10))
 
     builder.build

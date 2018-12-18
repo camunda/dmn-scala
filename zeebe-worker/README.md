@@ -18,7 +18,7 @@ Per default, the application uses the directory 'dmn-repo' as repository.
 
 You can change the configuration by the following environment variables:
 
-* `dmn.repo` - the directory the repository
+* `dmn-repo` - the directory the repository
 * `zeebe.client.broker.contactPoint` - the Zeebe connection
 
 ### Zeebe Task Definition
