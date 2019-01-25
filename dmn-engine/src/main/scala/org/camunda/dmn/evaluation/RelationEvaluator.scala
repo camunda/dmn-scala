@@ -10,22 +10,35 @@ import org.camunda.dmn.parser.{
   ParsedRelationRow
 }
 import org.camunda.feel.interpreter.{Val, ValContext, DefaultContext, ValList}
+import org.camunda.dmn.Audit.SingleEvaluationResult
 
 class RelationEvaluator(
     eval: (ParsedDecisionLogic, EvalContext) => Either[Failure, Val]) {
 
   def eval(relation: ParsedRelation,
            context: EvalContext): Either[Failure, Val] = {
-    mapEither(
+
+    val rows = mapEither(
       relation.rows,
       (row: ParsedRelationRow) => {
-        mapEither[(String, ParsedDecisionLogic), (String, Val)](row.columns, {
-          case (column, expr) =>
-            eval(expr, context).right
-              .map(r => column -> r)
-        }).right.map(r => ValContext(DefaultContext(r.toMap)))
+        val columns =
+          mapEither[(String, ParsedDecisionLogic), (String, Val)](row.columns, {
+            case (column, expr) =>
+              eval(expr, context).right
+                .map(r => column -> r)
+          })
+
+        columns.right.map(values => ValContext(DefaultContext(values.toMap)))
       }
-    ).right.map(r => ValList(r))
+    )
+
+    rows.right
+      .map(ValList)
+      .map { result =>
+        context.audit(relation, SingleEvaluationResult(result))
+
+        result
+      }
   }
 
 }

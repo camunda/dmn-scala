@@ -13,32 +13,21 @@ import org.camunda.feel.interpreter.{
   ValFunction,
   DefaultContext
 }
+import org.camunda.dmn.Audit.ContextEvaluationResult
 
 class ContextEvaluator(
     eval: (ParsedDecisionLogic, EvalContext) => Either[Failure, Val]) {
 
   def eval(context: ParsedContext, ctx: EvalContext): Either[Failure, Val] = {
 
-    context.aggregationEntry
-      .map(expr => {
-        evalContextEntries(context.entries, ctx).right
-          .flatMap(results => {
-            val context = ctx.copy(variables = ctx.variables ++ results)
+    evalContextEntries(context.entries, ctx).right.flatMap(results =>
+      evalContextResult(context.aggregationEntry, results, ctx).right.map {
+        result =>
+          ctx.audit(context,
+                    ContextEvaluationResult(entries = results, result = result))
 
-            eval(expr, context)
-          })
-      })
-      .getOrElse {
-        evalContextEntries(context.entries, ctx).right
-          .map(results => {
-            val functions = results
-              .filter { case (k, v) => v.isInstanceOf[ValFunction] }
-              .map { case (k, f) => k -> List(f.asInstanceOf[ValFunction]) }
-
-            ValContext(
-              DefaultContext(variables = results, functions = functions))
-          })
-      }
+          result
+    })
   }
 
   private def evalContextEntries(
@@ -55,6 +44,27 @@ class ContextEvaluator(
             .map(v => result + (name -> v))
       }
     )
+  }
+
+  private def evalContextResult(aggregationEntry: Option[ParsedDecisionLogic],
+                                results: Map[String, Val],
+                                ctx: EvalContext): Either[Failure, Val] = {
+
+    aggregationEntry
+      .map(expr => {
+        val evalContext = ctx.copy(variables = ctx.variables ++ results)
+
+        eval(expr, evalContext)
+      })
+      .getOrElse {
+        val functions = results
+          .filter { case (k, v) => v.isInstanceOf[ValFunction] }
+          .map { case (k, f) => k -> List(f.asInstanceOf[ValFunction]) }
+
+        Right(
+          ValContext(
+            DefaultContext(variables = results, functions = functions)))
+      }
   }
 
 }

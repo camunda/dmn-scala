@@ -12,12 +12,18 @@ import org.camunda.bpm.model.dmn.instance.{LiteralExpression, UnaryTests}
 import scala.Left
 import scala.Right
 import org.camunda.dmn.parser.ParsedLiteralExpression
+import org.camunda.dmn.Audit.SingleEvaluationResult
 
 class LiteralExpressionEvaluator(feelEngine: FeelEngine) {
 
   def evalExpression(literalExpression: ParsedLiteralExpression,
                      context: EvalContext): Either[Failure, Val] = {
-    evalExpression(literalExpression.expression, context)
+
+    evalExpression(literalExpression.expression, context).right.map { result =>
+      context.audit(literalExpression, SingleEvaluationResult(result))
+
+      result
+    }
   }
 
   def evalExpression(expression: ParsedExpression,

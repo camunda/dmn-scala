@@ -1,6 +1,7 @@
 package org.camunda.dmn
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable.{ListBuffer => mutableList}
 import scala.reflect.{ClassTag, classTag}
 
 import java.io.InputStream
@@ -38,6 +39,12 @@ import org.camunda.feel.interpreter.{
   DefaultValueMapper
 }
 import org.camunda.feel.spi.{CustomValueMapper, CustomFunctionProvider}
+import org.camunda.dmn.Audit.{
+  AuditLog,
+  AuditLogEntry,
+  AuditLogListener,
+  EvaluationResult
+}
 
 object DmnEngine {
 
@@ -55,15 +62,31 @@ object DmnEngine {
     val isNil = true
   }
 
-  case class EvalContext(dmn: ParsedDmn, variables: Map[String, Any])
+  case class EvalContext(dmn: ParsedDmn,
+                         variables: Map[String, Any],
+                         currentElement: ParsedDecisionLogicContainer,
+                         auditLog: mutableList[AuditLogEntry] =
+                           mutableList.empty) {
+
+    def audit(decisionLogic: ParsedDecisionLogic, result: EvaluationResult) {
+      if (decisionLogic == currentElement.logic) {
+        auditLog += AuditLogEntry(id = currentElement.id,
+                                  name = currentElement.name,
+                                  decisionLogic = decisionLogic,
+                                  result = result)
+      }
+    }
+
+  }
 
   case class Configuration(escapeNamesWithSpaces: Boolean = false,
                            escapeNamesWithDashes: Boolean = false)
 
 }
 
-class DmnEngine(
-    configuration: DmnEngine.Configuration = DmnEngine.Configuration()) {
+class DmnEngine(configuration: DmnEngine.Configuration =
+                  DmnEngine.Configuration(),
+                auditLogListeners: List[AuditLogListener] = List.empty) {
 
   import DmnEngine._
 
@@ -115,7 +138,8 @@ class DmnEngine(
            variables: Map[String, Any]): Either[Failure, EvalResult] = {
     dmn.decisionsById
       .get(decisionId)
-      .map(evalDecision(_, EvalContext(dmn, variables)))
+      .map(decision =>
+        evalDecision(decision, EvalContext(dmn, variables, decision)))
       .getOrElse(Left(Failure(s"no decision found with id '$decisionId'")))
   }
 
@@ -124,7 +148,8 @@ class DmnEngine(
                  variables: Map[String, Any]): Either[Failure, EvalResult] = {
     dmn.decisionsByName
       .get(decisionName)
-      .map(evalDecision(_, EvalContext(dmn, variables)))
+      .map(decision =>
+        evalDecision(decision, EvalContext(dmn, variables, decision)))
       .getOrElse(Left(Failure(s"no decision found with name '$decisionName'")))
   }
 
@@ -156,9 +181,15 @@ class DmnEngine(
     decisionEval
       .eval(decision, context)
       .right
-      .map({
-        case ValNull => NilResult
-        case result  => Result(valueMapper.unpackVal(result))
+      .map(result => {
+        val log = new AuditLog(context.dmn, context.auditLog.toList)
+
+        auditLogListeners.map(_.onEval(log))
+
+        result match {
+          case ValNull => NilResult
+          case result  => Result(valueMapper.unpackVal(result))
+        }
       })
   }
 

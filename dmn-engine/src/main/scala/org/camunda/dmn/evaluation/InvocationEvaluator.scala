@@ -17,6 +17,7 @@ import org.camunda.dmn.parser.{
 }
 import org.camunda.feel.ParsedExpression
 import org.camunda.feel.interpreter.Val
+import org.camunda.dmn.Audit.SingleEvaluationResult
 
 class InvocationEvaluator(
     eval: (ParsedExpression, EvalContext) => Either[Failure, Val],
@@ -24,11 +25,17 @@ class InvocationEvaluator(
 
   def eval(invocation: ParsedInvocation,
            context: EvalContext): Either[Failure, Val] = {
-    evalParameters(invocation.bindings, context).right.flatMap(p => {
+
+    evalParameters(invocation.bindings, context).right.flatMap { p =>
       val ctx = context.copy(variables = context.variables ++ p.toMap)
 
-      evalBkm(invocation.invocation, ctx)
-    })
+      evalBkm(invocation.invocation, ctx).right
+        .map { result =>
+          context.audit(invocation, SingleEvaluationResult(result))
+
+          result
+        }
+    }
   }
 
   private def evalParameters(

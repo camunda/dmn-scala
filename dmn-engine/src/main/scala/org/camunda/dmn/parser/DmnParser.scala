@@ -191,9 +191,11 @@ class DmnParser(configuration: Configuration) {
     }
 
     val inputExpressions = decisionTable.getInputs.asScala
-      .map(_.getInputExpression)
-      .map(parseFeelExpression)
-
+      .map(
+        i =>
+          ParsedInput(i.getId,
+                      i.getLabel,
+                      parseFeelExpression(i.getInputExpression)))
     val rules = decisionTable.getRules.asScala
     val outputs = decisionTable.getOutputs.asScala
 
@@ -208,18 +210,18 @@ class DmnParser(configuration: Configuration) {
       val defaultValue =
         Option(o.getDefaultOutputEntry).map(parseFeelExpression)
 
-      ParsedOutput(o.getName, value, defaultValue)
+      ParsedOutput(o.getId, o.getName, o.getLabel, value, defaultValue)
     })
 
     val parsedRules = rules.map(r => {
       val inputEntries = r.getInputEntries.asScala
         .map(parseUnaryTests)
 
-      val outputNames = outputs.map(_.getName)
+      val outputNames = parsedOutputs.map(_.name)
       val outputEntries = r.getOutputEntries.asScala
         .map(parseFeelExpression)
 
-      ParsedRule(inputEntries, outputNames.zip(outputEntries))
+      ParsedRule(r.getId, inputEntries, outputNames.zip(outputEntries))
     })
 
     ParsedDecisionTable(inputExpressions,
@@ -259,8 +261,8 @@ class DmnParser(configuration: Configuration) {
     }
   }
 
-  private def parseList(list: DmnList)(
-      implicit ctx: ParsingContext): ParsedList = {
+  private def parseList(list: DmnList)(implicit
+                                       ctx: ParsingContext): ParsedList = {
     val entries = list.getExpressions.asScala
       .map(parseAnyExpression)
 

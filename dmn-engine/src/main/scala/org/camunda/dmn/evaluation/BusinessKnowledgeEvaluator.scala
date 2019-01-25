@@ -34,7 +34,8 @@ class BusinessKnowledgeEvaluator(
       .flatMap(functions => {
 
         val evalContext =
-          context.copy(variables = context.variables ++ functions)
+          context.copy(variables = context.variables ++ functions,
+                       currentElement = bkm)
 
         validateParameters(bkm.parameters, evalContext).right
           .flatMap(_ => eval(bkm.logic, evalContext))
@@ -47,7 +48,8 @@ class BusinessKnowledgeEvaluator(
 
     evalRequiredKnowledge(bkm.requiredBkms, context).right.map(functions => {
 
-      val evalContext = context.copy(variables = context.variables ++ functions)
+      val evalContext = context.copy(variables = context.variables ++ functions,
+                                     currentElement = bkm)
 
       val function = createFunction(bkm.logic, bkm.parameters, evalContext)
 
@@ -98,6 +100,7 @@ class BusinessKnowledgeEvaluator(
     ValFunction(
       params = parameterNames,
       invoke = args => {
+
         val result = validateArguments(parameters, args, context).right.flatMap(
           arguments =>
             eval(expression,

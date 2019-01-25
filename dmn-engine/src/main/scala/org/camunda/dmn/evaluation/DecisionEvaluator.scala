@@ -25,6 +25,7 @@ class DecisionEvaluator(
 
   def eval(decision: ParsedDecision,
            context: EvalContext): Either[Failure, Val] = {
+
     evalDecision(decision, context).right
       .map { case (name, result) => result }
   }
@@ -32,13 +33,15 @@ class DecisionEvaluator(
   private def evalDecision(
       decision: ParsedDecision,
       context: EvalContext): Either[Failure, (String, Val)] = {
+
     evalRequiredDecisions(decision.requiredDecisions, context).right
       .flatMap(decisionResults => {
         evalRequiredKnowledge(decision.requiredBkms, context).right
           .flatMap(functions => {
 
             val decisionEvaluationContext = context.copy(
-              variables = context.variables ++ decisionResults ++ functions)
+              variables = context.variables ++ decisionResults ++ functions,
+              currentElement = decision)
 
             eval(decision.logic, decisionEvaluationContext).right
               .flatMap(

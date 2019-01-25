@@ -32,8 +32,18 @@ import org.camunda.bpm.engine.variable.Variables
 import org.camunda.bpm.engine.variable.context.VariableContext
 import org.camunda.bpm.engine.impl.util.ParseUtil
 import java.util.stream.Collectors
+import scala.util.Either
 
-class CamundaDmnEngine(engine: DmnEngine)
+object CamundaDmnEngine {
+
+  type EvalListener = (
+      DmnDecision,
+      String,
+      () => Either[Failure, EvalResult]) => Either[Failure, EvalResult]
+
+}
+
+class CamundaDmnEngine(engine: DmnEngine, onEval: CamundaDmnEngine.EvalListener)
     extends org.camunda.bpm.dmn.engine.DmnEngine {
 
   override def parseDecisions(inputStream: InputStream): JList[DmnDecision] = {
@@ -62,7 +72,7 @@ class CamundaDmnEngine(engine: DmnEngine)
         drg.setName(definitions.getName)
         drg.setCategory(definitions.getNamespace)
 
-        val decisionMap = createDecisionDefinitions(parsedDmn)
+        val decisionMap = createDecisionDefinitions(parsedDmn, Some(drg))
           .map(d => d.getKey -> d)
           .toMap
           .asJava
@@ -85,11 +95,13 @@ class CamundaDmnEngine(engine: DmnEngine)
   }
 
   private def createDecisionDefinitions(
-      parsedDmn: ParsedDmn): Iterable[DmnDecision] = {
+      parsedDmn: ParsedDmn,
+      drg: Option[DecisionRequirementsDefinitionEntity] = None)
+    : Iterable[DmnDecision] = {
     val model = parsedDmn.model
     val namespace = model.getDefinitions.getNamespace
 
-    parsedDmn.decisions.map(decision => {
+    val decisions = parsedDmn.decisions.map(decision => {
       val element: Decision = model.getModelElementById(decision.id)
 
       val definition = new DecisionDefinitionEntity
@@ -103,8 +115,26 @@ class CamundaDmnEngine(engine: DmnEngine)
           element.getCamundaHistoryTimeToLiveString))
       definition.setVersionTag(element.getVersionTag)
 
-      definition: DmnDecision
+      drg.map { drg =>
+        definition.setDecisionRequirementsDefinitionId(drg.getId)
+        definition.setDecisionRequirementsDefinitionKey(drg.getKey)
+      }
+
+      definition
     })
+
+    val decisionsById = decisions.map(d => d.getKey -> d).toMap
+
+    decisions.map { decision =>
+      val parsedDecision = parsedDmn.decisionsById(decision.getKey)
+
+      val requiredDecisions =
+        parsedDecision.requiredDecisions.map(requiredDecision =>
+          decisionsById(requiredDecision.id): DmnDecision)
+      decision.setRequiredDecision(requiredDecisions.toList.asJava)
+    }
+
+    decisions
   }
 
   override def evaluateDecision(
@@ -115,7 +145,9 @@ class CamundaDmnEngine(engine: DmnEngine)
         val id = decision.getKey
         val name = decision.getName
 
-        engine.eval(dmn, id, variables) match {
+        val result = onEval(decision, id, () => engine.eval(dmn, id, variables))
+
+        result match {
           case Left(failure) =>
             throw new ProcessEngineException(failure.toString)
           case Right(result) => createDecisionResult(result, decision)
