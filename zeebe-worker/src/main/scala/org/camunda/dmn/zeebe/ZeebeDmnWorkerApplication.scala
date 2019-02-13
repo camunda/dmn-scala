@@ -57,7 +57,6 @@ class ZeebeDmnWorkerApplication(repository: String,
 
     val handler = new DmnJobHandler(dmnEngine)
     zeebeClient
-      .jobClient()
       .newWorker()
       .jobType("DMN")
       .handler(handler)

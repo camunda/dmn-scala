@@ -54,7 +54,7 @@ class ZeebeDmnWorkerTest extends JUnitSuite with Matchers {
 
     client = testRule.getClient
 
-    client.workflowClient()
+    client
       .newDeployCommand()
       .addWorkflowModel(workflow, "wf.bpmn")
       .send()
@@ -69,7 +69,8 @@ class ZeebeDmnWorkerTest extends JUnitSuite with Matchers {
 
   @Test def shouldReturnDecisionResult {
 
-    val workflowInstance = client.workflowClient().newCreateInstanceCommand()
+    val workflowInstance = client
+      .newCreateInstanceCommand()
       .bpmnProcessId("wf")
       .latestVersion()
       .payload("""{"customer":"Business","orderSize":15}""")
@@ -85,7 +86,8 @@ class ZeebeDmnWorkerTest extends JUnitSuite with Matchers {
 
   @Test def shouldReturnNilResult {
 
-    val workflowInstance = client.workflowClient().newCreateInstanceCommand()
+    val workflowInstance = client
+      .newCreateInstanceCommand()
       .bpmnProcessId("wf")
       .latestVersion()
       .payload("""{"customer":"VIP","orderSize":100}""")
