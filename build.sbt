@@ -19,7 +19,7 @@ val commonDependencies = Seq(
 
 val feelVersion = "1.6.2"
 val camundaVersion = "7.9.0"
-val zeebeVersion = "0.14.0"
+val zeebeVersion = "0.15.0"
 val scalatraVersion = "2.6.2"
 
 lazy val root = (project in file("."))
