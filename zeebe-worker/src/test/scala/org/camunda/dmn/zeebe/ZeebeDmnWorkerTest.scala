@@ -27,7 +27,8 @@ import io.zeebe.exporter.record.value.job.Headers
 
 class ZeebeDmnWorkerTest extends JUnitSuite with Matchers {
 
-  val repository = Paths.get(getClass.getResource("/repository").toURI()).toString
+  val repository =
+    Paths.get(getClass.getResource("/repository").toURI()).toString
 
   @(Rule @getter)
   val testRule = new ZeebeTestRule()
@@ -38,23 +39,27 @@ class ZeebeDmnWorkerTest extends JUnitSuite with Matchers {
 
   @Before def init {
 
-    worker = new ZeebeDmnWorkerApplication(repository, testRule.getClient.getConfiguration.getBrokerContactPoint)
+    worker = new ZeebeDmnWorkerApplication(
+      repository,
+      testRule.getClient.getConfiguration.getBrokerContactPoint)
 
     Future {
       worker.start
     }
 
-    val workflow = Bpmn.createExecutableProcess("wf")
+    val workflow = Bpmn
+      .createExecutableProcess("wf")
       .startEvent()
-      .serviceTask("dmn-task", t => t
-        .zeebeTaskType("DMN")
-        .zeebeTaskHeader("decisionRef", "discount"))
+      .serviceTask("dmn-task",
+                   t =>
+                     t.zeebeTaskType("DMN")
+                       .zeebeTaskHeader("decisionRef", "discount"))
       .endEvent()
       .done()
 
     client = testRule.getClient
 
-    client.workflowClient()
+    client
       .newDeployCommand()
       .addWorkflowModel(workflow, "wf.bpmn")
       .send()
@@ -69,7 +74,8 @@ class ZeebeDmnWorkerTest extends JUnitSuite with Matchers {
 
   @Test def shouldReturnDecisionResult {
 
-    val workflowInstance = client.workflowClient().newCreateInstanceCommand()
+    val workflowInstance = client
+      .newCreateInstanceCommand()
       .bpmnProcessId("wf")
       .latestVersion()
       .payload("""{"customer":"Business","orderSize":15}""")
@@ -85,7 +91,8 @@ class ZeebeDmnWorkerTest extends JUnitSuite with Matchers {
 
   @Test def shouldReturnNilResult {
 
-    val workflowInstance = client.workflowClient().newCreateInstanceCommand()
+    val workflowInstance = client
+      .newCreateInstanceCommand()
       .bpmnProcessId("wf")
       .latestVersion()
       .payload("""{"customer":"VIP","orderSize":100}""")
