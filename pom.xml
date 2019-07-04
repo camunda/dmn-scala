@@ -17,9 +17,9 @@
 	<name>DMN Scala Root</name>
 
 	<properties>
-		<feel.version>1.6.2</feel.version>
-		<camunda.version>7.9.0</camunda.version>
-		<zeebe.version>0.15.0</zeebe.version>
+		<feel.version>1.8.0</feel.version>
+		<camunda.version>7.11.0</camunda.version>
+		<zeebe.version>0.19.0</zeebe.version>
 		<version.java>1.8</version.java>
 		<scala.version>2.12.4</scala.version>
 		<scala.binary.version>2.12.4</scala.binary.version>
@@ -45,6 +45,22 @@
 				<version>${camunda.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>io.zeebe</groupId>
+				<artifactId>zeebe-bom</artifactId>
+				<version>${zeebe.version}</version>
+				<scope>import</scope>
+				<type>pom</type>
+			</dependency>
+
+			<dependency>
+				<groupId>io.netty</groupId>
+				<artifactId>netty-bom</artifactId>
+				<version>4.1.37.Final</version>
+				<scope>import</scope>
+				<type>pom</type>
 			</dependency>
 
 			<dependency>
@@ -149,24 +165,6 @@
 				<version>1.4.193</version>
 			</dependency>
 
-			<dependency>
-				<groupId>io.zeebe</groupId>
-				<artifactId>zeebe-test</artifactId>
-				<version>${zeebe.version}</version>
-			</dependency>
-			
-			<dependency>
-				<groupId>io.zeebe</groupId>
-				<artifactId>zeebe-broker-core</artifactId>
-				<version>${zeebe.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>io.zeebe</groupId>
-				<artifactId>zeebe-client-java</artifactId>
-				<version>${zeebe.version}</version>
-			</dependency>
-
 		</dependencies>
 	</dependencyManagement>
 
@@ -178,7 +176,7 @@
 			<plugin>
 				<groupId>net.alchim31.maven</groupId>
 				<artifactId>scala-maven-plugin</artifactId>
-				<version>3.2.1</version>
+				<version>4.1.0</version>
 				<configuration>
 					<scalaCompatVersion>${scala.binary.version}</scalaCompatVersion>
 					<scalaVersion>${scala.version}</scalaVersion>

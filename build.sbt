@@ -17,9 +17,9 @@ val commonDependencies = Seq(
   "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.9.0" % "test"
 )
 
-val feelVersion = "1.6.2"
-val camundaVersion = "7.9.0"
-val zeebeVersion = "0.15.0"
+val feelVersion = "1.8.0"
+val camundaVersion = "7.11.0"
+val zeebeVersion = "0.19.0"
 val scalatraVersion = "2.6.2"
 
 lazy val root = (project in file("."))
@@ -106,8 +106,7 @@ lazy val zeebeWorker = (project in file("zeebe-worker"))
       "org.apache.logging.log4j" % "log4j-api" % "2.9.0",
       "org.apache.logging.log4j" % "log4j-core" % "2.9.0",
       "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.9.0",
-      "io.zeebe" % "zeebe-test" % zeebeVersion % "test",
-      "io.zeebe" % "zeebe-broker-core" % zeebeVersion % "test"
+      "io.zeebe" % "zeebe-test" % zeebeVersion % "test"
     )
   )
   .dependsOn(

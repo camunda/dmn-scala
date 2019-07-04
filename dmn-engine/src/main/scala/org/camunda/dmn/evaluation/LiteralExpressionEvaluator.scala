@@ -36,11 +36,9 @@ class LiteralExpressionEvaluator(feelEngine: FeelEngine) {
       DefaultContext(variables = context.variables, functions = functions)
 
     feelEngine.eval(expression, evalContext) match {
-      case EvalValue(value: Val) => Right(value)
-      case EvalValue(value) =>
-        Left(Failure(s"expected value but found '$value'"))
-      case EvalFailure(msg)  => Left(Failure(msg))
-      case ParseFailure(msg) => Left(Failure(msg))
+      case Right(v: Val)                     => Right(v)
+      case Right(other)                      => Left(Failure(s"expected value but found '$other'"))
+      case Left(FeelEngine.Failure(message)) => Left(Failure(message))
     }
   }
 

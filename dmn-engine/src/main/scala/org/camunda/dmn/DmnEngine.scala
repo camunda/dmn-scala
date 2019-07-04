@@ -96,7 +96,14 @@ class DmnEngine(configuration: DmnEngine.Configuration =
                                   valueMapper =
                                     new NoUnpackValueMapper(valueMapper))
 
-  val parser = new DmnParser(configuration)
+  val parser = new DmnParser(
+    configuration = configuration,
+    parser = exp =>
+      feelEngine
+        .parseExpression(exp)
+        .left
+        .map(_.message)
+  )
 
   val decisionEval = new DecisionEvaluator(eval = this.evalExpression,
                                            evalBkm = bkmEval.createFunction)

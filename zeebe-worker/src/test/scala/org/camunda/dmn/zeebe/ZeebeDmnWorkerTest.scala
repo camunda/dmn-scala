@@ -22,8 +22,6 @@ import org.junit.After
 import java.io.ByteArrayInputStream
 import io.zeebe.client.ZeebeClient
 import io.zeebe.test.util.record.RecordingExporter
-import io.zeebe.protocol.intent.JobIntent
-import io.zeebe.exporter.record.value.job.Headers
 
 class ZeebeDmnWorkerTest extends JUnitSuite with Matchers {
 
@@ -50,10 +48,9 @@ class ZeebeDmnWorkerTest extends JUnitSuite with Matchers {
     val workflow = Bpmn
       .createExecutableProcess("wf")
       .startEvent()
-      .serviceTask("dmn-task",
-                   t =>
-                     t.zeebeTaskType("DMN")
-                       .zeebeTaskHeader("decisionRef", "discount"))
+      .serviceTask("dmn-task")
+      .zeebeTaskType("DMN")
+      .zeebeTaskHeader("decisionRef", "discount")
       .endEvent()
       .done()
 
@@ -78,15 +75,13 @@ class ZeebeDmnWorkerTest extends JUnitSuite with Matchers {
       .newCreateInstanceCommand()
       .bpmnProcessId("wf")
       .latestVersion()
-      .payload("""{"customer":"Business","orderSize":15}""")
+      .variables("""{"customer":"Business","orderSize":15}""")
       .send()
       .join()
 
-    val jobRecord = RecordingExporter
-      .jobRecords(JobIntent.COMPLETED)
-      .getFirst
-
-    jobRecord.getValue.getPayload should be("""{"result":0.15}""")
+    ZeebeTestRule
+      .assertThat(workflowInstance)
+      .hasVariables("result", 0.15);
   }
 
   @Test def shouldReturnNilResult {
@@ -95,14 +90,12 @@ class ZeebeDmnWorkerTest extends JUnitSuite with Matchers {
       .newCreateInstanceCommand()
       .bpmnProcessId("wf")
       .latestVersion()
-      .payload("""{"customer":"VIP","orderSize":100}""")
+      .variables("""{"customer":"VIP","orderSize":100}""")
       .send()
       .join()
 
-    val jobRecord = RecordingExporter
-      .jobRecords(JobIntent.COMPLETED)
-      .getFirst
-
-    jobRecord.getValue.getPayload should be("""{"result":null}""")
+    ZeebeTestRule
+      .assertThat(workflowInstance)
+      .hasVariables("result", "null");
   }
 }

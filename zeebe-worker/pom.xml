@@ -47,14 +47,14 @@
 			<groupId>io.zeebe</groupId>
 			<artifactId>zeebe-test</artifactId>
 			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.scala-lang.modules</groupId>
+					<artifactId>scala-parser-combinators_2.13</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
-		<dependency>
-			<groupId>io.zeebe</groupId>
-			<artifactId>zeebe-broker-core</artifactId>
-			<scope>test</scope>
-		</dependency>
-		
 		<dependency>
       <groupId>org.scalatest</groupId>
       <artifactId>scalatest_2.12</artifactId>

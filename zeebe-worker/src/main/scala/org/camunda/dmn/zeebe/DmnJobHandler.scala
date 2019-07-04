@@ -5,11 +5,10 @@ import org.camunda.dmn._
 import scala.collection.JavaConverters._
 import org.camunda.dmn.standalone.StandaloneEngine
 import org.camunda.dmn.DmnEngine._
-import io.zeebe.client.api.subscription.JobHandler
-import io.zeebe.client.api.clients.JobClient
-import io.zeebe.client.api.events.JobEvent
 import java.util.Collections
+
 import io.zeebe.client.api.response.ActivatedJob
+import io.zeebe.client.api.worker.{JobClient, JobHandler}
 
 class DmnJobHandler(engine: StandaloneEngine) extends JobHandler {
 
@@ -17,7 +16,7 @@ class DmnJobHandler(engine: StandaloneEngine) extends JobHandler {
     Option(job.getCustomHeaders.get("decisionRef")).map(_.toString) match {
       case None => error("missing custom header 'decisionRef'")
       case Some(decisionId) => {
-        val variables: Map[String, Any] = job.getPayloadAsMap.asScala.toMap
+        val variables: Map[String, Any] = job.getVariablesAsMap.asScala.toMap
 
         engine.evalDecisionById(decisionId, variables) match {
           case Left(Failure(msg)) =>
@@ -32,7 +31,7 @@ class DmnJobHandler(engine: StandaloneEngine) extends JobHandler {
   private def complete(client: JobClient, job: ActivatedJob, result: Any) {
     client
       .newCompleteCommand(job.getKey)
-      .payload(s"""{"result":$result}""")
+      .variables(Collections.singletonMap("result", result))
       .send()
   }
 

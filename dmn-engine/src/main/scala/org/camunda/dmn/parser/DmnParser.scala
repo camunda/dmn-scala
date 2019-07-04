@@ -1,38 +1,38 @@
 package org.camunda.dmn.parser
 
 import scala.collection.JavaConverters._
-
 import java.io.InputStream
 
 import org.camunda.dmn.DmnEngine.Failure
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.instance.{
-  Decision,
   BusinessKnowledgeModel,
+  Decision,
   Invocation
 }
 import org.camunda.bpm.model.dmn.instance.{
   DecisionTable,
   InputEntry,
-  OutputEntry,
-  Output
+  Output,
+  OutputEntry
 }
 import org.camunda.bpm.model.dmn.instance.{
-  LiteralExpression,
   Expression,
+  LiteralExpression,
   UnaryTests
 }
 import org.camunda.bpm.model.dmn.instance.{Context, ContextEntry}
 import org.camunda.bpm.model.dmn.instance.{
-  List => DmnList,
+  FunctionDefinition,
   Relation,
-  FunctionDefinition
+  List => DmnList
 }
 import org.camunda.feel.parser.FeelParser
-import org.camunda.feel.parser.FeelParser.{Success, NoSuccess}
-import org.camunda.feel.ParsedExpression
+import org.camunda.feel.parser.FeelParser.{NoSuccess, Success}
+import org.camunda.feel.{FeelEngine, ParsedExpression}
 import org.camunda.feel.parser.{ConstBool, ConstNull}
 import org.camunda.feel.interpreter.ValError
+
 import scala.util.Try
 import scala.collection.mutable
 import org.camunda.bpm.model.dmn.instance.InputData
@@ -47,7 +47,8 @@ object DmnParser {
     List("feel", DmnModelConstants.FEEL_NS).map(_.toLowerCase())
 }
 
-class DmnParser(configuration: Configuration) {
+class DmnParser(configuration: Configuration,
+                parser: String => Either[String, ParsedExpression]) {
 
   import DmnParser._
 
@@ -393,11 +394,11 @@ class DmnParser(configuration: Configuration) {
           var escapedExpression =
             escapeNamesInExpression(expression, ctx.namesToEscape)
 
-          FeelParser.parseExpression(escapedExpression) match {
-            case Success(exp, _) => ParsedExpression(exp, expression)
-            case e: NoSuccess => {
+          parser(escapedExpression) match {
+            case Right(parsedExpression) => parsedExpression
+            case Left(failure) => {
               ctx.failures += Failure(
-                s"Failed to parse FEEL expression '$expression':\n$e")
+                s"Failed to parse FEEL expression '$expression': $failure")
               ParsedExpression(ConstNull, expression)
             }
           }
