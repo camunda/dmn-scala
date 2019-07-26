@@ -1,45 +1,31 @@
 package org.camunda.dmn.parser
 
-import scala.collection.JavaConverters._
 import java.io.InputStream
 
-import org.camunda.dmn.DmnEngine.Failure
 import org.camunda.bpm.model.dmn._
+import org.camunda.bpm.model.dmn.impl.DmnModelConstants
 import org.camunda.bpm.model.dmn.instance.{
   BusinessKnowledgeModel,
+  Context,
   Decision,
-  Invocation
-}
-import org.camunda.bpm.model.dmn.instance.{
   DecisionTable,
-  InputEntry,
-  Output,
-  OutputEntry
-}
-import org.camunda.bpm.model.dmn.instance.{
   Expression,
-  LiteralExpression,
-  UnaryTests
-}
-import org.camunda.bpm.model.dmn.instance.{Context, ContextEntry}
-import org.camunda.bpm.model.dmn.instance.{
   FunctionDefinition,
+  Invocation,
+  LiteralExpression,
   Relation,
+  UnaryTests,
+  Variable,
   List => DmnList
 }
-import org.camunda.feel.parser.FeelParser
+import org.camunda.dmn.DmnEngine.{Configuration, Failure}
+import org.camunda.feel.ParsedExpression
 import org.camunda.feel.parser.FeelParser.{NoSuccess, Success}
-import org.camunda.feel.{FeelEngine, ParsedExpression}
-import org.camunda.feel.parser.{ConstBool, ConstNull}
-import org.camunda.feel.interpreter.ValError
+import org.camunda.feel.parser.{ConstBool, ConstNull, FeelParser}
 
-import scala.util.Try
+import scala.collection.JavaConverters._
 import scala.collection.mutable
-import org.camunda.bpm.model.dmn.instance.InputData
-import org.camunda.bpm.model.dmn.instance.DrgElement
-import org.camunda.bpm.model.dmn.impl.DmnModelConstants
-import org.camunda.bpm.model.dmn.instance.Variable
-import org.camunda.dmn.DmnEngine.Configuration
+import scala.util.Try
 
 object DmnParser {
 
@@ -66,7 +52,10 @@ class DmnParser(configuration: Configuration,
   }
 
   object ParsingFailure
-      extends ParsedLiteralExpression(ParsedExpression(ConstNull, "failure"))
+      extends ParsedLiteralExpression(ParsedExpression(ConstNull, "<failure>"))
+
+  object EmptyLogic
+      extends ParsedLiteralExpression(ParsedExpression(ConstNull, "<empty>"))
 
   def parse(stream: InputStream): Either[Failure, ParsedDmn] = {
 
@@ -156,28 +145,39 @@ class DmnParser(configuration: Configuration,
       .map(k =>
         ctx.bkms.getOrElseUpdate(k.getName, parseBusinessKnowledgeModel(k)))
 
-    val expr = bkm.getEncapsulatedLogic.getExpression
+    Option(bkm.getEncapsulatedLogic)
+      .map { encapsulatedLogic =>
+        val logic: ParsedDecisionLogic = encapsulatedLogic.getExpression match {
+          case dt: DecisionTable     => parseDecisionTable(dt)
+          case c: Context            => parseContext(c)
+          case rel: Relation         => parseRelation(rel)
+          case l: DmnList            => parseList(l)
+          case lt: LiteralExpression => parseLiteralExpression(lt)
+          case other => {
+            ctx.failures += Failure(
+              s"unsupported business knowledge model logic found '$other'")
+            ParsingFailure
+          }
+        }
 
-    val logic: ParsedDecisionLogic = expr match {
-      case dt: DecisionTable     => parseDecisionTable(dt)
-      case c: Context            => parseContext(c)
-      case rel: Relation         => parseRelation(rel)
-      case l: DmnList            => parseList(l)
-      case lt: LiteralExpression => parseLiteralExpression(lt)
-      case other => {
-        Failure(s"unsupported business knowledge model logic found '$other'")
-        ParsingFailure
+        val parameters = encapsulatedLogic.getFormalParameters.asScala
+          .map(f => f.getName -> f.getTypeRef)
+
+        ParsedBusinessKnowledgeModel(bkm.getId,
+                                     bkm.getName,
+                                     logic,
+                                     parameters,
+                                     requiredBkms)
+
       }
-    }
+      .getOrElse {
 
-    val parameters = bkm.getEncapsulatedLogic.getFormalParameters.asScala
-      .map(f => f.getName -> f.getTypeRef)
-
-    ParsedBusinessKnowledgeModel(bkm.getId,
-                                 bkm.getName,
-                                 logic,
-                                 parameters,
-                                 requiredBkms)
+        ParsedBusinessKnowledgeModel(bkm.getId,
+                                     bkm.getName,
+                                     EmptyLogic,
+                                     Iterable.empty,
+                                     requiredBkms)
+      }
   }
 
   private def parseDecisionTable(decisionTable: DecisionTable)(
