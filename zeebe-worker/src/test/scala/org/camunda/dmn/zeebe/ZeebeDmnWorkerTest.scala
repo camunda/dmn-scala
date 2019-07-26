@@ -81,7 +81,7 @@ class ZeebeDmnWorkerTest extends JUnitSuite with Matchers {
 
     ZeebeTestRule
       .assertThat(workflowInstance)
-      .hasVariables("result", 0.15);
+      .hasVariable("result", 0.15);
   }
 
   @Test def shouldReturnNilResult {
@@ -96,6 +96,6 @@ class ZeebeDmnWorkerTest extends JUnitSuite with Matchers {
 
     ZeebeTestRule
       .assertThat(workflowInstance)
-      .hasVariables("result", "null");
+      .hasVariable("result", null);
   }
 }
