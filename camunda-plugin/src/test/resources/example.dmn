@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="_0001-input-data-string" name="0001-input-data-string"
+  namespace="https://github.com/agilepro/dmn-tck"
+  xmlns="http://www.omg.org/spec/DMN/20151101/dmn.xsd"
+>
+
+  <decision name="Append" id="append">
+    <variable name="Append"/>
+    <literalExpression>
+      <text>append(list, item)</text>
+    </literalExpression>
+  </decision>
+
+  <decision name="Context" id="context">
+    <variable name="Context"/>
+    <context>
+      <contextEntry>
+        <variable name="x"/>
+        <literalExpression>
+          <text>x</text>
+        </literalExpression>
+      </contextEntry>
+      <contextEntry>
+        <variable name="y"/>
+        <literalExpression>
+          <text>y</text>
+        </literalExpression>
+      </contextEntry>
+    </context>
+  </decision>
+
+  <decision name="ContextWithAggregation" id="contextWithAggregation">
+    <variable name="ContextWithAggregation"/>
+    <context>
+      <contextEntry>
+        <variable name="x"/>
+        <literalExpression>
+          <text>x</text>
+        </literalExpression>
+      </contextEntry>
+      <contextEntry>
+        <variable name="y"/>
+        <literalExpression>
+          <text>y</text>
+        </literalExpression>
+      </contextEntry>
+      <contextEntry>
+        <literalExpression>
+          <text>x + y</text>
+        </literalExpression>
+      </contextEntry>
+    </context>
+  </decision>
+
+  <decision name="Relation" id="relation">
+    <variable name="Relation"/>
+    <relation>
+      <column name="x"/>
+      <column name="y"/>
+      <row>
+        <literalExpression>
+          <text>"1: " + x</text>
+        </literalExpression>
+        <literalExpression>
+          <text>"1: " + y</text>
+        </literalExpression>
+      </row>
+      <row>
+        <literalExpression>
+          <text>"2: " + x</text>
+        </literalExpression>
+        <literalExpression>
+          <text>"2: " + y</text>
+        </literalExpression>
+      </row>
+    </relation>
+  </decision>
+
+  <decision name="List" id="list">
+    <variable name="List"/>
+    <list>
+      <literalExpression>
+        <text>x</text>
+      </literalExpression>
+      <literalExpression>
+        <text>y</text>
+      </literalExpression>
+    </list>
+  </decision>
+
+</definitions>

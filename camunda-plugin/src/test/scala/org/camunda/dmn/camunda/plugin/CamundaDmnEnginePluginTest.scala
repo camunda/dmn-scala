@@ -1,11 +1,11 @@
 package org.camunda.dmn.camunda.plugin
 
-import org.scalatest._
-import scala.collection.JavaConverters._
-import org.camunda.bpm.engine.ProcessEngineConfiguration
-import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl
 import java.util.{Map => JMap}
-import java.math.MathContext
+
+import org.camunda.bpm.engine.ProcessEngineConfiguration
+import org.scalatest._
+
+import scala.collection.JavaConverters._
 
 class CamundaDmnEnginePluginTest
     extends FlatSpec
@@ -29,6 +29,7 @@ class CamundaDmnEnginePluginTest
     .addClasspathResource("routingRules.dmn")
     .addClasspathResource("loan-comparison.dmn")
     .addClasspathResource("lending.dmn")
+    .addClasspathResource("example.dmn")
     .addClasspathResource("process.bpmn")
     .deploy()
 
@@ -153,6 +154,76 @@ class CamundaDmnEnginePluginTest
     result.getSingleEntry[Any] should be(1680.8803256086348)
   }
 
+  it should "evaluate a decision literal expression with list result" in {
+
+    val result = decisionService
+      .evaluateDecisionByKey("append")
+      .variables(Map("list" -> List("a", "b", "c").asJava, "item" -> "d").asJava
+        .asInstanceOf[JMap[String, Object]])
+      .evaluate()
+
+    result.size should be(1)
+    result.getSingleResult.size should be(1)
+    result.getSingleEntry[Any] should be(List("a", "b", "c", "d").asJava)
+  }
+
+  it should "evaluate a context" in {
+
+    val result = decisionService
+      .evaluateDecisionByKey("context")
+      .variables(Map("x" -> 1, "y" -> 2).asJava
+        .asInstanceOf[JMap[String, Object]])
+      .evaluate()
+
+    result.size should be(1)
+    result.getSingleResult.size should be(2)
+    result.getSingleResult.getEntry[Any]("x") should be(1)
+    result.getSingleResult.getEntry[Any]("y") should be(2)
+  }
+
+  it should "evaluate a context with aggregation entry" in {
+
+    val result = decisionService
+      .evaluateDecisionByKey("contextWithAggregation")
+      .variables(Map("x" -> 1, "y" -> 2).asJava
+        .asInstanceOf[JMap[String, Object]])
+      .evaluate()
+
+    result.size should be(1)
+    result.getSingleResult.size should be(1)
+    result.getSingleResult.getSingleEntry[Any] should be(3)
+  }
+
+  it should "evaluate a relation" in {
+
+    val result = decisionService
+      .evaluateDecisionByKey("relation")
+      .variables(Map("x" -> "x", "y" -> "y").asJava
+        .asInstanceOf[JMap[String, Object]])
+      .evaluate()
+
+    result.size should be(2)
+    result.get(0).size should be(2)
+    result.get(0).getEntry[Any]("x") should be("1: x")
+    result.get(0).getEntry[Any]("y") should be("1: y")
+    result.get(1).getEntry[Any]("x") should be("2: x")
+    result.get(1).getEntry[Any]("y") should be("2: y")
+  }
+
+  it should "evaluate a list" in {
+
+    val result = decisionService
+      .evaluateDecisionByKey("list")
+      .variables(Map("x" -> 1, "y" -> 2).asJava
+        .asInstanceOf[JMap[String, Object]])
+      .evaluate()
+
+    result.size should be(2)
+    result.get(0).size should be(1)
+    result.get(0).getSingleEntry[Any] should be(1)
+    result.get(1).getSingleEntry[Any] should be(2)
+  }
+
   it should "evaluate a decision by id" in {
 
     val decisionDefinition = repositoryService
@@ -194,6 +265,8 @@ class CamundaDmnEnginePluginTest
       .createHistoricDecisionInstanceQuery()
       .includeInputs()
       .includeOutputs()
+      .orderByEvaluationTime()
+      .asc()
       .list()
       .asScala
       .last

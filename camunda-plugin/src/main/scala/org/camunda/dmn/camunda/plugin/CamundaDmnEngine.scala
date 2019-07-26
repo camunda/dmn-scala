@@ -1,37 +1,35 @@
 package org.camunda.dmn.camunda.plugin
 
-import scala.collection.JavaConverters._
-
 import java.io.InputStream
+import java.util.stream.Collectors
 import java.util.{List => JList, Map => JMap}
 
-import org.camunda.dmn.DmnEngine
-import org.camunda.dmn.DmnEngine._
-import org.camunda.dmn.parser.ParsedDmn
-import org.camunda.bpm.model.dmn.DmnModelInstance
-import org.camunda.bpm.model.dmn.instance.Decision
-import org.camunda.bpm.dmn.engine.{
-  DmnEngineConfiguration,
-  DmnDecisionResult,
-  DmnDecision,
-  DmnDecisionResultEntries,
-  DmnDecisionRequirementsGraph,
-  DmnDecisionTableResult
-}
 import org.camunda.bpm.dmn.engine.impl.{
   DefaultDmnEngineConfiguration,
-  DmnDecisionResultImpl,
-  DmnDecisionResultEntriesImpl
+  DmnDecisionResultEntriesImpl,
+  DmnDecisionResultImpl
 }
-import org.camunda.bpm.engine.impl.dmn.entity.repository.{
-  DecisionRequirementsDefinitionEntity,
-  DecisionDefinitionEntity
-}
+import org.camunda.bpm.dmn.engine._
 import org.camunda.bpm.engine.ProcessEngineException
+import org.camunda.bpm.engine.impl.dmn.entity.repository.{
+  DecisionDefinitionEntity,
+  DecisionRequirementsDefinitionEntity
+}
+import org.camunda.bpm.engine.impl.util.ParseUtil
 import org.camunda.bpm.engine.variable.Variables
 import org.camunda.bpm.engine.variable.context.VariableContext
-import org.camunda.bpm.engine.impl.util.ParseUtil
-import java.util.stream.Collectors
+import org.camunda.bpm.model.dmn.DmnModelInstance
+import org.camunda.bpm.model.dmn.instance.Decision
+import org.camunda.dmn.DmnEngine
+import org.camunda.dmn.DmnEngine._
+import org.camunda.dmn.parser.{
+  ParsedDecisionTable,
+  ParsedDmn,
+  ParsedList,
+  ParsedRelation
+}
+
+import scala.collection.JavaConverters._
 import scala.util.Either
 
 object CamundaDmnEngine {
@@ -145,6 +143,8 @@ class CamundaDmnEngine(engine: DmnEngine, onEval: CamundaDmnEngine.EvalListener)
         val id = decision.getKey
         val name = decision.getName
 
+        dmn.decisionsById(id).logic
+
         val result = onEval(decision, id, () => engine.eval(dmn, id, variables))
 
         result match {
@@ -197,12 +197,12 @@ class CamundaDmnEngine(engine: DmnEngine, onEval: CamundaDmnEngine.EvalListener)
       case NilResult => null
       case Result(value) =>
         value match {
-          case list: List[_] => {
+          case list: List[_] if (hasCollectResult(evaluatedDecision)) => {
             val entries = list.map(item =>
               createDecisionResultEntries(item, evaluatedDecision))
             new DmnDecisionResultImpl(entries.asJava)
           }
-          case list: JList[_] => {
+          case list: JList[_] if (hasCollectResult(evaluatedDecision)) => {
             val entries = list
               .stream()
               .map[DmnDecisionResultEntries](item =>
@@ -218,6 +218,18 @@ class CamundaDmnEngine(engine: DmnEngine, onEval: CamundaDmnEngine.EvalListener)
         }
     }
   }
+
+  private def hasCollectResult(decision: DmnDecision): Boolean =
+    decision.getDecisionLogic match {
+      case DmnScalaDecisionLogic(dmn) =>
+        dmn.decisionsById(decision.getKey).logic match {
+          case l: ParsedDecisionTable => true
+          case l: ParsedRelation      => true
+          case l: ParsedList          => true
+          case _                      => false
+        }
+      case _ => false
+    }
 
   private def createDecisionResultEntries(
       value: Any,
