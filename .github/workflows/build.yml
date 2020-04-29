@@ -1,7 +1,8 @@
-name: Build
+name: Build project with Maven
 on:
   pull_request:
   push:
+    branches-ignore: [master]
   schedule:
   - cron: '2 2 * * 1-5' # run nightly master builds on weekdays
 
@@ -23,29 +24,4 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-maven-
     - name: Run Maven
-      run: mvn -B -DskipTests clean install
-
-      # IF BRANCH EQUAL TO MASTER, THEN BUILD A SNAPSHOT
-
-    - name: Import Secrets
-      if: github.event.push.ref == 'refs/heads/master'
-      uses: RichiCoder1/vault-action@v0.10.2
-      with:
-        url: ${{ secrets.VAULT_ADDR }}
-        method: approle
-        roleId: ${{ secrets.VAULT_ROLE_ID }}
-        secretId: ${{ secrets.VAULT_SECRET_ID }}
-        secrets: |
-          common/jenkins/main NEXUS_APP_CAMUNDA_COM_PSW | NEXUS_APP_CAMUNDA_COM_PSW;
-          common/jenkins/main NEXUS_APP_CAMUNDA_COM_USR | NEXUS_APP_CAMUNDA_COM_USR;
-    - name: Set up Nexus authentication
-      if: github.event.push.ref == 'refs/heads/master'
-      uses: actions/setup-java@v1
-      with:
-        java-version: 1.8
-        server-id: camunda-nexus
-        server-username: NEXUS_APP_CAMUNDA_COM_USR
-        server-password: NEXUS_APP_CAMUNDA_COM_PSW
-    - name: Publish package
-      if: github.event.push.ref == 'refs/heads/master'
-      run: mvn -B deploy
+      run: mvn -B clean install com.mycila:license-maven-plugin:check
