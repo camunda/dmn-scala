@@ -2,17 +2,14 @@ package org.camunda.dmn.evaluation
 
 import org.camunda.dmn.DmnEngine._
 import org.camunda.feel._
-import org.camunda.feel.interpreter.{
-  RootContext,
-  ValFunction,
-  DefaultContext,
-  Val
-}
+import org.camunda.feel.syntaxtree.{ParsedExpression, Val, ValFunction}
 import org.camunda.bpm.model.dmn.instance.{LiteralExpression, UnaryTests}
+
 import scala.Left
 import scala.Right
 import org.camunda.dmn.parser.ParsedLiteralExpression
 import org.camunda.dmn.Audit.SingleEvaluationResult
+import org.camunda.feel.context.Context.StaticContext
 
 class LiteralExpressionEvaluator(feelEngine: FeelEngine) {
 
@@ -33,7 +30,7 @@ class LiteralExpressionEvaluator(feelEngine: FeelEngine) {
       .map { case (k, f) => k -> List(f.asInstanceOf[ValFunction]) }
 
     val evalContext =
-      DefaultContext(variables = context.variables, functions = functions)
+      StaticContext(variables = context.variables, functions = functions)
 
     feelEngine.eval(expression, evalContext) match {
       case Right(v: Val)                     => Right(v)

@@ -1,15 +1,12 @@
 package org.camunda.dmn.camunda.plugin
 
-import scala.collection.JavaConverters._
-import scala.beans.BeanProperty
-
-import org.camunda.bpm.engine.impl.cfg.AbstractProcessEnginePlugin
-import org.camunda.bpm.engine.impl.cfg.ProcessEngineConfigurationImpl
-import org.camunda.dmn.DmnEngine;
-import org.camunda.bpm.dmn.engine.DmnEngineConfiguration
-import org.camunda.bpm.dmn.engine.impl.DefaultDmnEngineConfiguration
-import org.camunda.bpm.engine.impl.history.parser.HistoryDecisionEvaluationListener
 import org.camunda.bpm.engine.ProcessEngineException
+import org.camunda.bpm.engine.impl.cfg.{
+  AbstractProcessEnginePlugin,
+  ProcessEngineConfigurationImpl
+}
+import org.camunda.bpm.engine.impl.history.parser.HistoryDecisionEvaluationListener
+import org.camunda.dmn.DmnEngine
 
 class CamundaDmnEnginePlugin extends AbstractProcessEnginePlugin {
 
@@ -34,8 +31,7 @@ class CamundaDmnEnginePlugin extends AbstractProcessEnginePlugin {
   override def postInit(config: ProcessEngineConfigurationImpl) {
     // history level and event producer are set on init()
     historyListener = new HistoryDecisionEvaluationListener(
-      config.getDmnHistoryEventProducer,
-      config.getHistoryLevel)
+      config.getDmnHistoryEventProducer)
   }
 
 }

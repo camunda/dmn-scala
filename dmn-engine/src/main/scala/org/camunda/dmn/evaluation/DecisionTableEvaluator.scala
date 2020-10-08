@@ -1,38 +1,36 @@
 package org.camunda.dmn.evaluation
 
 import scala.collection.JavaConverters._
-
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
 import org.camunda.feel._
-import org.camunda.feel.interpreter.{
-  RootContext,
+import org.camunda.feel.syntaxtree.{
+  ParsedExpression,
   Val,
-  ValNull,
-  ValContext,
-  DefaultContext,
-  ValList,
-  ValNumber,
   ValBoolean,
+  ValContext,
+  ValList,
+  ValNull,
+  ValNumber,
   ValString
 }
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.instance.{
   Decision,
   DecisionTable,
-  InputEntry,
-  OutputEntry,
-  Output,
-  Rule,
   Input,
+  InputEntry,
   LiteralExpression,
+  Output,
+  OutputEntry,
+  Rule,
   UnaryTests
 }
 import org.camunda.dmn.parser.{
   ParsedDecisionTable,
-  ParsedRule,
+  ParsedInput,
   ParsedOutput,
-  ParsedInput
+  ParsedRule
 }
 import org.camunda.dmn.Audit.{
   DecisionTableEvaluationResult,
@@ -40,6 +38,7 @@ import org.camunda.dmn.Audit.{
   EvaluatedOutput,
   EvaluatedRule
 }
+import org.camunda.feel.context.Context.StaticContext
 
 class DecisionTableEvaluator(
     eval: (ParsedExpression, EvalContext) => Either[Failure, Val]) {
@@ -105,7 +104,7 @@ class DecisionTableEvaluator(
       implicit
       context: EvalContext): Either[Failure, Boolean] = {
 
-    inputEntries match {
+    inputEntries.toList match {
       case Nil => Right(true)
       case (entry, value) :: is => {
 
@@ -127,7 +126,7 @@ class DecisionTableEvaluator(
       implicit
       context: EvalContext): Either[Failure, Val] = {
 
-    val variablesWithInput = context.variables + (RootContext.defaultInputVariable -> inputValue)
+    val variablesWithInput = context.variables + (FeelEngine.UnaryTests.defaultInputVariable -> inputValue)
 
     eval(entry, context.copy(variables = variablesWithInput))
   }
@@ -144,7 +143,7 @@ class DecisionTableEvaluator(
         } else if (outputValues.size == 1) {
           outputValues.values.head
         } else {
-          ValContext(DefaultContext(outputValues))
+          ValContext(StaticContext(outputValues))
         }
       }
   }
@@ -239,7 +238,7 @@ class DecisionTableEvaluator(
   private def singleOutputValue(values: List[Map[String, Val]]): Val = {
     values.headOption
       .map(v =>
-        if (v.size == 1) v.values.head else ValContext(DefaultContext(v)))
+        if (v.size == 1) v.values.head else ValContext(StaticContext(v)))
       .getOrElse(ValNull)
   }
 
@@ -247,7 +246,7 @@ class DecisionTableEvaluator(
     values match {
       case Nil                           => ValNull
       case list if (list.head.size == 1) => ValList(list.map(_.values.head))
-      case list                          => ValList(list.map(m => ValContext(DefaultContext(m))))
+      case list                          => ValList(list.map(m => ValContext(StaticContext(m))))
     }
 
   private def sortByPriority(

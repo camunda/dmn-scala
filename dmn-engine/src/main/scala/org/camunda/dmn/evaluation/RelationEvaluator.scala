@@ -1,7 +1,6 @@
 package org.camunda.dmn.evaluation
 
-import scala.collection.JavaConverters._
-
+import org.camunda.dmn.Audit.SingleEvaluationResult
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
 import org.camunda.dmn.parser.{
@@ -9,8 +8,8 @@ import org.camunda.dmn.parser.{
   ParsedRelation,
   ParsedRelationRow
 }
-import org.camunda.feel.interpreter.{Val, ValContext, DefaultContext, ValList}
-import org.camunda.dmn.Audit.SingleEvaluationResult
+import org.camunda.feel.context.Context.StaticContext
+import org.camunda.feel.syntaxtree.{Val, ValContext, ValList}
 
 class RelationEvaluator(
     eval: (ParsedDecisionLogic, EvalContext) => Either[Failure, Val]) {
@@ -28,7 +27,7 @@ class RelationEvaluator(
                 .map(r => column -> r)
           })
 
-        columns.right.map(values => ValContext(DefaultContext(values.toMap)))
+        columns.right.map(values => ValContext(StaticContext(values.toMap)))
       }
     )
 

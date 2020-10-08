@@ -1,11 +1,15 @@
 package org.camunda.dmn
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
 import org.camunda.dmn.DmnEngine._
 import java.time.LocalDate
 
-class FunctionDefinitionTest extends FlatSpec with Matchers with DecisionTest {
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+
+class FunctionDefinitionTest
+    extends AnyFlatSpec
+    with Matchers
+    with DecisionTest {
 
   lazy val applicantData = parse("/functionDefinition/ApplicantData.dmn")
   lazy val userFunction = parse("/functionDefinition/FeelUserFunction.dmn")

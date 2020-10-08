@@ -1,19 +1,12 @@
 package org.camunda.dmn.standalone
 
-import org.camunda.dmn._
-import org.camunda.dmn.DmnEngine
+import java.io._
+import java.nio.file.{Files, Paths, StandardCopyOption}
+
 import org.camunda.dmn.DmnEngine.Failure
-import org.camunda.dmn.parser.ParsedDmn
-import org.camunda.bpm.model.dmn.instance.Decision
+import org.camunda.dmn.{DmnEngine, _}
+
 import scala.collection.mutable
-import scala.util.Try
-import java.io.{InputStream, FileInputStream, IOException}
-import java.nio.file.{Paths, Files}
-import java.nio.file.StandardCopyOption
-import java.io.ByteArrayOutputStream
-import java.util.stream.Streams
-import java.io.ByteArrayInputStream
-import java.io.OutputStream
 
 class FileSystemRepository(val dmnEngine: DmnEngine, directory: String)
     extends DecisionRepository {
@@ -47,7 +40,9 @@ class FileSystemRepository(val dmnEngine: DmnEngine, directory: String)
     }
   }
 
-  def getDecisions: List[DeployedDecision] = deployedDecisions.values.toList
+  def getDecisions: List[DeployedDecision] =
+    deployedDecisions.values.toList
+      .sortBy(decision => decision.decisionId)
 
   def getDecisionById(id: String): Option[DeployedDecision] =
     deployedDecisions.get(id)
@@ -111,12 +106,11 @@ class FileSystemRepository(val dmnEngine: DmnEngine, directory: String)
 
   def removeResource(
       resource: String): Either[Failure, List[DeployedDecision]] = {
-    deployedDecisions.values.filter(_.resource == resource) match {
+    deployedDecisions.values.filter(_.resource == resource).toList match {
       case Nil => Left(Failure(s"No decisions found for resource '$resource'"))
       case decisionsToRemove => {
         try {
           Files.delete(path.resolve(resource))
-
           Right(decisionsToRemove)
         } catch {
           case t: Throwable =>

@@ -1,19 +1,11 @@
 package org.camunda.dmn.rest
 
-import org.scalatra._
-import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.json._
-import org.scalatra.servlet.{
-  FileUploadSupport,
-  MultipartConfig,
-  SizeConstraintExceededException
-}
-import org.camunda.dmn.DmnEngine
 import org.camunda.dmn.DmnEngine._
-import org.camunda.dmn.standalone.StandaloneEngine
-import java.nio.file.Paths
-import org.scalatra.servlet.FileItem
-import org.camunda.dmn.standalone.DeployedDecision
+import org.camunda.dmn.standalone.{DeployedDecision, StandaloneEngine}
+import org.json4s.{DefaultFormats, Formats}
+import org.scalatra._
+import org.scalatra.json._
+import org.scalatra.servlet.{FileItem, FileUploadSupport, MultipartConfig}
 
 class DmnEngineRestServlet(engine: StandaloneEngine)
     extends ScalatraServlet
@@ -29,8 +21,10 @@ class DmnEngineRestServlet(engine: StandaloneEngine)
 
   // JSON data objects
   case class Decision(id: String, name: String, resource: String)
+
   case class DeploymentResult(deployedDecisions: Iterable[Decision],
                               failures: Iterable[Failure])
+
   case class DecisionEvalResult(result: Any)
 
   // response is JSON
@@ -57,16 +51,17 @@ class DmnEngineRestServlet(engine: StandaloneEngine)
   }
 
   post("/decisions") {
-    val result = fileParams.map {
-      case (name: String, file: FileItem) => {
-        engine
-          .insertDecisions(file.getInputStream, name)
-          .right
-          .map(_.map(decisionDto))
+    val result = fileMultiParams.iterator.flatMap {
+      case (name: String, files: Seq[FileItem]) => {
+        files.map { file =>
+          engine
+            .insertDecisions(file.getInputStream, file.name)
+            .map(_.map(decisionDto))
+        }
       }
-    }
+    }.toList
 
-    val deployedDecisions = result.filter(_.isRight).map(_.right.get).flatten
+    val deployedDecisions = result.filter(_.isRight).flatMap(_.right.get)
     val failures = result.filter(_.isLeft).map(_.left.get)
 
     DeploymentResult(deployedDecisions, failures)

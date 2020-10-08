@@ -5,14 +5,10 @@ import scala.collection.JavaConverters._
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
 import org.camunda.feel.FeelEngine
+import org.camunda.feel.context.Context._
 import org.camunda.bpm.model.dmn.instance.{Context, ContextEntry, Expression}
 import org.camunda.dmn.parser.{ParsedContext, ParsedDecisionLogic}
-import org.camunda.feel.interpreter.{
-  Val,
-  ValContext,
-  ValFunction,
-  DefaultContext
-}
+import org.camunda.feel.syntaxtree.{Val, ValContext, ValFunction}
 import org.camunda.dmn.Audit.ContextEvaluationResult
 
 class ContextEvaluator(
@@ -62,8 +58,7 @@ class ContextEvaluator(
           .map { case (k, f) => k -> List(f.asInstanceOf[ValFunction]) }
 
         Right(
-          ValContext(
-            DefaultContext(variables = results, functions = functions)))
+          ValContext(StaticContext(variables = results, functions = functions)))
       }
   }
 

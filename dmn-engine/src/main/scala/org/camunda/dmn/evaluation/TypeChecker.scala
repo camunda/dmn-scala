@@ -1,8 +1,7 @@
 package org.camunda.dmn.evaluation
 
 import org.camunda.dmn.DmnEngine._
-import org.camunda.feel._
-import org.camunda.feel.interpreter._
+import org.camunda.feel.syntaxtree._
 
 object TypeChecker {
 

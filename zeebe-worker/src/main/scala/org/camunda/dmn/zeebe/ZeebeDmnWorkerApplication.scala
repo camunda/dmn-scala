@@ -41,6 +41,7 @@ class ZeebeDmnWorkerApplication(repository: String,
       .brokerContactPoint(brokerContactPoint)
       .defaultJobWorkerName("dmn-scala-worker")
       .defaultJobTimeout(Duration.ofSeconds(10))
+      .usePlaintext()
 
     builder.build
   }

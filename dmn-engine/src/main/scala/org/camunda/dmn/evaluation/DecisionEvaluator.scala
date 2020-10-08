@@ -4,7 +4,7 @@ import scala.collection.JavaConverters._
 
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
-import org.camunda.feel.interpreter.{Val, ValFunction}
+import org.camunda.feel.syntaxtree.{Val, ValFunction}
 import org.camunda.bpm.model.dmn.instance.{
   Decision,
   Expression,

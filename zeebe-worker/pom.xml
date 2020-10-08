@@ -57,9 +57,15 @@
 
 		<dependency>
       <groupId>org.scalatest</groupId>
-      <artifactId>scalatest_2.12</artifactId>
+      <artifactId>scalatest_2.13</artifactId>
       <scope>test</scope>
     </dependency>
+
+		<dependency>
+			<groupId>org.scalatestplus</groupId>
+			<artifactId>junit-4-13_2.13</artifactId>
+			<scope>test</scope>
+		</dependency>
 
 	</dependencies>
 

@@ -1,7 +1,7 @@
 package org.camunda.dmn
 
 import org.camunda.dmn.parser._
-import org.camunda.feel.interpreter.Val
+import org.camunda.feel.syntaxtree.Val
 
 object Audit {
 
@@ -16,11 +16,10 @@ object Audit {
     val requiredEntries = entries.dropRight(1)
   }
 
-  case class AuditLogEntry(
-    id:            String,
-    name:          String,
-    decisionLogic: ParsedDecisionLogic,
-    result:        EvaluationResult)
+  case class AuditLogEntry(id: String,
+                           name: String,
+                           decisionLogic: ParsedDecisionLogic,
+                           result: EvaluationResult)
 
   ///// evaluation results
 
@@ -28,18 +27,19 @@ object Audit {
     val result: Val
   }
 
-  case class SingleEvaluationResult(override val result: Val) extends EvaluationResult
+  case class SingleEvaluationResult(override val result: Val)
+      extends EvaluationResult
 
-  case class ContextEvaluationResult(entries: Map[String, Val], override val result: Val)
-    extends EvaluationResult
+  case class ContextEvaluationResult(entries: Map[String, Val],
+                                     override val result: Val)
+      extends EvaluationResult
 
   ///// decision table results
 
-  case class DecisionTableEvaluationResult(
-    inputs:              List[EvaluatedInput],
-    matchedRules:        List[EvaluatedRule],
-    override val result: Val)
-    extends EvaluationResult
+  case class DecisionTableEvaluationResult(inputs: List[EvaluatedInput],
+                                           matchedRules: List[EvaluatedRule],
+                                           override val result: Val)
+      extends EvaluationResult
 
   case class EvaluatedInput(input: ParsedInput, value: Val)
 

@@ -1,12 +1,12 @@
 package org.camunda.dmn.rest
 
-import org.scalatra.test.scalatest._
-import org.camunda.dmn.standalone.StandaloneEngine
-import java.nio.file.Paths
-import java.nio.file.Files
 import java.io.File
+import java.nio.file.Paths
 
-class DmnRestServletTests extends ScalatraFunSuite {
+import org.camunda.dmn.standalone.StandaloneEngine
+import org.scalatra.test.scalatest.ScalatraFlatSpec
+
+class DmnRestServletTests extends ScalatraFlatSpec {
 
   val repository =
     Paths.get(getClass.getResource("/repository").toURI()).toString
@@ -15,15 +15,17 @@ class DmnRestServletTests extends ScalatraFunSuite {
 
   addServlet(servlet, "/*")
 
-  test("GET /decisions on should return deployed decisions") {
+  override def header = ???
+
+  "A GET /decsions" should "return deployed decisions" in {
     get("/decisions") {
-      status should equal(200)
+      status should be(200)
       body should equal(
         """[{"id":"discount","name":"Discount","resource":"discount.dmn"}]""")
     }
   }
 
-  test("POST /decisions/:id/eval on should return evaluation result") {
+  "A POST /decisions/:id/eval" should "return evaluation result" in {
     post("/decisions/discount/eval",
          """{"customer":"Business","orderSize":15.0}""") {
       status should equal(200)
@@ -31,7 +33,7 @@ class DmnRestServletTests extends ScalatraFunSuite {
     }
   }
 
-  test("POST /decisions/:id/eval on should return evaluation failure") {
+  it should "return evaluation failure" in {
     post("/decisions/discount/eval", """{}""") {
       status should equal(400)
       body should equal(
@@ -39,7 +41,7 @@ class DmnRestServletTests extends ScalatraFunSuite {
     }
   }
 
-  test("POST /decisions on should insert decision into repository") {
+  "A POST /decisions" should "insert decision into repository" in {
     val resource =
       new File(getClass.getResource("/repository2/adjustments.dmn").toURI())
 
@@ -54,11 +56,11 @@ class DmnRestServletTests extends ScalatraFunSuite {
     get("/decisions") {
       status should equal(200)
       body should equal(
-        """[{"id":"discount","name":"Discount","resource":"discount.dmn"},{"id":"adjustments","name":"Adjustments","resource":"adjustments.dmn"}]""")
+        """[{"id":"adjustments","name":"Adjustments","resource":"adjustments.dmn"},{"id":"discount","name":"Discount","resource":"discount.dmn"}]""")
     }
   }
 
-  test("DELETE /decisions/:resource on should remove decision from repository") {
+  "A DELETE /decisions/:resource" should "remove decision from repository" in {
     delete("/decisions/adjustments.dmn") {
       status should equal(200)
       body should equal(

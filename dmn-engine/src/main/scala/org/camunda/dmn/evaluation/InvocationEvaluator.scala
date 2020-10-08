@@ -1,22 +1,20 @@
 package org.camunda.dmn.evaluation
 
 import scala.collection.JavaConverters._
-
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
-import org.camunda.bpm.model.dmn.instance.{Invocation, Parameter, Binding}
+import org.camunda.bpm.model.dmn.instance.{Binding, Invocation, Parameter}
 import org.camunda.bpm.model.dmn.instance.{
-  LiteralExpression,
   BusinessKnowledgeModel,
-  Expression
+  Expression,
+  LiteralExpression
 }
 import org.camunda.dmn.parser.{
+  ParsedBusinessKnowledgeModel,
   ParsedDecisionLogic,
-  ParsedInvocation,
-  ParsedBusinessKnowledgeModel
+  ParsedInvocation
 }
-import org.camunda.feel.ParsedExpression
-import org.camunda.feel.interpreter.Val
+import org.camunda.feel.syntaxtree.{ParsedExpression, Val}
 import org.camunda.dmn.Audit.SingleEvaluationResult
 
 class InvocationEvaluator(

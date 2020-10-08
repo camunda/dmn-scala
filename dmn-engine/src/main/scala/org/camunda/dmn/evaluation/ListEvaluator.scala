@@ -6,7 +6,7 @@ import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
 import org.camunda.bpm.model.dmn.instance.{List, Expression}
 import org.camunda.dmn.parser.{ParsedDecisionLogic, ParsedList}
-import org.camunda.feel.interpreter.{Val, ValList}
+import org.camunda.feel.syntaxtree.{Val, ValList}
 import org.camunda.dmn.Audit.SingleEvaluationResult
 
 class ListEvaluator(

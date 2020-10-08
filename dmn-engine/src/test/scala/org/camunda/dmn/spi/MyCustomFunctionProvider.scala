@@ -1,9 +1,7 @@
 package org.camunda.dmn.spi
 
-import org.camunda.feel.spi.CustomFunctionProvider
-import org.camunda.feel.interpreter.ValFunction
-import org.camunda.feel.interpreter.ValNumber
-import org.camunda.feel.interpreter.ValError
+import org.camunda.feel.context.CustomFunctionProvider
+import org.camunda.feel.syntaxtree.{ValError, ValFunction, ValNumber}
 
 class MyCustomFunctionProvider extends CustomFunctionProvider {
 
@@ -21,4 +19,5 @@ class MyCustomFunctionProvider extends CustomFunctionProvider {
 
   def getFunction(name: String): Option[ValFunction] = functions.get(name)
 
+  override def functionNames(): Iterable[String] = functions.keys
 }
