@@ -1,11 +1,11 @@
 package org.camunda.dmn
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
 import org.camunda.dmn.DmnEngine._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 class DecisionTableHitPolicyTest
-    extends FlatSpec
+    extends AnyFlatSpec
     with Matchers
     with DecisionTest {
 

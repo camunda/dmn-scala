@@ -1,34 +1,23 @@
 package org.camunda.dmn.camunda.plugin
 
-import scala.collection.JavaConverters._
-
-import org.camunda.bpm.dmn.engine.delegate.DmnDecisionEvaluationListener
 import org.camunda.bpm.dmn.engine.DmnDecision
-import org.camunda.bpm.dmn.engine.impl.delegate.DmnDecisionEvaluationEventImpl
-import org.camunda.bpm.dmn.engine.delegate.DmnDecisionLogicEvaluationEvent
-import org.camunda.dmn.DmnEngine._
-import org.camunda.bpm.dmn.engine.impl.delegate.DmnDecisionTableEvaluationEventImpl
-import org.camunda.bpm.dmn.engine.delegate.DmnEvaluatedInput
-import org.camunda.bpm.dmn.engine.impl.delegate.DmnEvaluatedInputImpl
-import org.camunda.bpm.dmn.engine.impl.DmnDecisionTableInputImpl
-import org.camunda.dmn.parser.ParsedDmn
-import org.camunda.bpm.engine.variable.impl.value.UntypedValueImpl
-import org.camunda.bpm.engine.variable.Variables
-import org.camunda.bpm.model.bpmn.instance.camunda.CamundaValue
-import org.camunda.feel.integration.CamundaValueMapper
-import org.camunda.feel.interpreter.Val
-import org.camunda.bpm.engine.variable.value.TypedValue
-import org.camunda.dmn.parser.ParsedDecisionTable
-import org.camunda.bpm.dmn.engine.impl.DmnDecisionTableRuleImpl
-import org.camunda.bpm.dmn.engine.impl.delegate.DmnEvaluatedDecisionRuleImpl
-import org.camunda.bpm.dmn.engine.delegate.DmnEvaluatedDecisionRule
-import org.camunda.bpm.dmn.engine.impl.delegate.DmnEvaluatedOutputImpl
-import org.camunda.bpm.dmn.engine.delegate.DmnEvaluatedOutput
-import org.camunda.bpm.dmn.engine.impl.DmnDecisionTableOutputImpl
-import org.camunda.bpm.dmn.engine.impl.delegate.DmnDecisionLiteralExpressionEvaluationEventImpl
-import org.camunda.bpm.engine.ProcessEngine
+import org.camunda.bpm.dmn.engine.delegate._
+import org.camunda.bpm.dmn.engine.impl.delegate._
+import org.camunda.bpm.dmn.engine.impl.{
+  DmnDecisionTableInputImpl,
+  DmnDecisionTableOutputImpl,
+  DmnDecisionTableRuleImpl
+}
 import org.camunda.bpm.engine.ProcessEngineException
+import org.camunda.bpm.engine.variable.Variables
+import org.camunda.bpm.engine.variable.value.TypedValue
 import org.camunda.dmn.Audit._
+import org.camunda.dmn.parser.ParsedDecisionTable
+import org.camunda.feel.impl.{DefaultValueMapper, JavaValueMapper}
+import org.camunda.feel.syntaxtree.Val
+import org.camunda.feel.valuemapper.ValueMapper._
+
+import scala.jdk.CollectionConverters._
 
 class CamundaDmnHistoryListener(listener: () => DmnDecisionEvaluationListener)
     extends AuditLogListener {
@@ -186,7 +175,9 @@ class CamundaDmnHistoryListener(listener: () => DmnDecisionEvaluationListener)
     evalEvent
   }
 
-  val valueMapper = new CamundaValueMapper
+  val valueMapper = CompositeValueMapper(
+    List(DefaultValueMapper.instance, new JavaValueMapper())
+  )
 
   private def toTypedValue(value: Val): TypedValue =
     valueMapper.unpackVal(value) match {

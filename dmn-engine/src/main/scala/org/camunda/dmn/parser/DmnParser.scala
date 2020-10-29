@@ -19,9 +19,9 @@ import org.camunda.bpm.model.dmn.instance.{
   List => DmnList
 }
 import org.camunda.dmn.DmnEngine.{Configuration, Failure}
-import org.camunda.feel.ParsedExpression
-import org.camunda.feel.parser.FeelParser.{NoSuccess, Success}
-import org.camunda.feel.parser.{ConstBool, ConstNull, FeelParser}
+import org.camunda.feel.impl.parser.FeelParser
+import org.camunda.feel.syntaxtree._
+import org.camunda.feel.impl.parser.FeelParser.{NoSuccess, Success}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable

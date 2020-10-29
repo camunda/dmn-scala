@@ -1,280 +1,297 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
 
-	<groupId>org.camunda.bpm.extension.dmn.scala</groupId>
-	<artifactId>dmn-scala-root</artifactId>
-	<version>1.5.0-SNAPSHOT</version>
-	<packaging>pom</packaging>
+  <groupId>org.camunda.bpm.extension.dmn.scala</groupId>
+  <artifactId>dmn-scala-root</artifactId>
+  <version>1.5.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
 
-	<parent>
-		<groupId>org.camunda</groupId>
-		<artifactId>camunda-release-parent</artifactId>
-		<version>3.3</version>
-		<relativePath />
-	</parent>
+  <parent>
+    <groupId>org.camunda</groupId>
+    <artifactId>camunda-release-parent</artifactId>
+    <version>3.3</version>
+    <relativePath/>
+  </parent>
 
-	<name>DMN Scala Root</name>
+  <name>DMN Scala Root</name>
 
-	<properties>
-		<feel.version>1.8.0</feel.version>
-		<camunda.version>7.11.0</camunda.version>
-		<zeebe.version>0.20.0</zeebe.version>
-		<version.java>1.8</version.java>
-		<scala.version>2.12.4</scala.version>
-		<scala.binary.version>2.12.4</scala.binary.version>
-		<encoding>UTF-8</encoding>
-		<project.build.sourceEncoding>${encoding}</project.build.sourceEncoding>
-		<project.build.resourceEncoding>${encoding}</project.build.resourceEncoding>
-	</properties>
+  <properties>
+    <feel.version>1.12.2</feel.version>
+    <camunda.version>7.13.0</camunda.version>
+    <zeebe.version>0.24.4</zeebe.version>
+    <version.java>11</version.java>
+    <scala.version>2.13.0</scala.version>
+    <scala.binary.version>2.13.0</scala.binary.version>
+    <encoding>UTF-8</encoding>
+    <project.build.sourceEncoding>${encoding}</project.build.sourceEncoding>
+    <project.build.resourceEncoding>${encoding}</project.build.resourceEncoding>
+  </properties>
 
-	<modules>
-		<module>dmn-engine</module>
-		<module>camunda-plugin</module>
-		<module>standalone-engine</module>
-		<module>engine-rest</module>
-		<module>zeebe-worker</module>
-		<module>engine-benchmark</module>
-	</modules>
+  <modules>
+    <module>dmn-engine</module>
+    <module>camunda-plugin</module>
+    <module>standalone-engine</module>
+    <module>engine-rest</module>
+    <module>zeebe-worker</module>
+    <module>engine-benchmark</module>
+  </modules>
 
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.camunda.bpm</groupId>
-				<artifactId>camunda-bom</artifactId>
-				<version>${camunda.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.camunda.bpm</groupId>
+        <artifactId>camunda-bom</artifactId>
+        <version>${camunda.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
 
-			<dependency>
-				<groupId>io.zeebe</groupId>
-				<artifactId>zeebe-bom</artifactId>
-				<version>${zeebe.version}</version>
-				<scope>import</scope>
-				<type>pom</type>
-			</dependency>
+      <dependency>
+        <groupId>io.zeebe</groupId>
+        <artifactId>zeebe-bom</artifactId>
+        <version>${zeebe.version}</version>
+        <scope>import</scope>
+        <type>pom</type>
+      </dependency>
 
-			<dependency>
-				<groupId>io.netty</groupId>
-				<artifactId>netty-bom</artifactId>
-				<version>4.1.37.Final</version>
-				<scope>import</scope>
-				<type>pom</type>
-			</dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-bom</artifactId>
+        <version>4.1.37.Final</version>
+        <scope>import</scope>
+        <type>pom</type>
+      </dependency>
 
-			<dependency>
-				<groupId>org.camunda.bpm.extension.dmn.scala</groupId>
-				<artifactId>dmn-engine</artifactId>
-				<version>${project.version}</version>
-			</dependency>
+      <dependency>
+        <groupId>org.scala-lang</groupId>
+        <artifactId>scala-library</artifactId>
+        <version>${scala.version}</version>
+      </dependency>
 
-			<dependency>
-				<groupId>org.camunda.bpm.extension.dmn.scala</groupId>
-				<artifactId>dmn-engine-standalone</artifactId>
-				<version>${project.version}</version>
-			</dependency>
+      <dependency>
+        <groupId>org.camunda.bpm.extension.dmn.scala</groupId>
+        <artifactId>dmn-engine</artifactId>
+        <version>${project.version}</version>
+      </dependency>
 
-			<dependency>
-				<groupId>org.camunda.bpm.extension.feel.scala</groupId>
-				<artifactId>feel-engine</artifactId>
-				<version>${feel.version}</version>
-			</dependency>
+      <dependency>
+        <groupId>org.camunda.bpm.extension.dmn.scala</groupId>
+        <artifactId>dmn-engine-standalone</artifactId>
+        <version>${project.version}</version>
+      </dependency>
 
-			<dependency>
-				<groupId>org.camunda.bpm.extension.feel.scala</groupId>
-				<artifactId>feel-engine-factory</artifactId>
-				<version>${feel.version}</version>
-			</dependency>
+      <dependency>
+        <groupId>org.camunda.feel</groupId>
+        <artifactId>feel-engine</artifactId>
+        <version>${feel.version}</version>
+      </dependency>
 
-			<dependency>
-				<groupId>org.scalatra</groupId>
-				<artifactId>scalatra_2.12</artifactId>
-				<version>2.6.2</version>
-			</dependency>
+      <dependency>
+        <groupId>org.camunda.bpm.extension.feel.scala</groupId>
+        <artifactId>feel-engine-factory</artifactId>
+        <version>${feel.version}</version>
+      </dependency>
 
-			<dependency>
-				<groupId>org.scalatra</groupId>
-				<artifactId>scalatra-json_2.12</artifactId>
-				<version>2.6.2</version>
-			</dependency>
+      <dependency>
+        <groupId>org.scalatra</groupId>
+        <artifactId>scalatra_2.13</artifactId>
+        <version>2.7.0</version>
+      </dependency>
 
-			<dependency>
-				<groupId>org.scalatra</groupId>
-				<artifactId>scalatra-scalatest_2.12</artifactId>
-				<version>2.6.2</version>
-			</dependency>
+      <dependency>
+        <groupId>org.scalatra</groupId>
+        <artifactId>scalatra-scalatest_2.13</artifactId>
+        <version>2.7.0</version>
+      </dependency>
 
-			<dependency>
-				<groupId>org.scalatra</groupId>
-				<artifactId>scalatra-json_2.12</artifactId>
-				<version>2.6.2</version>
-			</dependency>
+      <dependency>
+        <groupId>org.scalatra</groupId>
+        <artifactId>scalatra-json_2.13</artifactId>
+        <version>2.7.0</version>
+      </dependency>
 
-			<dependency>
-				<groupId>org.json4s</groupId>
-				<artifactId>json4s-jackson_2.12</artifactId>
-				<version>3.5.2</version>
-			</dependency>
+      <dependency>
+        <groupId>org.json4s</groupId>
+        <artifactId>json4s-jackson_2.13</artifactId>
+        <version>3.6.9</version>
+      </dependency>
 
-			<dependency>
-				<groupId>org.eclipse.jetty</groupId>
-				<artifactId>jetty-webapp</artifactId>
-				<version>9.4.8.v20171121</version>
-			</dependency>
+      <dependency>
+        <groupId>org.eclipse.jetty</groupId>
+        <artifactId>jetty-webapp</artifactId>
+        <version>9.4.8.v20171121</version>
+      </dependency>
 
-			<dependency>
-				<groupId>javax.servlet</groupId>
-				<artifactId>javax.servlet-api</artifactId>
-				<version>3.1.0</version>
-			</dependency>
+      <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>javax.servlet-api</artifactId>
+        <version>3.1.0</version>
+      </dependency>
 
-			<dependency>
-				<groupId>org.scalatest</groupId>
-				<artifactId>scalatest_2.12</artifactId>
-				<version>3.0.4</version>
-			</dependency>
+      <dependency>
+        <groupId>org.scalatest</groupId>
+        <artifactId>scalatest_2.13</artifactId>
+        <version>3.2.2</version>
+      </dependency>
 
-			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-api</artifactId>
-				<version>1.7.25</version>
-			</dependency>
+      <dependency>
+        <groupId>org.scalatest</groupId>
+        <artifactId>scalatest-flatspec_2.13</artifactId>
+        <version>3.2.2</version>
+      </dependency>
 
-			<dependency>
-				<groupId>org.apache.logging.log4j</groupId>
-				<artifactId>log4j-api</artifactId>
-				<version>2.9.0</version>
-			</dependency>
+      <dependency>
+        <groupId>org.scalatestplus</groupId>
+        <artifactId>junit-4-13_2.13</artifactId>
+        <version>3.2.2.0</version>
+        <scope>test</scope>
+      </dependency>
 
-			<dependency>
-				<groupId>org.apache.logging.log4j</groupId>
-				<artifactId>log4j-core</artifactId>
-				<version>2.9.0</version>
-			</dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>1.7.25</version>
+      </dependency>
 
-			<dependency>
-				<groupId>org.apache.logging.log4j</groupId>
-				<artifactId>log4j-slf4j-impl</artifactId>
-				<version>2.9.0</version>
-			</dependency>
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-api</artifactId>
+        <version>2.13.3</version>
+      </dependency>
 
-			<dependency>
-				<groupId>com.h2database</groupId>
-				<artifactId>h2</artifactId>
-				<version>1.4.193</version>
-			</dependency>
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-core</artifactId>
+        <version>2.13.3</version>
+      </dependency>
 
-		</dependencies>
-	</dependencyManagement>
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-slf4j-impl</artifactId>
+        <version>2.13.3</version>
+      </dependency>
 
-	<build>
-		<defaultGoal>clean install</defaultGoal>
+      <dependency>
+        <groupId>com.h2database</groupId>
+        <artifactId>h2</artifactId>
+        <version>1.4.193</version>
+      </dependency>
 
-		<plugins>
+    </dependencies>
+  </dependencyManagement>
 
-			<plugin>
-				<groupId>net.alchim31.maven</groupId>
-				<artifactId>scala-maven-plugin</artifactId>
-				<version>4.1.0</version>
-				<configuration>
-					<scalaCompatVersion>${scala.binary.version}</scalaCompatVersion>
-					<scalaVersion>${scala.version}</scalaVersion>
-				</configuration>
-				<executions>
-					<execution>
-						<id>scala-compile-first</id>
-						<phase>process-resources</phase>
-						<goals>
-							<goal>add-source</goal>
-							<goal>compile</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>scala-test-compile</id>
-						<phase>process-test-resources</phase>
-						<goals>
-							<goal>testCompile</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>scala-doc</id>
-						<phase>package</phase>
-						<goals>
-							<goal>doc-jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
+  <build>
+    <defaultGoal>clean install</defaultGoal>
 
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.7</version>
-				<configuration>
-					<skipTests>true</skipTests>
-				</configuration>
-			</plugin>
+    <plugins>
 
-			<plugin>
-				<groupId>org.scalatest</groupId>
-				<artifactId>scalatest-maven-plugin</artifactId>
-				<version>1.0</version>
-				<configuration>
-					<reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
-					<junitxml>.</junitxml>
-					<filereports>TestSuite.txt</filereports>
-				</configuration>
-			</plugin>
+      <plugin>
+        <groupId>net.alchim31.maven</groupId>
+        <artifactId>scala-maven-plugin</artifactId>
+        <version>4.3.1</version>
+        <configuration>
+          <scalaCompatVersion>${scala.binary.version}</scalaCompatVersion>
+          <scalaVersion>${scala.version}</scalaVersion>
+        </configuration>
+        <executions>
+          <execution>
+            <id>scala-compile-first</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>add-source</goal>
+              <goal>compile</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>scala-test-compile</id>
+            <phase>process-test-resources</phase>
+            <goals>
+              <goal>testCompile</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>scala-doc</id>
+            <phase>package</phase>
+            <goals>
+              <goal>doc-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
 
-			<plugin>
-				<groupId>org.antipathy</groupId>
-				<artifactId>mvn-scalafmt_2.12</artifactId>
-				<version>0.7_1.5.1</version>
-				<configuration>
-				    <parameters>--diff</parameters>
-				  </configuration>
-				<executions>
-					<execution>
-						<phase>validate</phase>
-						<goals>
-							<goal>format</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.22.2</version>
+        <configuration>
+          <skipTests>true</skipTests>
+        </configuration>
+      </plugin>
 
-		</plugins>
+      <plugin>
+        <groupId>org.scalatest</groupId>
+        <artifactId>scalatest-maven-plugin</artifactId>
+        <version>2.0.0</version>
+        <configuration>
+          <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+          <junitxml>.</junitxml>
+          <filereports>TestSuite.txt</filereports>
+        </configuration>
+      </plugin>
 
-	</build>
+      <plugin>
+        <groupId>org.antipathy</groupId>
+        <artifactId>mvn-scalafmt_2.12</artifactId>
+        <version>0.7_1.5.1</version>
+        <configuration>
+          <parameters>--diff</parameters>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>validate</phase>
+            <goals>
+              <goal>format</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
 
-	<licenses>
-		<license>
-			<name>The Apache Software License, Version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-		</license>
-	</licenses>
+    </plugins>
 
-	<scm>
-        <connection>scm:git:git@github.com:camunda/dmn-scala.git</connection>
-        <url>scm:git:git@github.com:camunda/dmn-scala.git</url>
-        <developerConnection>scm:git:git@github.com:camunda/dmn-scala.git</developerConnection>
-        <tag>1.0.0</tag>
-    </scm>
+  </build>
 
-	<distributionManagement>
-		<repository>
-			<id>camunda-nexus</id>
-			<name>camunda bpm community extensions</name>
-			<url>https://app.camunda.com/nexus/content/repositories/camunda-bpm-community-extensions</url>
-		</repository>
-		<snapshotRepository>
-			<id>camunda-nexus</id>
-			<name>camunda bpm community extensions snapshots</name>
-			<url>https://app.camunda.com/nexus/content/repositories/camunda-bpm-community-extensions-snapshots</url>
-			<!-- for maven 2 compatibility -->
-			<uniqueVersion>true</uniqueVersion>
-		</snapshotRepository>
-	</distributionManagement>
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+  <scm>
+    <connection>scm:git:git@github.com:camunda/dmn-scala.git</connection>
+    <url>scm:git:git@github.com:camunda/dmn-scala.git</url>
+    <developerConnection>scm:git:git@github.com:camunda/dmn-scala.git</developerConnection>
+    <tag>1.0.0</tag>
+  </scm>
+
+  <distributionManagement>
+    <repository>
+      <id>camunda-nexus</id>
+      <name>camunda bpm community extensions</name>
+      <url>https://app.camunda.com/nexus/content/repositories/camunda-bpm-community-extensions</url>
+    </repository>
+    <snapshotRepository>
+      <id>camunda-nexus</id>
+      <name>camunda bpm community extensions snapshots</name>
+      <url>
+        https://app.camunda.com/nexus/content/repositories/camunda-bpm-community-extensions-snapshots
+      </url>
+      <!-- for maven 2 compatibility -->
+      <uniqueVersion>true</uniqueVersion>
+    </snapshotRepository>
+  </distributionManagement>
 
 </project>

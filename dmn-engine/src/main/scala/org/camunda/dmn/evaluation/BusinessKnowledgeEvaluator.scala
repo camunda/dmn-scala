@@ -1,27 +1,13 @@
 package org.camunda.dmn.evaluation
 
-import scala.collection.JavaConverters._
-
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
-import org.camunda.feel.interpreter.{
-  ValFunction,
-  ValError,
-  ValueMapper,
-  DefaultValueMapper,
-  Val
-}
-import org.camunda.bpm.model.dmn.instance.{
-  BusinessKnowledgeModel,
-  KnowledgeRequirement,
-  FormalParameter,
-  Expression,
-  LiteralExpression
-}
 import org.camunda.dmn.parser.{
-  ParsedDecisionLogic,
-  ParsedBusinessKnowledgeModel
+  ParsedBusinessKnowledgeModel,
+  ParsedDecisionLogic
 }
+import org.camunda.feel.syntaxtree.{Val, ValError, ValFunction}
+import org.camunda.feel.valuemapper.ValueMapper
 
 class BusinessKnowledgeEvaluator(
     eval: (ParsedDecisionLogic, EvalContext) => Either[Failure, Val],

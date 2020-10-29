@@ -3,12 +3,14 @@ package org.camunda.dmn.camunda.plugin
 import java.util.{Map => JMap}
 
 import org.camunda.bpm.engine.ProcessEngineConfiguration
-import org.scalatest._
+import org.scalatest.BeforeAndAfter
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.collection.JavaConverters._
 
 class CamundaDmnEnginePluginTest
-    extends FlatSpec
+    extends AnyFlatSpec
     with Matchers
     with BeforeAndAfter {
 

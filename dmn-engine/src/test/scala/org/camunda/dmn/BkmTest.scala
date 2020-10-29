@@ -1,9 +1,10 @@
 package org.camunda.dmn
 
 import org.camunda.dmn.DmnEngine._
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class BkmTest extends FlatSpec with Matchers with DecisionTest {
+class BkmTest extends AnyFlatSpec with Matchers with DecisionTest {
 
   lazy val literalExpression = parse("/bkm/BkmWithLiteralExpression.dmn")
   lazy val context = parse("/bkm/BkmWithContext.dmn")

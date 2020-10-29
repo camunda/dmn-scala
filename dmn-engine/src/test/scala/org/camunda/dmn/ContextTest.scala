@@ -1,10 +1,10 @@
 package org.camunda.dmn
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
 import org.camunda.dmn.DmnEngine._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class ContextTest extends FlatSpec with Matchers with DecisionTest {
+class ContextTest extends AnyFlatSpec with Matchers with DecisionTest {
 
   lazy val simpleContext = parse("/context/SimpleContext.dmn")
   lazy val nestedContext = parse("/context/NestedContext.dmn")

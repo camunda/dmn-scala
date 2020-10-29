@@ -1,13 +1,13 @@
 package org.camunda.dmn
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.parser._
 import org.camunda.dmn.Audit._
-import org.camunda.feel.interpreter._
+import org.camunda.feel.syntaxtree.{ValBoolean, ValNumber, ValString}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class AuditLogTest extends FlatSpec with Matchers with DecisionTest {
+class AuditLogTest extends AnyFlatSpec with Matchers with DecisionTest {
 
   lazy val discountDecision = parse("/decisiontable/discount.dmn")
   lazy val eligibilityContext = parse("/context/Eligibility.dmn")
@@ -17,14 +17,17 @@ class AuditLogTest extends FlatSpec with Matchers with DecisionTest {
 
   "The audit log" should "contains the result of a decision table" in {
 
-    eval(discountDecision, "discount", Map("customer" -> "Business", "orderSize" -> 7))
+    eval(discountDecision,
+         "discount",
+         Map("customer" -> "Business", "orderSize" -> 7))
 
     auditLog.rootEntry.id should be("discount")
     auditLog.rootEntry.name should be("Discount")
     auditLog.rootEntry.decisionLogic shouldBe a[ParsedDecisionTable]
     auditLog.rootEntry.result shouldBe a[DecisionTableEvaluationResult]
 
-    val result = auditLog.rootEntry.result.asInstanceOf[DecisionTableEvaluationResult]
+    val result =
+      auditLog.rootEntry.result.asInstanceOf[DecisionTableEvaluationResult]
     result.inputs.size should be(2)
 
     result.inputs(0).input.id should be("input1")
@@ -47,13 +50,9 @@ class AuditLogTest extends FlatSpec with Matchers with DecisionTest {
   it should "contains the result of a context" in {
 
     val variables = Map(
-      "Applicant" -> Map(
-        "Age" -> 51,
-        "Monthly" -> Map(
-          "Income" -> 10000.00)),
-      "Affordability" -> Map(
-        "PreBureauRiskCategory" -> "DECLINE",
-        "InstallmentAffordable" -> true))
+      "Applicant" -> Map("Age" -> 51, "Monthly" -> Map("Income" -> 10000.00)),
+      "Affordability" -> Map("PreBureauRiskCategory" -> "DECLINE",
+                             "InstallmentAffordable" -> true))
 
     eval(eligibilityContext, "eligibility", variables)
 
@@ -92,7 +91,9 @@ class AuditLogTest extends FlatSpec with Matchers with DecisionTest {
 
   it should "contains the result of a BKM invocation" in {
 
-    eval(discountBkm, "discount", Map("Customer" -> "Business", "OrderSize" -> 7))
+    eval(discountBkm,
+         "discount",
+         Map("Customer" -> "Business", "OrderSize" -> 7))
 
     auditLog.rootEntry.id should be("discount")
     auditLog.rootEntry.name should be("Discount")
@@ -124,7 +125,9 @@ class AuditLogTest extends FlatSpec with Matchers with DecisionTest {
 
     auditLog.requiredEntries.size should be(1)
     auditLog.requiredEntries(0).name should be("Sum")
-    auditLog.requiredEntries(0).decisionLogic shouldBe a[ParsedLiteralExpression]
+    auditLog
+      .requiredEntries(0)
+      .decisionLogic shouldBe a[ParsedLiteralExpression]
     auditLog.requiredEntries(0).result shouldBe a[SingleEvaluationResult]
     auditLog.requiredEntries(0).result.result should be(ValNumber(5))
   }

@@ -1,25 +1,23 @@
 package org.camunda.dmn.spi
 
-import org.camunda.feel._
-import org.camunda.feel.interpreter._
-import org.camunda.feel.spi.CustomValueMapper
+import org.camunda.feel.syntaxtree.{Val, ValString}
+import org.camunda.feel.valuemapper.CustomValueMapper
 
 class MyCustomValueMapper extends CustomValueMapper {
 
-  override def toVal(x: Any): Val =
-    {
-      x match {
-        case "bar" => ValString("baz")
-        case _ => super.toVal(x)
-      }
+  override def toVal(x: Any, innerValueMapper: Any => Val): Option[Val] = {
+    x match {
+      case "bar" => Some(ValString("baz"))
+      case _     => None
     }
+  }
 
-  override def unpackVal(value: Val): Any =
-    {
-      value match {
-        case ValString("foobar") => "baz"
-        case _ => super.unpackVal(value)
-      }
+  override def unpackVal(value: Val,
+                         innerValueMapper: Val => Any): Option[Any] = {
+    value match {
+      case ValString("foobar") => Some("baz")
+      case _                   => None
     }
+  }
 
 }

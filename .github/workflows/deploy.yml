@@ -25,7 +25,7 @@ jobs:
       id: release-detection
     - uses: actions/setup-java@v1
       with:
-        java-version: 1.8
+        java-version: 11
     - name: Import Secrets
       uses: RichiCoder1/vault-action@v0.10.2
       with:
@@ -44,14 +44,14 @@ jobs:
     - name: Set up Nexus authentication
       uses: actions/setup-java@v1
       with:
-        java-version: 1.8
+        java-version: 11
         server-id: camunda-nexus
         server-username: NEXUS_USR
         server-password: NEXUS_PSW
     - name: Set up Maven Central authentication
       uses: actions/setup-java@v1
       with:
-        java-version: 1.8
+        java-version: 11
         server-id: central
         server-username: MAVEN_CENTRAL_DEPLOYMENT_USR
         server-password: MAVEN_CENTRAL_DEPLOYMENT_PSW

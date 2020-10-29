@@ -1,50 +1,24 @@
 package org.camunda.dmn
 
-import scala.collection.JavaConverters._
-import scala.collection.mutable.{ListBuffer => mutableList}
-import scala.reflect.{ClassTag, classTag}
-
 import java.io.InputStream
 import java.util.ServiceLoader
 
-import org.camunda.dmn.FunctionalHelper._
-import org.camunda.dmn.parser._
-import org.camunda.dmn.evaluation._
-import org.camunda.bpm.model.dmn._
-import org.camunda.bpm.model.dmn.instance.{
-  Decision,
-  DecisionTable,
-  Expression,
-  BusinessKnowledgeModel,
-  LiteralExpression
-}
-import org.camunda.bpm.model.dmn.instance.{
-  Invocation,
-  Binding,
-  FormalParameter,
-  Context
-}
-import org.camunda.bpm.model.dmn.instance.{
-  List => DmnList,
-  Relation,
-  FunctionDefinition
-}
-import org.camunda.feel._
-import org.camunda.feel.{FeelEngine, ParsedExpression}
-import org.camunda.feel.interpreter.{
-  Val,
-  ValNull,
-  FunctionProvider,
-  ValueMapper,
-  DefaultValueMapper
-}
-import org.camunda.feel.spi.{CustomValueMapper, CustomFunctionProvider}
 import org.camunda.dmn.Audit.{
   AuditLog,
   AuditLogEntry,
   AuditLogListener,
   EvaluationResult
 }
+import org.camunda.dmn.evaluation._
+import org.camunda.dmn.parser._
+import org.camunda.feel.FeelEngine
+import org.camunda.feel.context.{CustomFunctionProvider, FunctionProvider}
+import org.camunda.feel.syntaxtree.{Val, ValNull}
+import org.camunda.feel.valuemapper.{CustomValueMapper, ValueMapper}
+
+import scala.collection.JavaConverters._
+import scala.collection.mutable.{ListBuffer => mutableList}
+import scala.reflect.{ClassTag, classTag}
 
 object DmnEngine {
 
@@ -82,6 +56,38 @@ object DmnEngine {
   case class Configuration(escapeNamesWithSpaces: Boolean = false,
                            escapeNamesWithDashes: Boolean = false)
 
+  class Builder {
+
+    private var escapeNamesWithSpaces_ = false
+    private var escapeNamesWithDashes_ = false
+    private var auditLogListeners_ = List[AuditLogListener]().toBuffer
+
+    def escapeNamesWithSpaces(enabled: Boolean): Builder = {
+      escapeNamesWithSpaces_ = enabled
+      this
+    }
+
+    def escapeNamesWithDashes(enabled: Boolean): Builder = {
+      escapeNamesWithDashes_ = enabled
+      this
+    }
+
+    def addAuditListener(listener: AuditLogListener): Builder = {
+      auditLogListeners_ += listener
+      this
+    }
+
+    def build: DmnEngine =
+      new DmnEngine(
+        configuration = DmnEngine.Configuration(escapeNamesWithSpaces =
+                                                  escapeNamesWithSpaces_,
+                                                escapeNamesWithDashes =
+                                                  escapeNamesWithDashes_),
+        auditLogListeners = auditLogListeners_.toList
+      )
+
+  }
+
 }
 
 class DmnEngine(configuration: DmnEngine.Configuration =
@@ -92,9 +98,10 @@ class DmnEngine(configuration: DmnEngine.Configuration =
 
   val valueMapper = loadValueMapper()
 
-  val feelEngine = new FeelEngine(functionProvider = loadFunctionProvider(),
-                                  valueMapper =
-                                    new NoUnpackValueMapper(valueMapper))
+  val feelEngine = new FeelEngine(
+    functionProvider = loadFunctionProvider(),
+    valueMapper = ValueMapper.CompositeValueMapper(
+      List(new NoUnpackValueMapper(valueMapper))))
 
   val parser = new DmnParser(
     configuration = configuration,
@@ -219,16 +226,12 @@ class DmnEngine(configuration: DmnEngine.Configuration =
 
   private def loadValueMapper(): ValueMapper = {
     loadServiceProvider[CustomValueMapper]() match {
-      case Nil => DefaultValueMapper.instance
+      case Nil => FeelEngine.defaultValueMapper
       case m :: Nil => {
-        logger.info("Found custom value mapper: {}", m)
-        m
+        ValueMapper.CompositeValueMapper(List(m))
       }
       case mappers => {
-        logger.warn(
-          "Found more than one custom value mapper: {}. Use the first one.",
-          mappers)
-        mappers.head
+        ValueMapper.CompositeValueMapper(mappers)
       }
     }
   }
@@ -237,12 +240,10 @@ class DmnEngine(configuration: DmnEngine.Configuration =
     loadServiceProvider[CustomFunctionProvider]() match {
       case Nil => FunctionProvider.EmptyFunctionProvider
       case f :: Nil => {
-        logger.info("Found custom function provider: {}", f)
-        f
+        FunctionProvider.CompositeFunctionProvider(List(f))
       }
       case fs => {
-        logger.info("Found custom function providers: {}", fs)
-        new FunctionProvider.CompositeFunctionProvider(fs)
+        FunctionProvider.CompositeFunctionProvider(fs)
       }
     }
   }

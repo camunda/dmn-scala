@@ -1,26 +1,14 @@
 package org.camunda.dmn.evaluation
 
-import scala.collection.JavaConverters._
-
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
-import org.camunda.bpm.model.dmn.instance.{
-  FunctionDefinition,
-  FormalParameter,
-  Expression,
-  LiteralExpression
-}
-import org.camunda.feel.interpreter.{
-  ValFunction,
+import org.camunda.dmn.parser.ParsedFunctionDefinition
+import org.camunda.feel.syntaxtree.{
+  ParsedExpression,
+  Val,
   ValError,
-  DefaultValueMapper,
-  Val
+  ValFunction
 }
-import org.camunda.dmn.parser.{
-  ParsedLiteralExpression,
-  ParsedFunctionDefinition
-}
-import org.camunda.feel.ParsedExpression
 
 class FunctionDefinitionEvaluator(
     eval: (ParsedExpression, EvalContext) => Either[Failure, Val]) {

@@ -1,14 +1,19 @@
 package org.camunda.dmn.standalone
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
 import org.camunda.dmn.DmnEngine._
 import java.nio.file.Paths
+
 import org.scalatest.BeforeAndAfter
 import java.nio.file.Files
 import java.io.FileInputStream
 
-class StandaloneEngineTest extends FlatSpec with Matchers with BeforeAndAfter {
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+
+class StandaloneEngineTest
+    extends AnyFlatSpec
+    with Matchers
+    with BeforeAndAfter {
 
   val repository =
     Paths.get(getClass.getResource("/repository").toURI()).toString

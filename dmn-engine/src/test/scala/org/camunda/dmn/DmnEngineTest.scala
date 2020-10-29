@@ -1,20 +1,26 @@
 package org.camunda.dmn
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
 import org.camunda.dmn.DmnEngine._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class DmnEngineTest extends FlatSpec with Matchers {
+class DmnEngineTest extends AnyFlatSpec with Matchers {
 
   val engine = new DmnEngine
 
-  def discountDecision = getClass.getResourceAsStream("/decisiontable/discount.dmn")
-  def invalidExpressionDecision = getClass.getResourceAsStream("/decisiontable/invalid-expression.dmn")
-  def expressionLanguageDecision = getClass.getResourceAsStream("/decisiontable/expression-language.dmn")
+  def discountDecision =
+    getClass.getResourceAsStream("/decisiontable/discount.dmn")
+  def invalidExpressionDecision =
+    getClass.getResourceAsStream("/decisiontable/invalid-expression.dmn")
+  def expressionLanguageDecision =
+    getClass.getResourceAsStream("/decisiontable/expression-language.dmn")
 
   "A DMN engine" should "evaluate a decision table" in {
 
-    engine.eval(discountDecision, "discount", Map("customer" -> "Business", "orderSize" -> 7)) should be(Right(Result(0.1)))
+    engine.eval(discountDecision,
+                "discount",
+                Map("customer" -> "Business", "orderSize" -> 7)) should be(
+      Right(Result(0.1)))
   }
 
   it should "parse and evaluate a decision table" in {
@@ -25,7 +31,10 @@ class DmnEngineTest extends FlatSpec with Matchers {
 
     val parsedDmn = parseResult.right.get
 
-    engine.eval(parsedDmn, "discount", Map("customer" -> "Business", "orderSize" -> 7)) should be(Right(Result(0.1)))
+    engine.eval(parsedDmn,
+                "discount",
+                Map("customer" -> "Business", "orderSize" -> 7)) should be(
+      Right(Result(0.1)))
   }
 
   it should "report parse failures" in {
@@ -41,7 +50,8 @@ class DmnEngineTest extends FlatSpec with Matchers {
 
   it should "report parse failures on evaluation" in {
 
-    val result = engine.eval(invalidExpressionDecision, "discount", Map[String, Any]())
+    val result =
+      engine.eval(invalidExpressionDecision, "discount", Map[String, Any]())
 
     result.isLeft should be(true)
 
@@ -52,7 +62,10 @@ class DmnEngineTest extends FlatSpec with Matchers {
 
   it should "report an evaluation failure" in {
 
-    val result = engine.eval(discountDecision, "discount", Map[String, Any]("customer" -> "Business", "orderSize" -> "foo"))
+    val result = engine.eval(
+      discountDecision,
+      "discount",
+      Map[String, Any]("customer" -> "Business", "orderSize" -> "foo"))
 
     result.isLeft should be(true)
 
@@ -69,7 +82,8 @@ class DmnEngineTest extends FlatSpec with Matchers {
 
     val failure = parseResult.left.get
 
-    failure.message should include("Expression language 'groovy' is not supported")
+    failure.message should include(
+      "Expression language 'groovy' is not supported")
   }
 
 }

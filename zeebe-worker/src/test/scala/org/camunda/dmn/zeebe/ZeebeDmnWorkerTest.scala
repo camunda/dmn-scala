@@ -1,27 +1,19 @@
 package org.camunda.dmn.standalone
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
-import org.camunda.dmn.DmnEngine._
 import java.nio.file.Paths
-import org.scalatest.BeforeAndAfter
-import java.nio.file.Files
-import java.io.FileInputStream
-import org.scalatest.junit.JUnitSuite
-import scala.annotation.meta.getter
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import io.zeebe.test.ZeebeTestRule
-import io.zeebe.model.bpmn.Bpmn
-import java.util.Properties
-import org.camunda.dmn.zeebe.ZeebeDmnWorkerApplication
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
-import org.junit.After
-import java.io.ByteArrayInputStream
+
 import io.zeebe.client.ZeebeClient
+import io.zeebe.model.bpmn.Bpmn
+import io.zeebe.test.ZeebeTestRule
 import io.zeebe.test.util.record.RecordingExporter
+import org.camunda.dmn.zeebe.ZeebeDmnWorkerApplication
+import org.junit.{After, Before, Rule, Test}
+import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.junit.JUnitSuite
+
+import scala.annotation.meta.getter
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class ZeebeDmnWorkerTest extends JUnitSuite with Matchers {
 
@@ -49,7 +41,7 @@ class ZeebeDmnWorkerTest extends JUnitSuite with Matchers {
       .createExecutableProcess("wf")
       .startEvent()
       .serviceTask("dmn-task")
-      .zeebeTaskType("DMN")
+      .zeebeJobType("DMN")
       .zeebeTaskHeader("decisionRef", "discount")
       .endEvent()
       .done()
