@@ -140,8 +140,7 @@ class DmnEngine(configuration: DmnEngine.Configuration =
   def eval(stream: InputStream,
            decisionId: String,
            context: Map[String, Any]): Either[Failure, EvalResult] = {
-    parse(stream).flatMap(parsedDmn =>
-      eval(parsedDmn, decisionId, context))
+    parse(stream).flatMap(parsedDmn => eval(parsedDmn, decisionId, context))
   }
 
   def parse(stream: InputStream): Either[Failure, ParsedDmn] =
@@ -196,7 +195,7 @@ class DmnEngine(configuration: DmnEngine.Configuration =
       .eval(decision, context)
       .map {
         case ValNull => NilResult
-        case result => Result(valueMapper.unpackVal(result))
+        case result  => Result(valueMapper.unpackVal(result))
       } match {
       case anyResult =>
         val log = AuditLog(context.dmn, context.auditLog.toList)

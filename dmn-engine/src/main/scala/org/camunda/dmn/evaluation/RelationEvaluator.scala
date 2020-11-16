@@ -3,7 +3,11 @@ package org.camunda.dmn.evaluation
 import org.camunda.dmn.Audit.SingleEvaluationResult
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
-import org.camunda.dmn.parser.{ParsedDecisionLogic, ParsedRelation, ParsedRelationRow}
+import org.camunda.dmn.parser.{
+  ParsedDecisionLogic,
+  ParsedRelation,
+  ParsedRelationRow
+}
 import org.camunda.feel.context.Context.StaticContext
 import org.camunda.feel.syntaxtree.{Val, ValContext, ValError, ValList}
 
@@ -28,11 +32,12 @@ class RelationEvaluator(
     )
 
     rows.map(ValList) match {
-      case r@Right(result) =>
+      case r @ Right(result) =>
         context.audit(relation, SingleEvaluationResult(result))
         r
-      case l@Left(failure) =>
-        context.audit(relation, SingleEvaluationResult(ValError(failure.message)))
+      case l @ Left(failure) =>
+        context.audit(relation,
+                      SingleEvaluationResult(ValError(failure.message)))
         l
     }
   }

@@ -59,7 +59,6 @@ class BusinessKnowledgeEvaluator(
       case ((name, typeRef), arg) =>
         TypeChecker
           .isOfType(arg, typeRef)
-
           .map(name -> _)
     })
   }

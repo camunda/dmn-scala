@@ -12,7 +12,7 @@ trait DecisionTest {
   def parse(file: String): ParsedDmn = {
     val stream = getClass.getResourceAsStream(file)
     engine.parse(stream) match {
-      case Right(dmn) => dmn
+      case Right(dmn)    => dmn
       case Left(failure) => throw new IllegalArgumentException(failure.message)
     }
   }

@@ -27,14 +27,12 @@ class FileSystemRepository(val dmnEngine: DmnEngine, directory: String)
       Files
         .walk(path)
         .filter(p => p.getFileName.toString.endsWith(".dmn"))
-        .forEach(
-          p => {
-            parseDecision(new FileInputStream(p.toFile()),
-                          p.getFileName.toString)
-              .map(decisions => deployedDecisions ++= decisions)
-              .left
-              .map(f => logger.warn(f.toString))
-          })
+        .forEach(p => {
+          parseDecision(new FileInputStream(p.toFile()), p.getFileName.toString)
+            .map(decisions => deployedDecisions ++= decisions)
+            .left
+            .map(f => logger.warn(f.toString))
+        })
     } catch {
       case e: IOException => logger.warn(s"Fail to scan directory", e)
     }
@@ -79,7 +77,6 @@ class FileSystemRepository(val dmnEngine: DmnEngine, directory: String)
           case t: Throwable =>
             Left(Failure(s"Fail to copy resource '$resource': $t"))
       })
-
       .map(decisions => {
         deployedDecisions ++= decisions
 
@@ -116,14 +113,13 @@ class FileSystemRepository(val dmnEngine: DmnEngine, directory: String)
           case t: Throwable =>
             Left(Failure(s"Fail to delete resource '$resource': $t"))
         }
-      }
-        .map(decisionsToRemove => {
-          val ids = decisionsToRemove.map(_.decisionId)
+      }.map(decisionsToRemove => {
+        val ids = decisionsToRemove.map(_.decisionId)
 
-          deployedDecisions --= ids
+        deployedDecisions --= ids
 
-          decisionsToRemove.toList
-        })
+        decisionsToRemove.toList
+      })
     }
   }
 

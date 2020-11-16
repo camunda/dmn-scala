@@ -4,11 +4,41 @@ import scala.collection.JavaConverters._
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
 import org.camunda.feel._
-import org.camunda.feel.syntaxtree.{ParsedExpression, Val, ValBoolean, ValContext, ValError, ValList, ValNull, ValNumber, ValString}
+import org.camunda.feel.syntaxtree.{
+  ParsedExpression,
+  Val,
+  ValBoolean,
+  ValContext,
+  ValError,
+  ValList,
+  ValNull,
+  ValNumber,
+  ValString
+}
 import org.camunda.bpm.model.dmn._
-import org.camunda.bpm.model.dmn.instance.{Decision, DecisionTable, Input, InputEntry, LiteralExpression, Output, OutputEntry, Rule, UnaryTests}
-import org.camunda.dmn.parser.{ParsedDecisionTable, ParsedInput, ParsedOutput, ParsedRule}
-import org.camunda.dmn.Audit.{DecisionTableEvaluationResult, EvaluatedInput, EvaluatedOutput, EvaluatedRule}
+import org.camunda.bpm.model.dmn.instance.{
+  Decision,
+  DecisionTable,
+  Input,
+  InputEntry,
+  LiteralExpression,
+  Output,
+  OutputEntry,
+  Rule,
+  UnaryTests
+}
+import org.camunda.dmn.parser.{
+  ParsedDecisionTable,
+  ParsedInput,
+  ParsedOutput,
+  ParsedRule
+}
+import org.camunda.dmn.Audit.{
+  DecisionTableEvaluationResult,
+  EvaluatedInput,
+  EvaluatedOutput,
+  EvaluatedRule
+}
 import org.camunda.feel.context.Context.StaticContext
 
 class DecisionTableEvaluator(
@@ -29,16 +59,18 @@ class DecisionTableEvaluator(
             Left(failure)
           case right =>
             right
-        })
-          .map(_.flatten)
+        }).map(_.flatten)
           .flatMap {
             case Nil =>
               applyDefaultOutputEntries(decisionTable.outputs) match {
-                case r@Right(result) =>
+                case r @ Right(result) =>
                   audit(decisionTable, inputValues, Nil, result)
                   r
-                case l@Left(failure) =>
-                  audit(decisionTable, inputValues, Nil, ValError(failure.message))
+                case l @ Left(failure) =>
+                  audit(decisionTable,
+                        inputValues,
+                        Nil,
+                        ValError(failure.message))
                   l
               }
             case rules if (decisionTable.hitPolicy == HitPolicy.FIRST) =>
@@ -46,29 +78,35 @@ class DecisionTableEvaluator(
 
               evalOutputValues(firstMatchedRule).flatMap { values =>
                 applyHitPolicy(decisionTable, values.map(_.toMap)) match {
-                  case r@Right(result) =>
+                  case r @ Right(result) =>
                     audit(decisionTable,
-                      inputValues,
-                      firstMatchedRule.zip(values),
-                      result)
+                          inputValues,
+                          firstMatchedRule.zip(values),
+                          result)
                     r
-                  case l@Left(failure) =>
-                    audit(decisionTable, inputValues, firstMatchedRule.zip(values), ValError(failure.message))
+                  case l @ Left(failure) =>
+                    audit(decisionTable,
+                          inputValues,
+                          firstMatchedRule.zip(values),
+                          ValError(failure.message))
                     l
                 }
               }
             case rules =>
               evalOutputValues(rules).flatMap { values =>
                 applyHitPolicy(decisionTable, values.map(_.toMap)) match {
-                  case r@Right(result) =>
+                  case r @ Right(result) =>
                     audit(decisionTable, inputValues, rules.zip(values), result)
                     r
-                  case l@Left(failure) =>
-                    audit(decisionTable, inputValues, rules.zip(values), ValError(failure.message))
+                  case l @ Left(failure) =>
+                    audit(decisionTable,
+                          inputValues,
+                          rules.zip(values),
+                          ValError(failure.message))
                     l
                 }
               }
-        }
+          }
     }
   }
 

@@ -1,17 +1,8 @@
 package org.camunda.dmn.evaluation
 
-import scala.collection.JavaConverters._
-
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
 import org.camunda.feel.syntaxtree.{Val, ValFunction}
-import org.camunda.bpm.model.dmn.instance.{
-  Decision,
-  Expression,
-  BusinessKnowledgeModel,
-  KnowledgeRequirement,
-  InformationRequirement
-}
 import org.camunda.dmn.parser.{
   ParsedDecision,
   ParsedDecisionLogic,
@@ -49,7 +40,6 @@ class DecisionEvaluator(
                   decision.resultType
                     .map(typeRef => TypeChecker.isOfType(result, typeRef))
                     .getOrElse(Right(result)))
-
               .map(decision.resultName -> _)
           })
       })

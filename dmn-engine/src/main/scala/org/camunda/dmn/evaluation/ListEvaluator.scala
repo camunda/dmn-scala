@@ -15,10 +15,10 @@ class ListEvaluator(
 
     mapEither(list.entries, (expr: ParsedDecisionLogic) => eval(expr, context))
       .map(ValList) match {
-      case r@Right(result) =>
+      case r @ Right(result) =>
         context.audit(list, SingleEvaluationResult(result))
         r
-      case l@Left(failure) =>
+      case l @ Left(failure) =>
         context.audit(list, SingleEvaluationResult(ValError(failure.message)))
         l
     }
