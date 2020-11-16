@@ -11,20 +11,17 @@ trait DecisionTest {
 
   def parse(file: String): ParsedDmn = {
     val stream = getClass.getResourceAsStream(file)
-    val result = engine.parse(stream)
-
-    result.left.foreach(println)
-
-    result.right.get
+    engine.parse(stream) match {
+      case Right(dmn) => dmn
+      case Left(failure) => throw new IllegalArgumentException(failure.message)
+    }
   }
 
-  def eval(decision: ParsedDmn, id: String, context: Map[String, Any]): Any = {
-    val result = engine.eval(decision, id, context)
-
-    result.left.foreach(println)
-
-    result.right.get
-  }
+  def eval(decision: ParsedDmn, id: String, context: Map[String, Any]): Any =
+    engine.eval(decision, id, context) match {
+      case Right(result) => result
+      case Left(failure) => failure
+    }
 
   var lastAuditLog: AuditLog = _
 
