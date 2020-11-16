@@ -26,7 +26,7 @@ class DecisionEvaluator(
   def eval(decision: ParsedDecision,
            context: EvalContext): Either[Failure, Val] = {
 
-    evalDecision(decision, context).right
+    evalDecision(decision, context)
       .map { case (name, result) => result }
   }
 
@@ -34,22 +34,22 @@ class DecisionEvaluator(
       decision: ParsedDecision,
       context: EvalContext): Either[Failure, (String, Val)] = {
 
-    evalRequiredDecisions(decision.requiredDecisions, context).right
+    evalRequiredDecisions(decision.requiredDecisions, context)
       .flatMap(decisionResults => {
-        evalRequiredKnowledge(decision.requiredBkms, context).right
+        evalRequiredKnowledge(decision.requiredBkms, context)
           .flatMap(functions => {
 
             val decisionEvaluationContext = context.copy(
               variables = context.variables ++ decisionResults ++ functions,
               currentElement = decision)
 
-            eval(decision.logic, decisionEvaluationContext).right
+            eval(decision.logic, decisionEvaluationContext)
               .flatMap(
                 result =>
                   decision.resultType
                     .map(typeRef => TypeChecker.isOfType(result, typeRef))
                     .getOrElse(Right(result)))
-              .right
+
               .map(decision.resultName -> _)
           })
       })

@@ -26,7 +26,7 @@ class FunctionDefinitionEvaluator(
     ValFunction(
       params = parameterNames,
       invoke = args => {
-        val result = validateArguments(parameters, args, context).right.flatMap(
+        val result = validateArguments(parameters, args, context).flatMap(
           arguments =>
             eval(expression,
                  context.copy(variables = context.variables ++ arguments)))
@@ -47,7 +47,7 @@ class FunctionDefinitionEvaluator(
       case ((name, typeRef), arg) =>
         TypeChecker
           .isOfType(arg, typeRef)
-          .right
+
           .map(name -> _)
     })
   }

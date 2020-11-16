@@ -2,7 +2,7 @@ package org.camunda.dmn.evaluation
 
 import org.camunda.dmn.DmnEngine._
 import org.camunda.feel._
-import org.camunda.feel.syntaxtree.{ParsedExpression, Val, ValFunction}
+import org.camunda.feel.syntaxtree.{ParsedExpression, Val, ValError, ValFunction}
 import org.camunda.bpm.model.dmn.instance.{LiteralExpression, UnaryTests}
 
 import scala.Left
@@ -16,10 +16,13 @@ class LiteralExpressionEvaluator(feelEngine: FeelEngine) {
   def evalExpression(literalExpression: ParsedLiteralExpression,
                      context: EvalContext): Either[Failure, Val] = {
 
-    evalExpression(literalExpression.expression, context).right.map { result =>
-      context.audit(literalExpression, SingleEvaluationResult(result))
-
-      result
+    evalExpression(literalExpression.expression, context) match {
+      case r@Right(result) =>
+        context.audit(literalExpression, SingleEvaluationResult(result))
+        r
+      case l@Left(failure) =>
+        context.audit(literalExpression, SingleEvaluationResult(ValError(failure.message)))
+        l
     }
   }
 

@@ -8,7 +8,7 @@ object FunctionalHelper {
                       f: T => Either[Failure, R]): Either[Failure, List[R]] = {
     foldEither[T, List[R]](List(), it, {
       case (xs, x) =>
-        f(x).right.map(xs :+ _)
+        f(x).map(xs :+ _)
     })
   }
 
@@ -19,7 +19,7 @@ object FunctionalHelper {
     val startValue: Either[Failure, R] = Right(start)
 
     (startValue /: it)((xs, x) =>
-      xs.right.flatMap { xs =>
+      xs.flatMap { xs =>
         f(xs, x)
     })
   }

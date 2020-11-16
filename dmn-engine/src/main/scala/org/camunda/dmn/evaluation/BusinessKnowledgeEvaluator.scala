@@ -16,14 +16,14 @@ class BusinessKnowledgeEvaluator(
   def eval(bkm: ParsedBusinessKnowledgeModel,
            context: EvalContext): Either[Failure, Val] = {
 
-    evalRequiredKnowledge(bkm.requiredBkms, context).right
+    evalRequiredKnowledge(bkm.requiredBkms, context)
       .flatMap(functions => {
 
         val evalContext =
           context.copy(variables = context.variables ++ functions,
                        currentElement = bkm)
 
-        validateParameters(bkm.parameters, evalContext).right
+        validateParameters(bkm.parameters, evalContext)
           .flatMap(_ => eval(bkm.logic, evalContext))
       })
   }
@@ -32,7 +32,7 @@ class BusinessKnowledgeEvaluator(
       bkm: ParsedBusinessKnowledgeModel,
       context: EvalContext): Either[Failure, (String, ValFunction)] = {
 
-    evalRequiredKnowledge(bkm.requiredBkms, context).right.map(functions => {
+    evalRequiredKnowledge(bkm.requiredBkms, context).map(functions => {
 
       val evalContext = context.copy(variables = context.variables ++ functions,
                                      currentElement = bkm)
@@ -59,7 +59,7 @@ class BusinessKnowledgeEvaluator(
       case ((name, typeRef), arg) =>
         TypeChecker
           .isOfType(arg, typeRef)
-          .right
+
           .map(name -> _)
     })
   }
@@ -87,7 +87,7 @@ class BusinessKnowledgeEvaluator(
       params = parameterNames,
       invoke = args => {
 
-        val result = validateArguments(parameters, args, context).right.flatMap(
+        val result = validateArguments(parameters, args, context).flatMap(
           arguments =>
             eval(expression,
                  context.copy(variables = context.variables ++ arguments)))

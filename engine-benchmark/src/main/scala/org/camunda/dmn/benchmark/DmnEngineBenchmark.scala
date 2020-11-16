@@ -9,7 +9,7 @@ object DmnEngineBenchmark {
   val engine = new DmnEngine
 
   val parsedDmn =
-    engine.parse(getClass.getResourceAsStream("/discount.dmn")).right.get
+    engine.parse(getClass.getResourceAsStream("/discount.dmn")).get
 
   val variables = Map("customer" -> "Business", "orderSize" -> 15)
 

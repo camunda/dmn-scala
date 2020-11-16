@@ -89,7 +89,7 @@ class StandaloneEngineTest
     val stream = getClass.getResourceAsStream("/repository/discount.dmn")
 
     val result = engine.insertDecisions(stream, "discount.dmn")
-    val deployedDecision = result.right.get.head
+    val deployedDecision = result.get.head
 
     deployedDecision.decisionId should be("discount")
     deployedDecision.resource should be("discount.dmn")
@@ -103,7 +103,7 @@ class StandaloneEngineTest
     engine.insertDecisions(stream, "discount.dmn")
 
     val result = engine.removeResource("discount.dmn")
-    val removedDecision = result.right.get.head
+    val removedDecision = result.get.head
 
     removedDecision.decisionId should be("discount")
 

@@ -61,7 +61,7 @@ class DmnEngineRestServlet(engine: StandaloneEngine)
       }
     }.toList
 
-    val deployedDecisions = result.filter(_.isRight).flatMap(_.right.get)
+    val deployedDecisions = result.filter(_.isRight).flatMap(_.get)
     val failures = result.filter(_.isLeft).map(_.left.get)
 
     DeploymentResult(deployedDecisions, failures)

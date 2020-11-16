@@ -3,7 +3,7 @@ package org.camunda.dmn
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.parser._
 import org.camunda.dmn.Audit._
-import org.camunda.feel.syntaxtree.{ValBoolean, ValNumber, ValString}
+import org.camunda.feel.syntaxtree.{ValBoolean, ValError, ValNull, ValNumber, ValString}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -43,6 +43,62 @@ class AuditLogTest extends AnyFlatSpec with Matchers with DecisionTest {
     result.matchedRules(0).outputs(0).value should be(ValNumber(0.1))
 
     result.result should be(ValNumber(0.1))
+
+    auditLog.requiredEntries.size should be(0)
+  }
+
+  it should "contains the result of a decision table if there is none" in {
+
+    eval(discountDecision, "discount", Map("customer" -> "Other", "orderSize" -> 7))
+
+    auditLog.rootEntry.id should be("discount")
+    auditLog.rootEntry.name should be("Discount")
+    auditLog.rootEntry.decisionLogic shouldBe a[ParsedDecisionTable]
+    auditLog.rootEntry.result shouldBe a[DecisionTableEvaluationResult]
+
+    val result = auditLog.rootEntry.result.asInstanceOf[DecisionTableEvaluationResult]
+    result.inputs.size should be(2)
+
+    result.inputs(0).input.id should be("input1")
+    result.inputs(0).input.name should be("Customer")
+    result.inputs(0).value should be(ValString("Other"))
+
+    result.inputs(1).input.name should be("Order Size")
+    result.inputs(1).value should be(ValNumber(7))
+
+    result.matchedRules.size should be(0)
+
+    result.result should be(ValNull)
+
+    auditLog.requiredEntries.size should be(0)
+  }
+
+  it should "contains the result of a decision table if there is an exception" in {
+
+    eval(discountDecision, "discount", Map("customer" -> "Business", "orderSize" -> 9))
+
+    val l = auditLog
+    auditLog.rootEntry.id should be("discount")
+    auditLog.rootEntry.name should be("Discount")
+    auditLog.rootEntry.decisionLogic shouldBe a[ParsedDecisionTable]
+    auditLog.rootEntry.result shouldBe a[DecisionTableEvaluationResult]
+
+    val result = auditLog.rootEntry.result.asInstanceOf[DecisionTableEvaluationResult]
+    result.inputs.size should be(2)
+
+    result.inputs(0).input.id should be("input1")
+    result.inputs(0).input.name should be("Customer")
+    result.inputs(0).value should be(ValString("Business"))
+
+    result.inputs(1).input.name should be("Order Size")
+    result.inputs(1).value should be(ValNumber(9))
+
+    result.matchedRules.size should be(2)
+    result.matchedRules(0).outputs.size should be(1)
+    result.matchedRules(0).outputs(0).output.name should be("discount")
+    result.matchedRules(0).outputs(0).value should be(ValNumber(0.1))
+
+    result.result should be(ValError("multiple values aren't allowed for UNIQUE hit policy. found: 'List(Map(discount -> ValNumber(0.1)), Map(discount -> ValNumber(0.15)))'"))
 
     auditLog.requiredEntries.size should be(0)
   }

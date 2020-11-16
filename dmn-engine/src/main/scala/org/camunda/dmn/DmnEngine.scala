@@ -140,7 +140,7 @@ class DmnEngine(configuration: DmnEngine.Configuration =
   def eval(stream: InputStream,
            decisionId: String,
            context: Map[String, Any]): Either[Failure, EvalResult] = {
-    parse(stream).right.flatMap(parsedDmn =>
+    parse(stream).flatMap(parsedDmn =>
       eval(parsedDmn, decisionId, context))
   }
 
@@ -194,17 +194,15 @@ class DmnEngine(configuration: DmnEngine.Configuration =
       context: EvalContext): Either[Failure, EvalResult] = {
     decisionEval
       .eval(decision, context)
-      .right
-      .map(result => {
-        val log = new AuditLog(context.dmn, context.auditLog.toList)
-
-        auditLogListeners.map(_.onEval(log))
-
-        result match {
-          case ValNull => NilResult
-          case result  => Result(valueMapper.unpackVal(result))
-        }
-      })
+      .map {
+        case ValNull => NilResult
+        case result => Result(valueMapper.unpackVal(result))
+      } match {
+      case anyResult =>
+        val log = AuditLog(context.dmn, context.auditLog.toList)
+        auditLogListeners.foreach(_.onEval(log))
+        anyResult
+    }
   }
 
   private def evalExpression(expression: ParsedDecisionLogic,

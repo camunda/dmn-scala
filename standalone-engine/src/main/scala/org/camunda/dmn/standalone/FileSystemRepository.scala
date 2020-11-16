@@ -30,7 +30,7 @@ class FileSystemRepository(val dmnEngine: DmnEngine, directory: String)
         .forEach(
           p => {
             parseDecision(new FileInputStream(p.toFile()),
-                          p.getFileName.toString).right
+                          p.getFileName.toString)
               .map(decisions => deployedDecisions ++= decisions)
               .left
               .map(f => logger.warn(f.toString))
@@ -65,7 +65,7 @@ class FileSystemRepository(val dmnEngine: DmnEngine, directory: String)
     val outputStream = copyStream(inputStream)
 
     val inputStreamParse = new ByteArrayInputStream(outputStream.toByteArray())
-    parseDecision(inputStreamParse, resourceName).right
+    parseDecision(inputStreamParse, resourceName)
       .flatMap(decisions =>
         try {
           val inputStreamCopy =
@@ -79,7 +79,7 @@ class FileSystemRepository(val dmnEngine: DmnEngine, directory: String)
           case t: Throwable =>
             Left(Failure(s"Fail to copy resource '$resource': $t"))
       })
-      .right
+
       .map(decisions => {
         deployedDecisions ++= decisions
 
@@ -116,7 +116,7 @@ class FileSystemRepository(val dmnEngine: DmnEngine, directory: String)
           case t: Throwable =>
             Left(Failure(s"Fail to delete resource '$resource': $t"))
         }
-      }.right
+      }
         .map(decisionsToRemove => {
           val ids = decisionsToRemove.map(_.decisionId)
 
