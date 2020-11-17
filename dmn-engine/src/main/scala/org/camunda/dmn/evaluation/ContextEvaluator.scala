@@ -14,14 +14,16 @@ class ContextEvaluator(
 
     evalContextEntries(context.entries, ctx).flatMap(results =>
       evalContextResult(context.aggregationEntry, results, ctx) match {
-        case r@Right(result) =>
-          ctx.audit(context, ContextEvaluationResult(entries = results, result = result))
-          r
-        case l@Left(failure) =>
+        case r @ Right(result) =>
           ctx.audit(context,
-            ContextEvaluationResult(entries = results, result = ValError(failure.message)))
+                    ContextEvaluationResult(entries = results, result = result))
+          r
+        case l @ Left(failure) =>
+          ctx.audit(context,
+                    ContextEvaluationResult(entries = results,
+                                            result = ValError(failure.message)))
           l
-      })
+    })
   }
 
   private def evalContextEntries(
