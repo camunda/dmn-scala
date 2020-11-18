@@ -70,13 +70,13 @@ jobs:
       run: mvn -B -DskipTests=true clean install
     - name: Publish package to Camunda Nexus (${{ steps.release-detection.outputs.type }})
       run: |-
-        mvn -B -DskipTests=true -Dgpg.passphrase="${GPG_PASSPHRASE}" deploy
+        mvn -B -DskipTests=true -Dgpg.passphrase="${MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE}" deploy
     - name: Publish package to Maven Central (${{ steps.release-detection.outputs.type }})
       run: |-
-        echo -e "${MVN_CENTRAL_GPG_KEY_SEC}" | gpg -q --allow-secret-key-import --import
-        echo -e "${MVN_CENTRAL_GPG_KEY_PUB}" | gpg -q --allow-secret-key-import --import
+        echo -e "${MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC}" | gpg -q --allow-secret-key-import --import
+        echo -e "${MAVEN_CENTRAL_GPG_SIGNING_KEY_PUB}" | gpg -q --allow-secret-key-import --import
         sed -i 's@:camunda-nexus:.*$@:central:https://oss.sonatype.org/content/repositories/snapshots/@g' target/nexus-staging/deferred/.index
-        mvn -B -DskipTests=true -s $GITHUB_WORKSPACE/settings.xml -Dgpg.passphrase="${GPG_PASSPHRASE}" org.sonatype.plugins:nexus-staging-maven-plugin:deploy-staged
+        mvn -B -DskipTests=true -s $GITHUB_WORKSPACE/settings.xml -Dgpg.passphrase="${MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE}" org.sonatype.plugins:nexus-staging-maven-plugin:deploy-staged
     - name: Archive artifacts
       run: |-
         ZIPFILE=${{github.event.repository.name}}-${{github.event.release.tag_name}}.zip
