@@ -2,18 +2,12 @@ package org.camunda.dmn
 
 import java.io.InputStream
 import java.util.ServiceLoader
-
-import org.camunda.dmn.Audit.{
-  AuditLog,
-  AuditLogEntry,
-  AuditLogListener,
-  EvaluationResult
-}
+import org.camunda.dmn.Audit.{AuditLog, AuditLogEntry, AuditLogListener, ContextEvaluationResult, EvaluationResult}
 import org.camunda.dmn.evaluation._
 import org.camunda.dmn.parser._
 import org.camunda.feel.FeelEngine
 import org.camunda.feel.context.{CustomFunctionProvider, FunctionProvider}
-import org.camunda.feel.syntaxtree.{Val, ValNull}
+import org.camunda.feel.syntaxtree.{Val, ValError, ValNull}
 import org.camunda.feel.valuemapper.{CustomValueMapper, ValueMapper}
 
 import scala.collection.JavaConverters._
@@ -49,6 +43,20 @@ object DmnEngine {
                                   decisionLogic = decisionLogic,
                                   result = result)
       }
+    }
+
+    def audit(result: Either[Failure, Val],
+              decisionLogic: ParsedDecisionLogic,
+              funct: Val => EvaluationResult): Either[Failure, Val] = {
+      result match {
+        case Right(result) =>
+          audit(decisionLogic,
+            funct(result))
+        case Left(failure) =>
+          audit(decisionLogic,
+            funct(ValError(failure.message)))
+      }
+      result
     }
 
   }

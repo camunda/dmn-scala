@@ -1,11 +1,11 @@
 package org.camunda.dmn.evaluation
 
+import org.camunda.dmn.Audit.ContextEvaluationResult
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
-import org.camunda.feel.context.Context._
 import org.camunda.dmn.parser.{ParsedContext, ParsedDecisionLogic}
-import org.camunda.feel.syntaxtree.{Val, ValContext, ValError, ValFunction}
-import org.camunda.dmn.Audit.ContextEvaluationResult
+import org.camunda.feel.context.Context._
+import org.camunda.feel.syntaxtree.{Val, ValContext, ValFunction}
 
 class ContextEvaluator(
     eval: (ParsedDecisionLogic, EvalContext) => Either[Failure, Val]) {
@@ -13,17 +13,11 @@ class ContextEvaluator(
   def eval(context: ParsedContext, ctx: EvalContext): Either[Failure, Val] = {
 
     evalContextEntries(context.entries, ctx).flatMap(results =>
-      evalContextResult(context.aggregationEntry, results, ctx) match {
-        case r @ Right(result) =>
-          ctx.audit(context,
-                    ContextEvaluationResult(entries = results, result = result))
-          r
-        case l @ Left(failure) =>
-          ctx.audit(context,
-                    ContextEvaluationResult(entries = results,
-                                            result = ValError(failure.message)))
-          l
-    })
+      ctx.audit(
+        evalContextResult(context.aggregationEntry, results, ctx),
+        context,
+        (v: Val) => ContextEvaluationResult(entries = results, result = v))
+      )
   }
 
   private def evalContextEntries(
