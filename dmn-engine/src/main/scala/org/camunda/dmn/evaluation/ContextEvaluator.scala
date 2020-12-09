@@ -12,12 +12,12 @@ class ContextEvaluator(
 
   def eval(context: ParsedContext, ctx: EvalContext): Either[Failure, Val] = {
 
-    evalContextEntries(context.entries, ctx).flatMap(results =>
-      ctx.audit(
-        evalContextResult(context.aggregationEntry, results, ctx),
-        context,
-        (v: Val) => ContextEvaluationResult(entries = results, result = v))
-      )
+    evalContextEntries(context.entries, ctx).flatMap(
+      results =>
+        ctx.audit(evalContextResult(context.aggregationEntry, results, ctx),
+                  context,
+                  (v: Val) =>
+                    ContextEvaluationResult(entries = results, result = v)))
   }
 
   private def evalContextEntries(

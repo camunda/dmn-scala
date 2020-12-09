@@ -4,11 +4,43 @@ import scala.collection.JavaConverters._
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
 import org.camunda.feel._
-import org.camunda.feel.syntaxtree.{ParsedExpression, Val, ValBoolean, ValContext, ValError, ValList, ValNull, ValNumber, ValString}
+import org.camunda.feel.syntaxtree.{
+  ParsedExpression,
+  Val,
+  ValBoolean,
+  ValContext,
+  ValError,
+  ValList,
+  ValNull,
+  ValNumber,
+  ValString
+}
 import org.camunda.bpm.model.dmn._
-import org.camunda.bpm.model.dmn.instance.{Decision, DecisionTable, Input, InputEntry, LiteralExpression, Output, OutputEntry, Rule, UnaryTests}
-import org.camunda.dmn.parser.{ParsedDecisionLogic, ParsedDecisionTable, ParsedInput, ParsedOutput, ParsedRule}
-import org.camunda.dmn.Audit.{DecisionTableEvaluationResult, EvaluatedInput, EvaluatedOutput, EvaluatedRule, EvaluationResult}
+import org.camunda.bpm.model.dmn.instance.{
+  Decision,
+  DecisionTable,
+  Input,
+  InputEntry,
+  LiteralExpression,
+  Output,
+  OutputEntry,
+  Rule,
+  UnaryTests
+}
+import org.camunda.dmn.parser.{
+  ParsedDecisionLogic,
+  ParsedDecisionTable,
+  ParsedInput,
+  ParsedOutput,
+  ParsedRule
+}
+import org.camunda.dmn.Audit.{
+  DecisionTableEvaluationResult,
+  EvaluatedInput,
+  EvaluatedOutput,
+  EvaluatedRule,
+  EvaluationResult
+}
 import org.camunda.feel.context.Context.StaticContext
 
 class DecisionTableEvaluator(
@@ -31,15 +63,24 @@ class DecisionTableEvaluator(
         }).map(_.flatten)
           .flatMap {
             case Nil =>
-              evalAndAudit(decisionTable, inputValues, Nil, applyDefaultOutputEntries(decisionTable.outputs))
+              evalAndAudit(decisionTable,
+                           inputValues,
+                           Nil,
+                           applyDefaultOutputEntries(decisionTable.outputs))
             case rules if (decisionTable.hitPolicy == HitPolicy.FIRST) =>
               val firstMatchedRule = List(rules.head)
               evalOutputValues(firstMatchedRule).flatMap { values =>
-                evalAndAudit(decisionTable, inputValues, firstMatchedRule.zip(values), applyHitPolicy(decisionTable, values.map(_.toMap)))
+                evalAndAudit(decisionTable,
+                             inputValues,
+                             firstMatchedRule.zip(values),
+                             applyHitPolicy(decisionTable, values.map(_.toMap)))
               }
             case rules =>
               evalOutputValues(rules).flatMap { values =>
-                evalAndAudit(decisionTable, inputValues, rules.zip(values), applyHitPolicy(decisionTable, values.map(_.toMap)))
+                evalAndAudit(decisionTable,
+                             inputValues,
+                             rules.zip(values),
+                             applyHitPolicy(decisionTable, values.map(_.toMap)))
               }
           }
     }
@@ -255,10 +296,11 @@ class DecisionTableEvaluator(
     case o            => Left(Failure(s"expected number but found '$o'"))
   }
 
-  private def evalAndAudit(decisionTable: ParsedDecisionTable,
-                           inputValues: List[Val],
-                           matchedRules: List[(ParsedRule, Iterable[(String, Val)])],
-                           result: Either[Failure, Val])(implicit context: EvalContext) = {
+  private def evalAndAudit(
+      decisionTable: ParsedDecisionTable,
+      inputValues: List[Val],
+      matchedRules: List[(ParsedRule, Iterable[(String, Val)])],
+      result: Either[Failure, Val])(implicit context: EvalContext) = {
 
     val evalInputs = decisionTable.inputs
       .zip(inputValues)
@@ -268,20 +310,20 @@ class DecisionTableEvaluator(
     val evalRules = matchedRules.map {
       case (rule, values) =>
         EvaluatedRule(rule = rule,
-          outputs = decisionTable.outputs
-            .zip(values)
-            .map {
-              case (output, (name, value)) =>
-                EvaluatedOutput(output, value)
-            }
-            .toList)
+                      outputs = decisionTable.outputs
+                        .zip(values)
+                        .map {
+                          case (output, (name, value)) =>
+                            EvaluatedOutput(output, value)
+                        }
+                        .toList)
     }
     context.audit(result,
-      decisionTable,
-      (v: Val) => DecisionTableEvaluationResult(inputs = evalInputs,
-        matchedRules = evalRules,
-        result = v)
-    )
+                  decisionTable,
+                  (v: Val) =>
+                    DecisionTableEvaluationResult(inputs = evalInputs,
+                                                  matchedRules = evalRules,
+                                                  result = v))
     result
   }
 

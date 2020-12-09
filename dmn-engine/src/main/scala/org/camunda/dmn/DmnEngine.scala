@@ -2,7 +2,13 @@ package org.camunda.dmn
 
 import java.io.InputStream
 import java.util.ServiceLoader
-import org.camunda.dmn.Audit.{AuditLog, AuditLogEntry, AuditLogListener, ContextEvaluationResult, EvaluationResult}
+import org.camunda.dmn.Audit.{
+  AuditLog,
+  AuditLogEntry,
+  AuditLogListener,
+  ContextEvaluationResult,
+  EvaluationResult
+}
 import org.camunda.dmn.evaluation._
 import org.camunda.dmn.parser._
 import org.camunda.feel.FeelEngine
@@ -50,11 +56,9 @@ object DmnEngine {
               funct: Val => EvaluationResult): Either[Failure, Val] = {
       result match {
         case Right(result) =>
-          audit(decisionLogic,
-            funct(result))
+          audit(decisionLogic, funct(result))
         case Left(failure) =>
-          audit(decisionLogic,
-            funct(ValError(failure.message)))
+          audit(decisionLogic, funct(ValError(failure.message)))
       }
       result
     }
