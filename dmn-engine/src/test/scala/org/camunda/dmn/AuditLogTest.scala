@@ -88,7 +88,6 @@ class AuditLogTest extends AnyFlatSpec with Matchers with DecisionTest {
          "discount",
          Map("customer" -> "Business", "orderSize" -> 9))
 
-    val l = auditLog
     auditLog.rootEntry.id should be("discount")
     auditLog.rootEntry.name should be("Discount")
     auditLog.rootEntry.decisionLogic shouldBe a[ParsedDecisionTable]
