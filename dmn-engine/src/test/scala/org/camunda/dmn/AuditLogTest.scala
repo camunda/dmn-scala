@@ -53,7 +53,7 @@ class AuditLogTest extends AnyFlatSpec with Matchers with DecisionTest {
     auditLog.requiredEntries.size should be(0)
   }
 
-  it should "contains the result of a decision table if there is none" in {
+  it should "contains the result of a decision table if no rule matched" in {
 
     eval(discountDecision,
          "discount",
