@@ -23,24 +23,21 @@ jobs:
           echo "::set-output name=type::RELEASE"
         fi
       id: release-detection
-    - uses: actions/setup-java@v1
-      with:
-        java-version: 11
     - name: Import Secrets
-      uses: RichiCoder1/vault-action@v0.10.2
+      uses: hashicorp/vault-action@v2.1.0
       with:
+        id: vault
         url: ${{ secrets.VAULT_ADDR }}
         method: approle
         roleId: ${{ secrets.VAULT_ROLE_ID }}
         secretId: ${{ secrets.VAULT_SECRET_ID }}
         secrets: |
-          common/github.com/actions/camunda NEXUS_PSW | NEXUS_PSW;
-          common/github.com/actions/camunda NEXUS_USR | NEXUS_USR;
-          common/github.com/actions/camunda MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE | MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE;
-          common/github.com/actions/camunda MAVEN_CENTRAL_GPG_SIGNING_KEY_PUB | MAVEN_CENTRAL_GPG_SIGNING_KEY_PUB;
-          common/github.com/actions/camunda MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC | MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC;
-          common/github.com/actions/camunda MAVEN_CENTRAL_DEPLOYMENT_PSW | MAVEN_CENTRAL_DEPLOYMENT_PSW;
-          common/github.com/actions/camunda MAVEN_CENTRAL_DEPLOYMENT_USR | MAVEN_CENTRAL_DEPLOYMENT_USR;
+          secret/data/common/github.com/actions/camunda NEXUS_PSW | NEXUS_PSW;
+          secret/data/common/github.com/actions/camunda NEXUS_USR | NEXUS_USR;
+          secret/data/common/github.com/actions/camunda MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE | MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE;
+          secret/data/common/github.com/actions/camunda MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC | MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC;
+          secret/data/common/github.com/actions/camunda MAVEN_CENTRAL_DEPLOYMENT_PSW | MAVEN_CENTRAL_DEPLOYMENT_PSW;
+          secret/data/common/github.com/actions/camunda MAVEN_CENTRAL_DEPLOYMENT_USR | MAVEN_CENTRAL_DEPLOYMENT_USR;
     - name: Set up Nexus authentication
       uses: actions/setup-java@v1
       with:
@@ -56,6 +53,8 @@ jobs:
         server-username: MAVEN_CENTRAL_DEPLOYMENT_USR
         server-password: MAVEN_CENTRAL_DEPLOYMENT_PSW
         settings-path: ${{ github.workspace }}
+        gpg-private-key: ${{ secrets.GPG_SECRET_KEY }}
+        gpg-passphrase: MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE
     - name: Cache
       uses: actions/cache@v1
       with:
@@ -70,13 +69,13 @@ jobs:
       run: mvn -B -DskipTests=true clean install
     - name: Publish package to Camunda Nexus (${{ steps.release-detection.outputs.type }})
       run: |-
-        mvn -B -DskipTests=true -Dgpg.passphrase="${GPG_PASSPHRASE}" deploy
+        mvn -B -DskipTests=true -Dgpg.passphrase="${MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE}" deploy
     - name: Publish package to Maven Central (${{ steps.release-detection.outputs.type }})
       run: |-
-        echo -e "${MVN_CENTRAL_GPG_KEY_SEC}" | gpg -q --allow-secret-key-import --import
-        echo -e "${MVN_CENTRAL_GPG_KEY_PUB}" | gpg -q --allow-secret-key-import --import
+        echo -e "${MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC}" | gpg -q --allow-secret-key-import --import
+        echo -e "${MAVEN_CENTRAL_GPG_SIGNING_KEY_PUB}" | gpg -q --allow-secret-key-import --import
         sed -i 's@:camunda-nexus:.*$@:central:https://oss.sonatype.org/content/repositories/snapshots/@g' target/nexus-staging/deferred/.index
-        mvn -B -DskipTests=true -s $GITHUB_WORKSPACE/settings.xml -Dgpg.passphrase="${GPG_PASSPHRASE}" org.sonatype.plugins:nexus-staging-maven-plugin:deploy-staged
+        mvn -B -DskipTests=true -s $GITHUB_WORKSPACE/settings.xml -Dgpg.passphrase="${MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE}" org.sonatype.plugins:nexus-staging-maven-plugin:deploy-staged
     - name: Archive artifacts
       run: |-
         ZIPFILE=${{github.event.repository.name}}-${{github.event.release.tag_name}}.zip
