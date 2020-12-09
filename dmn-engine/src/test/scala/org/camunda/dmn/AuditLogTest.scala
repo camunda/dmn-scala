@@ -82,7 +82,7 @@ class AuditLogTest extends AnyFlatSpec with Matchers with DecisionTest {
     auditLog.requiredEntries.size should be(0)
   }
 
-  it should "contains the result of a decision table if there is an exception" in {
+  it should "contains the result of a decision table if a failure occurred" in {
 
     eval(discountDecision,
          "discount",
