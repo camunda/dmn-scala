@@ -20,16 +20,9 @@ class LiteralExpressionEvaluator(feelEngine: FeelEngine) {
 
   def evalExpression(literalExpression: ParsedLiteralExpression,
                      context: EvalContext): Either[Failure, Val] = {
-
-    evalExpression(literalExpression.expression, context) match {
-      case r @ Right(result) =>
-        context.audit(literalExpression, SingleEvaluationResult(result))
-        r
-      case l @ Left(failure) =>
-        context.audit(literalExpression,
-                      SingleEvaluationResult(ValError(failure.message)))
-        l
-    }
+    val result = evalExpression(literalExpression.expression, context)
+    context.audit(literalExpression, result)
+    result
   }
 
   def evalExpression(expression: ParsedExpression,
