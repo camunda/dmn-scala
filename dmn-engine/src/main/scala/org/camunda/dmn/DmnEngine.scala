@@ -51,14 +51,14 @@ object DmnEngine {
       }
     }
 
-    def audit(result: Either[Failure, Val],
-              decisionLogic: ParsedDecisionLogic,
-              funct: Val => EvaluationResult): Either[Failure, Val] = {
+    def audit(decisionLogic: ParsedDecisionLogic,
+              result: Either[Failure, Val],
+              resultFactory: Val => EvaluationResult  = SingleEvaluationResult) {
       result match {
         case Right(result) =>
-          audit(decisionLogic, funct(result))
+          audit(decisionLogic, resultFactory(result))
         case Left(failure) =>
-          audit(decisionLogic, funct(ValError(failure.message)))
+          audit(decisionLogic, resultFactory(ValError(failure.message)))
       }
       result
     }
