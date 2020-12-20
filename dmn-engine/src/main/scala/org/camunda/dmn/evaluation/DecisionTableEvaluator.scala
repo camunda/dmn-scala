@@ -318,9 +318,9 @@ class DecisionTableEvaluator(
                         }
                         .toList)
     }
-    context.audit(result,
-                  decisionTable,
-                  (v: Val) =>
+    context.audit(decisionTable,
+      result,
+      (v: Val) =>
                     DecisionTableEvaluationResult(inputs = evalInputs,
                                                   matchedRules = evalRules,
                                                   result = v))

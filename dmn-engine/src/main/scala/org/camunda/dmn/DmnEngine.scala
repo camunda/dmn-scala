@@ -60,7 +60,6 @@ object DmnEngine {
         case Left(failure) =>
           audit(decisionLogic, resultFactory(ValError(failure.message)))
       }
-      result
     }
 
   }
