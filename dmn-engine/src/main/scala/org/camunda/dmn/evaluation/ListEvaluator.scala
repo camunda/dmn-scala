@@ -13,7 +13,8 @@ class ListEvaluator(
 
   def eval(list: ParsedList, context: EvalContext): Either[Failure, Val] = {
 
-    val result = mapEither(list.entries, (expr: ParsedDecisionLogic) => eval(expr, context))
+    val result = mapEither(list.entries,
+                           (expr: ParsedDecisionLogic) => eval(expr, context))
       .map(ValList)
 
     context.audit(list, result)

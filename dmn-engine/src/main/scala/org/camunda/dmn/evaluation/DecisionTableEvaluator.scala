@@ -50,40 +50,47 @@ class DecisionTableEvaluator(
            context: EvalContext): Either[Failure, Val] = {
     implicit val ctx: EvalContext = context
 
-    evalInputExpressions(decisionTable.inputs) match {
-      case Left(failure) => // bad input values
-        evalAndAudit(decisionTable, Nil, Nil, Left(failure))
-      case Right(inputValues) =>
-        (checkRules(decisionTable.rules, inputValues) match {
-          case Left(failure) => // bad rules
-            evalAndAudit(decisionTable, inputValues, Nil, Left(failure))
-            Left(failure)
-          case right =>
-            right
-        }).map(_.flatten)
+    class AuditContext(
+        var inputValues: List[Val],
+        var matchedRules: List[(ParsedRule, Iterable[(String, Val)])]
+    )
+
+    val auditContext = new AuditContext(Nil, Nil)
+
+    val result = evalInputExpressions(decisionTable.inputs).flatMap {
+      inputValues =>
+        auditContext.inputValues = inputValues
+
+        checkRules(decisionTable.rules, inputValues)
+          .map(_.flatten)
           .flatMap {
-            case Nil =>
-              evalAndAudit(decisionTable,
-                           inputValues,
-                           Nil,
-                           applyDefaultOutputEntries(decisionTable.outputs))
-            case rules if (decisionTable.hitPolicy == HitPolicy.FIRST) =>
-              val firstMatchedRule = List(rules.head)
-              evalOutputValues(firstMatchedRule).flatMap { values =>
-                evalAndAudit(decisionTable,
-                             inputValues,
-                             firstMatchedRule.zip(values),
-                             applyHitPolicy(decisionTable, values.map(_.toMap)))
+            case Nil => {
+              auditContext.matchedRules = Nil
+
+              applyDefaultOutputEntries(decisionTable.outputs)
+            }
+            case matchedRules => {
+              val rules = if (decisionTable.hitPolicy == HitPolicy.FIRST) {
+                List(matchedRules.head)
+              } else {
+                matchedRules
               }
-            case rules =>
+
               evalOutputValues(rules).flatMap { values =>
-                evalAndAudit(decisionTable,
-                             inputValues,
-                             rules.zip(values),
-                             applyHitPolicy(decisionTable, values.map(_.toMap)))
+                auditContext.matchedRules = rules.zip(values)
+
+                applyHitPolicy(decisionTable, values.map(_.toMap))
               }
+            }
           }
+
     }
+
+    audit(decisionTable,
+          auditContext.inputValues,
+          auditContext.matchedRules,
+          result)
+    result
   }
 
   private def evalInputExpressions(inputs: Iterable[ParsedInput])(
@@ -296,7 +303,7 @@ class DecisionTableEvaluator(
     case o            => Left(Failure(s"expected number but found '$o'"))
   }
 
-  private def evalAndAudit(
+  private def audit(
       decisionTable: ParsedDecisionTable,
       inputValues: List[Val],
       matchedRules: List[(ParsedRule, Iterable[(String, Val)])],
@@ -319,8 +326,8 @@ class DecisionTableEvaluator(
                         .toList)
     }
     context.audit(decisionTable,
-      result,
-      (v: Val) =>
+                  result,
+                  (v: Val) =>
                     DecisionTableEvaluationResult(inputs = evalInputs,
                                                   matchedRules = evalRules,
                                                   result = v))

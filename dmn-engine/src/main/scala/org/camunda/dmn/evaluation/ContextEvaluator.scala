@@ -15,7 +15,9 @@ class ContextEvaluator(
     evalContextEntries(context.entries, ctx).flatMap { results =>
       val result = evalContextResult(context.aggregationEntry, results, ctx)
 
-      ctx.audit(context, result, r => ContextEvaluationResult(entries = results, result = r))
+      ctx.audit(context,
+                result,
+                r => ContextEvaluationResult(entries = results, result = r))
       result
     }
   }

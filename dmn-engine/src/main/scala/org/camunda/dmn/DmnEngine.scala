@@ -7,7 +7,8 @@ import org.camunda.dmn.Audit.{
   AuditLogEntry,
   AuditLogListener,
   ContextEvaluationResult,
-  EvaluationResult
+  EvaluationResult,
+  SingleEvaluationResult
 }
 import org.camunda.dmn.evaluation._
 import org.camunda.dmn.parser._
@@ -53,7 +54,7 @@ object DmnEngine {
 
     def audit(decisionLogic: ParsedDecisionLogic,
               result: Either[Failure, Val],
-              resultFactory: Val => EvaluationResult  = SingleEvaluationResult) {
+              resultFactory: Val => EvaluationResult = SingleEvaluationResult) {
       result match {
         case Right(result) =>
           audit(decisionLogic, resultFactory(result))
