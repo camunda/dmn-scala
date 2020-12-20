@@ -1,21 +1,9 @@
 package org.camunda.dmn.evaluation
 
-import scala.collection.JavaConverters._
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
-import org.camunda.bpm.model.dmn.instance.{Binding, Invocation, Parameter}
-import org.camunda.bpm.model.dmn.instance.{
-  BusinessKnowledgeModel,
-  Expression,
-  LiteralExpression
-}
-import org.camunda.dmn.parser.{
-  ParsedBusinessKnowledgeModel,
-  ParsedDecisionLogic,
-  ParsedInvocation
-}
-import org.camunda.feel.syntaxtree.{ParsedExpression, Val, ValError}
-import org.camunda.dmn.Audit.SingleEvaluationResult
+import org.camunda.dmn.parser.{ParsedBusinessKnowledgeModel, ParsedInvocation}
+import org.camunda.feel.syntaxtree.{ParsedExpression, Val}
 
 class InvocationEvaluator(
     eval: (ParsedExpression, EvalContext) => Either[Failure, Val],
@@ -27,15 +15,9 @@ class InvocationEvaluator(
     evalParameters(invocation.bindings, context).flatMap { p =>
       val ctx = context.copy(variables = context.variables ++ p.toMap)
 
-      evalBkm(invocation.invocation, ctx) match {
-        case r @ Right(result) =>
-          context.audit(invocation, SingleEvaluationResult(result))
-          r
-        case l @ Left(failure) =>
-          context.audit(invocation,
-                        SingleEvaluationResult(ValError(failure.message)))
-          l
-      }
+      val result = evalBkm(invocation.invocation, ctx)
+      context.audit(invocation, result)
+      result
     }
   }
 
