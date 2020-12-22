@@ -1,6 +1,5 @@
 package org.camunda.dmn.evaluation
 
-import scala.collection.JavaConverters._
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
 import org.camunda.feel._
@@ -16,19 +15,7 @@ import org.camunda.feel.syntaxtree.{
   ValString
 }
 import org.camunda.bpm.model.dmn._
-import org.camunda.bpm.model.dmn.instance.{
-  Decision,
-  DecisionTable,
-  Input,
-  InputEntry,
-  LiteralExpression,
-  Output,
-  OutputEntry,
-  Rule,
-  UnaryTests
-}
 import org.camunda.dmn.parser.{
-  ParsedDecisionLogic,
   ParsedDecisionTable,
   ParsedInput,
   ParsedOutput,
@@ -38,8 +25,7 @@ import org.camunda.dmn.Audit.{
   DecisionTableEvaluationResult,
   EvaluatedInput,
   EvaluatedOutput,
-  EvaluatedRule,
-  EvaluationResult
+  EvaluatedRule
 }
 import org.camunda.feel.context.Context.StaticContext
 
@@ -49,11 +35,6 @@ class DecisionTableEvaluator(
   def eval(decisionTable: ParsedDecisionTable,
            context: EvalContext): Either[Failure, Val] = {
     implicit val ctx: EvalContext = context
-
-    class AuditContext(
-        var inputValues: List[Val],
-        var matchedRules: List[(ParsedRule, Iterable[(String, Val)])]
-    )
 
     val auditContext = new AuditContext(Nil, Nil)
 
@@ -333,5 +314,10 @@ class DecisionTableEvaluator(
                                                   result = v))
     result
   }
+
+  private class AuditContext(
+      var inputValues: List[Val],
+      var matchedRules: List[(ParsedRule, Iterable[(String, Val)])]
+  )
 
 }
