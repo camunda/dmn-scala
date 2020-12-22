@@ -12,14 +12,19 @@ class ContextEvaluator(
 
   def eval(context: ParsedContext, ctx: EvalContext): Either[Failure, Val] = {
 
-    evalContextEntries(context.entries, ctx).flatMap { results =>
-      val result = evalContextResult(context.aggregationEntry, results, ctx)
+    val auditContext = new AuditContext(Map.empty)
 
-      ctx.audit(context,
-                result,
-                r => ContextEvaluationResult(entries = results, result = r))
-      result
+    val result = evalContextEntries(context.entries, ctx).flatMap { results =>
+      auditContext.entryResults = results
+
+      evalContextResult(context.aggregationEntry, results, ctx)
     }
+
+    ctx.audit(context,
+      result,
+      r => ContextEvaluationResult(entries = auditContext.entryResults, result = r))
+
+    result
   }
 
   private def evalContextEntries(
@@ -57,5 +62,7 @@ class ContextEvaluator(
           ValContext(StaticContext(variables = results, functions = functions)))
       }
   }
+
+  private class AuditContext(var entryResults: Map[String, Val])
 
 }
