@@ -21,8 +21,10 @@ class ContextEvaluator(
     }
 
     ctx.audit(context,
-      result,
-      r => ContextEvaluationResult(entries = auditContext.entryResults, result = r))
+              result,
+              r =>
+                ContextEvaluationResult(entries = auditContext.entryResults,
+                                        result = r))
 
     result
   }

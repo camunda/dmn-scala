@@ -29,6 +29,9 @@ trait DecisionTest {
     override def onEval(log: AuditLog) = {
       lastAuditLog = log
     }
+    override def onFailure(log: AuditLog) = {
+      lastAuditLog = log
+    }
   }
 
   def auditLog = lastAuditLog

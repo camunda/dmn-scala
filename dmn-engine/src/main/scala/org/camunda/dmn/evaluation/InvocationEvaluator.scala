@@ -13,7 +13,6 @@ class InvocationEvaluator(
            context: EvalContext): Either[Failure, Val] = {
 
     val result = evalParameters(invocation.bindings, context).flatMap { p =>
-
       val ctx = context.copy(variables = context.variables ++ p.toMap)
       evalBkm(invocation.invocation, ctx)
     }

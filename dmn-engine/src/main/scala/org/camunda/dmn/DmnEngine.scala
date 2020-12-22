@@ -208,10 +208,15 @@ class DmnEngine(configuration: DmnEngine.Configuration =
       .map {
         case ValNull => NilResult
         case result  => Result(valueMapper.unpackVal(result))
-      } match {
+      } match { // inform the AuditLogListeners
       case anyResult =>
         val log = AuditLog(context.dmn, context.auditLog.toList)
-        auditLogListeners.foreach(_.onEval(log))
+        auditLogListeners.foreach { l =>
+          if (anyResult.isRight)
+            l.onEval(log)
+          else
+            l.onFailure(log)
+        }
         anyResult
     }
   }

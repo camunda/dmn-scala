@@ -8,6 +8,8 @@ object Audit {
   trait AuditLogListener {
 
     def onEval(log: AuditLog)
+
+    def onFailure(log: AuditLog)
   }
 
   case class AuditLog(dmn: ParsedDmn, entries: List[AuditLogEntry]) {
