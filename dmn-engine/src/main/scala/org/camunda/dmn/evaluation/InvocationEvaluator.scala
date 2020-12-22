@@ -12,13 +12,14 @@ class InvocationEvaluator(
   def eval(invocation: ParsedInvocation,
            context: EvalContext): Either[Failure, Val] = {
 
-    evalParameters(invocation.bindings, context).flatMap { p =>
-      val ctx = context.copy(variables = context.variables ++ p.toMap)
+    val result = evalParameters(invocation.bindings, context).flatMap { p =>
 
-      val result = evalBkm(invocation.invocation, ctx)
-      context.audit(invocation, result)
-      result
+      val ctx = context.copy(variables = context.variables ++ p.toMap)
+      evalBkm(invocation.invocation, ctx)
     }
+
+    context.audit(invocation, result)
+    result
   }
 
   private def evalParameters(
