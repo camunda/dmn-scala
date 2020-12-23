@@ -2,18 +2,19 @@ package org.camunda.dmn
 
 import java.io.InputStream
 import java.util.ServiceLoader
-
 import org.camunda.dmn.Audit.{
   AuditLog,
   AuditLogEntry,
   AuditLogListener,
-  EvaluationResult
+  ContextEvaluationResult,
+  EvaluationResult,
+  SingleEvaluationResult
 }
 import org.camunda.dmn.evaluation._
 import org.camunda.dmn.parser._
 import org.camunda.feel.FeelEngine
 import org.camunda.feel.context.{CustomFunctionProvider, FunctionProvider}
-import org.camunda.feel.syntaxtree.{Val, ValNull}
+import org.camunda.feel.syntaxtree.{Val, ValError, ValNull}
 import org.camunda.feel.valuemapper.{CustomValueMapper, ValueMapper}
 
 import scala.collection.JavaConverters._
@@ -48,6 +49,17 @@ object DmnEngine {
                                   name = currentElement.name,
                                   decisionLogic = decisionLogic,
                                   result = result)
+      }
+    }
+
+    def audit(decisionLogic: ParsedDecisionLogic,
+              result: Either[Failure, Val],
+              resultFactory: Val => EvaluationResult = SingleEvaluationResult) {
+      result match {
+        case Right(result) =>
+          audit(decisionLogic, resultFactory(result))
+        case Left(failure) =>
+          audit(decisionLogic, resultFactory(ValError(failure.message)))
       }
     }
 
@@ -140,8 +152,7 @@ class DmnEngine(configuration: DmnEngine.Configuration =
   def eval(stream: InputStream,
            decisionId: String,
            context: Map[String, Any]): Either[Failure, EvalResult] = {
-    parse(stream).right.flatMap(parsedDmn =>
-      eval(parsedDmn, decisionId, context))
+    parse(stream).flatMap(parsedDmn => eval(parsedDmn, decisionId, context))
   }
 
   def parse(stream: InputStream): Either[Failure, ParsedDmn] =
@@ -194,17 +205,20 @@ class DmnEngine(configuration: DmnEngine.Configuration =
       context: EvalContext): Either[Failure, EvalResult] = {
     decisionEval
       .eval(decision, context)
-      .right
-      .map(result => {
-        val log = new AuditLog(context.dmn, context.auditLog.toList)
-
-        auditLogListeners.map(_.onEval(log))
-
-        result match {
-          case ValNull => NilResult
-          case result  => Result(valueMapper.unpackVal(result))
+      .map {
+        case ValNull => NilResult
+        case result  => Result(valueMapper.unpackVal(result))
+      } match { // inform the AuditLogListeners
+      case anyResult =>
+        val log = AuditLog(context.dmn, context.auditLog.toList)
+        auditLogListeners.foreach { l =>
+          if (anyResult.isRight)
+            l.onEval(log)
+          else
+            l.onFailure(log)
         }
-      })
+        anyResult
+    }
   }
 
   private def evalExpression(expression: ParsedDecisionLogic,

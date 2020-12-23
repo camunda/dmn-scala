@@ -57,6 +57,14 @@ class CamundaDmnHistoryListener(listener: () => DmnDecisionEvaluationListener)
   // Transforming the audit log from the DMN engine to Camunda history events.
 
   override def onEval(log: AuditLog) {
+    transformLogToHistoryEvents(log)
+  }
+
+  override def onFailure(log: AuditLog) {
+    transformLogToHistoryEvents(log)
+  }
+
+  private def transformLogToHistoryEvents(log: AuditLog) = {
     val evalEvent = new DmnDecisionEvaluationEventImpl();
 
     val rootDecision = decisionById(log.rootEntry.id).getOrElse {

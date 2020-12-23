@@ -1,29 +1,32 @@
 package org.camunda.dmn.evaluation
 
-import scala.collection.JavaConverters._
-
+import org.camunda.dmn.Audit.ContextEvaluationResult
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
-import org.camunda.feel.FeelEngine
-import org.camunda.feel.context.Context._
-import org.camunda.bpm.model.dmn.instance.{Context, ContextEntry, Expression}
 import org.camunda.dmn.parser.{ParsedContext, ParsedDecisionLogic}
+import org.camunda.feel.context.Context._
 import org.camunda.feel.syntaxtree.{Val, ValContext, ValFunction}
-import org.camunda.dmn.Audit.ContextEvaluationResult
 
 class ContextEvaluator(
     eval: (ParsedDecisionLogic, EvalContext) => Either[Failure, Val]) {
 
   def eval(context: ParsedContext, ctx: EvalContext): Either[Failure, Val] = {
 
-    evalContextEntries(context.entries, ctx).right.flatMap(results =>
-      evalContextResult(context.aggregationEntry, results, ctx).right.map {
-        result =>
-          ctx.audit(context,
-                    ContextEvaluationResult(entries = results, result = result))
+    val auditContext = new AuditContext(Map.empty)
 
-          result
-    })
+    val result = evalContextEntries(context.entries, ctx).flatMap { results =>
+      auditContext.entryResults = results
+
+      evalContextResult(context.aggregationEntry, results, ctx)
+    }
+
+    ctx.audit(context,
+              result,
+              r =>
+                ContextEvaluationResult(entries = auditContext.entryResults,
+                                        result = r))
+
+    result
   }
 
   private def evalContextEntries(
@@ -36,7 +39,7 @@ class ContextEvaluator(
           // a context entry must be able to access the result of previous entries
           val context = ctx.copy(variables = ctx.variables ++ result)
 
-          eval(expr, context).right
+          eval(expr, context)
             .map(v => result + (name -> v))
       }
     )
@@ -61,5 +64,7 @@ class ContextEvaluator(
           ValContext(StaticContext(variables = results, functions = functions)))
       }
   }
+
+  private class AuditContext(var entryResults: Map[String, Val])
 
 }
