@@ -74,7 +74,7 @@ jobs:
       run: mvn -B -DskipTests=true clean package
     - name: Publish package to Camunda Nexus (${{ steps.release-detection.outputs.type }})
       run: |-
-        mvn -B -DskipTests -s $HOME/.m2/settings.xml deploy
+        mvn -B -DskipTests -s $HOME/.m2/settings.xml deploy -Pdeploy
     - name: Publish package to Maven Central (${{ steps.release-detection.outputs.type }})
       run: |-
         sed -i 's@:camunda-nexus:.*$@:central:https://oss.sonatype.org/content/repositories/snapshots/@g' target/nexus-staging/deferred/.index
