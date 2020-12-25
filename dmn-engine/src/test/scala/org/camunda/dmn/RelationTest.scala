@@ -12,7 +12,7 @@ class RelationTest extends AnyFlatSpec with Matchers with DecisionTest {
 
   "A relation" should "return a list of contexts" in {
     eval(applicantData, "applicantData", Map()) should be(
-      Result(Map("CreditHistory" -> List(
+      Map("CreditHistory" -> List(
         Map(
           "recordDate" -> LocalDate.parse("2008-03-12"),
           "event" -> "home mortgage",
@@ -23,7 +23,7 @@ class RelationTest extends AnyFlatSpec with Matchers with DecisionTest {
           "event" -> "foreclosure warning",
           "weight" -> 150
         )
-      ))))
+      )))
   }
 
 }

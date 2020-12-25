@@ -40,19 +40,23 @@ class StandaloneEngineTest
   it should "evaluate decision by id" in {
     val engine = StandaloneEngine.fileSystemRepository(repository)
 
-    engine.evalDecisionById(
-      "discount",
-      Map("customer" -> "Business", "orderSize" -> 7)) should be(
-      Right(Result(0.1)))
+    val result =
+      engine.evalDecisionById("discount",
+                              Map("customer" -> "Business", "orderSize" -> 7))
+
+    result.isRight should be(true)
+    result.map(_.value should be(0.1))
   }
 
   it should "evaluate decision by name" in {
     val engine = StandaloneEngine.fileSystemRepository(repository)
 
-    engine.evalDecisionByName(
-      "Discount",
-      Map("customer" -> "Business", "orderSize" -> 7)) should be(
-      Right(Result(0.1)))
+    val result =
+      engine.evalDecisionByName("Discount",
+                                Map("customer" -> "Business", "orderSize" -> 7))
+
+    result.isRight should be(true)
+    result.map(_.value should be(0.1))
   }
 
   it should "return empty list if repository is empty" in {

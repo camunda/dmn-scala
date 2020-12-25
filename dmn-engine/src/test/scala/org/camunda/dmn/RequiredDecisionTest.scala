@@ -12,10 +12,10 @@ class RequiredDecisionTest extends AnyFlatSpec with Matchers with DecisionTest {
   "A decision" should "evaluate a required decision" in {
     eval(discountDecision,
          "price",
-         Map("customer" -> "Business", "orderSize" -> 7)) should be(Result(10))
+         Map("customer" -> "Business", "orderSize" -> 7)) should be(10)
   }
 
   it should "evaluate multiple required decision" in {
-    eval(applicantDataDecision, "income", Map()) should be(Result(10000.00))
+    eval(applicantDataDecision, "income", Map()) should be(10000.00)
   }
 }

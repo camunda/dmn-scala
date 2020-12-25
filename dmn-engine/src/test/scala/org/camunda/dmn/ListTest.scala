@@ -10,7 +10,7 @@ class ListTest extends AnyFlatSpec with Matchers with DecisionTest {
 
   "A list with literal expressions" should "return result as list" in {
     eval(applicantData, "applicantData", Map()) should be(
-      Result(Map("MonthlyOutgoings" -> List(2500, 3000))))
+      Map("MonthlyOutgoings" -> List(2500, 3000)))
   }
 
 }
