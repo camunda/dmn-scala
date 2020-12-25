@@ -61,7 +61,7 @@ class CamundaDmnHistoryListener(listener: () => DmnDecisionEvaluationListener)
   }
 
   override def onFailure(log: AuditLog) {
-    transformLogToHistoryEvents(log)
+    // don't persist the history if the evaluation fails
   }
 
   private def transformLogToHistoryEvents(log: AuditLog) = {
