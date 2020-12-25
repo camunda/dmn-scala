@@ -1,6 +1,7 @@
-package org.camunda.dmn
+package org.camunda.dmn.spi
 
-import org.camunda.dmn.DmnEngine._
+import org.camunda.dmn.DmnEngine
+import org.camunda.dmn.parser.ParsedDmn
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -8,24 +9,36 @@ class DmnEngineSpiTest extends AnyFlatSpec with Matchers {
 
   val engine = new DmnEngine
 
-  def decision = getClass.getResourceAsStream("/spi/SpiTests.dmn")
+  lazy val decision: ParsedDmn = {
+    val resource = getClass.getResourceAsStream("/spi/SpiTests.dmn")
+    engine.parse(resource) match {
+      case Right(decision) => decision
+      case Left(failure)   => throw new AssertionError(failure)
+    }
+  }
 
   "A custom value mapper" should "transform the input" in {
 
-    engine.eval(decision, "varInput", Map("in" -> "bar")) should be(
-      Right(Result("baz")))
+    val result = engine.eval(decision, "varInput", Map("in" -> "bar"))
+
+    result.isRight should be(true)
+    result.map(_.value should be("baz"))
   }
 
   it should "transform the output" in {
 
-    engine.eval(decision, "varOutput", Map[String, Any]()) should be(
-      Right(Result("baz")))
+    val result = engine.eval(decision, "varOutput", Map[String, Any]())
+
+    result.isRight should be(true)
+    result.map(_.value should be("baz"))
   }
 
   "A custom function provider" should "provide a function" in {
 
-    engine.eval(decision, "invFunction", Map("x" -> 2)) should be(
-      Right(Result(3)))
+    val result = engine.eval(decision, "invFunction", Map("x" -> 2))
+
+    result.isRight should be(true)
+    result.map(_.value should be(3))
   }
 
 }

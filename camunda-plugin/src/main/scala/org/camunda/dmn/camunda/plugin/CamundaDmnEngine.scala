@@ -194,8 +194,8 @@ class CamundaDmnEngine(engine: DmnEngine, onEval: CamundaDmnEngine.EvalListener)
       result: EvalResult,
       evaluatedDecision: DmnDecision): DmnDecisionResult = {
     result match {
-      case NilResult => null
-      case Result(value) =>
+      case NilResult(_) => null
+      case Result(value, _) =>
         value match {
           case list: List[_] if (hasCollectResult(evaluatedDecision)) => {
             val entries = list.map(item =>

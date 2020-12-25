@@ -23,15 +23,15 @@ class FunctionDefinitionTest
     val expected = (amount * rate / 12) / (1 - (1 + rate / 12)
       .pow(-36)) // ~ 3975.982590125562
 
-    eval(applicantData, "applicantData", Map()) should be(Result(expected))
+    eval(applicantData, "applicantData", Map()) should be(expected)
   }
 
   "A FEEL user function" should "be invoked inside a context" in {
-    eval(userFunction, "userFunction", Map()) should be(Result(5))
+    eval(userFunction, "userFunction", Map()) should be(5)
   }
 
   it should "be invoked outside of the context" in {
-    eval(contextWithFunction, "calculation", Map()) should be(Result(5))
+    eval(contextWithFunction, "calculation", Map()) should be(5)
   }
 
 }
