@@ -15,14 +15,6 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
-    - name: Detect release type
-      run: |-
-        if [ -n "${{github.event.release.action}}" ]; then
-          echo "::set-output name=type::RELEASE"
-        else
-          echo "::set-output name=type::SNAPSHOT"
-        fi
-      id: release-detection
     - name: Import Secrets
       uses: hashicorp/vault-action@v2.1.0
       id: vault
@@ -35,9 +27,14 @@ jobs:
           secret/data/common/github.com/actions/camunda NEXUS_PSW | NEXUS_PSW;
           secret/data/common/github.com/actions/camunda NEXUS_USR | NEXUS_USR;
           secret/data/common/github.com/actions/camunda MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE | MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE;
-          secret/data/common/github.com/actions/camunda MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC_PLAIN | MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC;
+          secret/data/common/github.com/actions/camunda MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC | MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC;
           secret/data/common/github.com/actions/camunda MAVEN_CENTRAL_DEPLOYMENT_PSW | MAVEN_CENTRAL_DEPLOYMENT_PSW;
           secret/data/common/github.com/actions/camunda MAVEN_CENTRAL_DEPLOYMENT_USR | MAVEN_CENTRAL_DEPLOYMENT_USR;
+    - name: Convert secret
+      run: |-
+        echo 'MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC<<EOF' >> $GITHUB_ENV
+        base64 -d <<< $MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC
+        echo 'EOF' >> $GITHUB_ENV
     - name: Set up Nexus authentication
       uses: actions/setup-java@v1
       with:
@@ -53,7 +50,7 @@ jobs:
         server-username: MAVEN_CENTRAL_DEPLOYMENT_USR
         server-password: MAVEN_CENTRAL_DEPLOYMENT_PSW
         settings-path: ${{ github.workspace }}
-        gpg-private-key: ${{ secrets.GPG_SECRET_KEY }}
+        gpg-private-key: ${{ env.MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC }}
     - name: Setup GPG agent and cache signing passphrase
       run: |-
         pkill gpg-agent || /bin/true
@@ -67,18 +64,31 @@ jobs:
         key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
         restore-keys: |
           ${{ runner.os }}-maven-
-    - if: github.event.release
-      name: Update version in pom.xml (Release only)
-      run: mvn -B versions:set -DnewVersion=${{ github.event.release.tag_name }} -DgenerateBackupPoms=false
-    - name: Run Maven (${{ steps.release-detection.outputs.type }})
-      run: mvn -B -DskipTests=true clean package
-    - name: Publish package to Camunda Nexus (${{ steps.release-detection.outputs.type }})
+    - name: Run maven
+      run: mvn -B
+    - if: ${{ ! github.event.release }}
+      name: Publish SNAPSHOT
       run: |-
-        mvn -B -DskipTests -s $HOME/.m2/settings.xml deploy -Pdeploy
-    - name: Publish package to Maven Central (${{ steps.release-detection.outputs.type }})
-      run: |-
+        mvn -B -DskipTests deploy
         sed -i 's@:camunda-nexus:.*$@:central:https://oss.sonatype.org/content/repositories/snapshots/@g' target/nexus-staging/deferred/.index
         mvn -B -DskipTests -s $GITHUB_WORKSPACE/settings.xml org.sonatype.plugins:nexus-staging-maven-plugin:deploy-staged
+    - if: github.event.release
+      name: Publish Maven Release
+      run: |-
+        # 1. set version
+        mvn -B versions:set versions:update-child-module -DnewVersion=${{ github.event.release.tag_name }}
+        # 2. perform release
+        mvn -B -DskipTests -s $GITHUB_WORKSPACE/settings.xml -DnexusUrl=https://oss.sonatype.org/ -DserverId=central -DreleaseVersion=${{ github.event.release.tag_name }} -Dgpg.sign initialize \
+          package source:jar javadoc:jar \
+          deploy org.apache.maven.plugins:maven-gpg-plugin:sign \
+          nexus-staging:deploy
+        # 3. push new development version
+        git config --global user.name "Release Bot"
+        git config --global user.email actions@github.com
+        mvn -B org.apache.maven.plugins:maven-release-plugin:update-versions -DgenerateBackupPoms=false
+        git add "**pom.xml"
+        mvn -B scm:checkin -Dbasedir=. -Dmessage="release(v${{ github.event.release.tag_name }}): prepare for next development iteration" -DdeveloperConnectionUrl="scm:git:https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${{ github.event.repository.full_name }}.git"
+
     - name: Archive artifacts
       run: |-
         ZIPFILE=${{github.event.repository.name}}-${{github.event.release.tag_name}}.zip
