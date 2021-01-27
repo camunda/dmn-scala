@@ -25,7 +25,7 @@ You can use the DMN engine in different ways
 
 * [embedded](https://github.com/camunda/dmn-scala/tree/master/dmn-engine#how-to-use-it) as a library into your application
 * [standalone](https://github.com/camunda/dmn-scala/tree/master/engine-rest#how-to-use-it) via REST endpoint
-* [integrated into the Camunda BPM engine](https://github.com/camunda/dmn-scala/tree/master/camunda-plugin#how-to-use-it) via process engine plugin
+* [integrated into the Camunda Platform engine](https://github.com/camunda/dmn-scala/tree/master/camunda-plugin#how-to-use-it) via process engine plugin
 * [integrated into Zeebe](https://github.com/camunda/dmn-scala/tree/master/zeebe-worker#how-to-use-it) as job worker
 
 ## Extensions
