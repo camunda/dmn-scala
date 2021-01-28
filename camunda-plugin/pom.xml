@@ -9,7 +9,7 @@
 
   <artifactId>dmn-engine-camunda-plugin</artifactId>
 
-  <name>DMN Scala - Camunda BPM Plugin</name>
+  <name>DMN Scala - Camunda Platform Plugin</name>
 
   <dependencies>
 
