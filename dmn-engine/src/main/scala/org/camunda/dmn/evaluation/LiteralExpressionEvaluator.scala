@@ -1,5 +1,6 @@
 package org.camunda.dmn.evaluation
 
+import javax.script.{ScriptEngineManager, ScriptException, SimpleBindings}
 import org.camunda.dmn.DmnEngine._
 import org.camunda.feel._
 import org.camunda.feel.syntaxtree.{
@@ -15,6 +16,8 @@ import scala.Right
 import org.camunda.dmn.parser.ParsedLiteralExpression
 import org.camunda.dmn.Audit.SingleEvaluationResult
 import org.camunda.feel.context.Context.StaticContext
+
+import scala.jdk.CollectionConverters.MapHasAsJava
 
 class LiteralExpressionEvaluator(feelEngine: FeelEngine) {
 
@@ -33,11 +36,23 @@ class LiteralExpressionEvaluator(feelEngine: FeelEngine) {
 
     val evalContext =
       StaticContext(variables = context.variables, functions = functions)
-
-    feelEngine.eval(expression, evalContext) match {
-      case Right(v: Val)                     => Right(v)
-      case Right(other)                      => Left(Failure(s"expected value but found '$other'"))
-      case Left(FeelEngine.Failure(message)) => Left(Failure(message))
+    val scriptEngineManager = new ScriptEngineManager();
+    expression match {
+      case exp: ScriptExpression => {
+        try {
+          val foo = new java.util.HashMap[String, Any]();
+          foo.putAll(context.variables.asJava);
+          Right(FeelEngine.defaultValueMapper.toVal(scriptEngineManager.getEngineByName(exp.language).eval(exp.text, new SimpleBindings(foo))))
+        } catch {
+          case e: ScriptException => Left(Failure(e.getMessage))
+        }
+      }
+      case _ =>
+        feelEngine.eval(expression, evalContext) match {
+          case Right(v: Val) => Right(v)
+          case Right(other) => Left(Failure(s"expected value but found '$other'"))
+          case Left(FeelEngine.Failure(message)) => Left(Failure(message))
+        }
     }
   }
 

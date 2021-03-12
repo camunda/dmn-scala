@@ -4,21 +4,9 @@ import java.io.InputStream
 
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.impl.DmnModelConstants
-import org.camunda.bpm.model.dmn.instance.{
-  BusinessKnowledgeModel,
-  Context,
-  Decision,
-  DecisionTable,
-  Expression,
-  FunctionDefinition,
-  Invocation,
-  LiteralExpression,
-  Relation,
-  UnaryTests,
-  Variable,
-  List => DmnList
-}
+import org.camunda.bpm.model.dmn.instance.{BusinessKnowledgeModel, Context, Decision, DecisionTable, Expression, FunctionDefinition, Invocation, LiteralExpression, Relation, UnaryTests, Variable, List => DmnList}
 import org.camunda.dmn.DmnEngine.{Configuration, Failure}
+import org.camunda.dmn.evaluation.ScriptExpression
 import org.camunda.feel.impl.parser.FeelParser
 import org.camunda.feel.syntaxtree._
 import org.camunda.feel.impl.parser.FeelParser.{NoSuccess, Success}
@@ -52,10 +40,10 @@ class DmnParser(configuration: Configuration,
   }
 
   object ParsingFailure
-      extends ParsedLiteralExpression(ParsedExpression(ConstNull, "<failure>"))
+    extends ParsedLiteralExpression(new ParsedExpression(ConstNull, "<failure>"))
 
   object EmptyLogic
-      extends ParsedLiteralExpression(ParsedExpression(ConstNull, "<empty>"))
+    extends ParsedLiteralExpression(new ParsedExpression(ConstNull, "<empty>"))
 
   def parse(stream: InputStream): Either[Failure, ParsedDmn] = {
 
@@ -382,11 +370,13 @@ class DmnParser(configuration: Configuration,
 
     val language =
       Option(lt.getExpressionLanguage).map(_.toLowerCase()).getOrElse("feel")
-    if (!feelNameSpaces.contains(language)) {
+    if (language != "javascript" && !feelNameSpaces.contains(language)) {
       ctx.failures += Failure(
         s"Expression language '$language' is not supported")
-      ParsedExpression(ConstNull, expression)
+      new ParsedExpression(ConstNull, expression)
 
+    } else if (language == "javascript") {
+      ScriptExpression(expression, language)
     } else {
       ctx.parsedExpressions.getOrElseUpdate(
         expression, {
@@ -399,7 +389,7 @@ class DmnParser(configuration: Configuration,
             case Left(failure) => {
               ctx.failures += Failure(
                 s"Failed to parse FEEL expression '$expression': $failure")
-              ParsedExpression(ConstNull, expression)
+              new ParsedExpression(ConstNull, expression)
             }
           }
         }
@@ -416,28 +406,30 @@ class DmnParser(configuration: Configuration,
     val language = Option(unaryTests.getExpressionLanguage)
       .map(_.toLowerCase())
       .getOrElse("feel")
-    if (!feelNameSpaces.contains(language)) {
+    if (language != "javascript" && !feelNameSpaces.contains(language)) {
       ctx.failures += Failure(
         s"Expression language '$language' is not supported")
-      ParsedExpression(ConstNull, expression)
+      new ParsedExpression(ConstNull, expression)
 
-    } else {
+    } else if (language == "javascript") {
+      ScriptExpression(expression, language)
+    }  else {
       ctx.parsedUnaryTest.getOrElseUpdate(
         expression, {
 
           if (expression.isEmpty()) {
-            ParsedExpression(ConstBool(true), expression)
+            new ParsedExpression(ConstBool(true), expression)
           } else {
 
             var escapedExpression =
               escapeNamesInExpression(expression, ctx.namesToEscape)
 
             FeelParser.parseUnaryTests(escapedExpression) match {
-              case Success(exp, _) => ParsedExpression(exp, expression)
+              case Success(exp, _) => new ParsedExpression(exp, expression)
               case e: NoSuccess => {
                 ctx.failures += Failure(
                   s"Failed to parse FEEL unary-tests '$expression':\n$e")
-                ParsedExpression(ConstNull, expression)
+                new ParsedExpression(ConstNull, expression)
               }
             }
           }

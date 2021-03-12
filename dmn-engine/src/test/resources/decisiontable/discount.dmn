@@ -3,47 +3,47 @@
   <decision id="discount" name="Discount">
     <decisionTable id="decisionTable">
       <input id="input1" label="Customer" camunda:inputVariable="">
-        <inputExpression id="inputExpression1" typeRef="string">
+        <inputExpression id="inputExpression1" typeRef="string" expressionLanguage="javascript">
           <text>customer</text>
         </inputExpression>
       </input>
       <input id="InputClause_0948jsx" label="Order Size" camunda:inputVariable="">
-        <inputExpression id="LiteralExpression_0541nfx" typeRef="integer">
+        <inputExpression id="LiteralExpression_0541nfx" typeRef="integer" expressionLanguage="javascript">
           <text>orderSize</text>
         </inputExpression>
       </input>
       <output id="output1" label="Discount" name="discount" typeRef="double" />
       <rule id="row-958866071-1">
-        <inputEntry id="UnaryTests_1j7evgw">
-          <text>"Business"</text>
+        <inputEntry id="UnaryTests_1j7evgw" expressionLanguage="javascript">
+          <text><![CDATA[customer === "Business"]]></text>
         </inputEntry>
-        <inputEntry id="UnaryTests_1jf21ih">
-          <text>&lt; 10</text>
+        <inputEntry id="UnaryTests_1jf21ih" expressionLanguage="javascript">
+          <text><![CDATA[orderSize < 10]]></text>
         </inputEntry>
-        <outputEntry id="LiteralExpression_104sjjb">
+        <outputEntry id="LiteralExpression_104sjjb" expressionLanguage="javascript">
           <text>0.1</text>
         </outputEntry>
       </rule>
       <rule id="row-958866071-2">
         <description></description>
-        <inputEntry id="UnaryTests_1nz4a49">
-          <text>"Business"</text>
+        <inputEntry id="UnaryTests_1nz4a49" expressionLanguage="javascript">
+          <text><![CDATA[customer === "Business"]]></text>
         </inputEntry>
-        <inputEntry id="UnaryTests_13nukij">
-          <text>&gt;= 9</text>
+        <inputEntry id="UnaryTests_13nukij" expressionLanguage="javascript">
+          <text><![CDATA[orderSize >= 10]]></text>
         </inputEntry>
-        <outputEntry id="LiteralExpression_15ipzxo">
+        <outputEntry id="LiteralExpression_15ipzxo" expressionLanguage="javascript">
           <text>0.15</text>
         </outputEntry>
       </rule>
       <rule id="row-958866071-3">
-        <inputEntry id="UnaryTests_1d94e9a">
-          <text>"Private"</text>
+        <inputEntry id="UnaryTests_1d94e9a" expressionLanguage="javascript">
+          <text><![CDATA[customer === "Private"]]></text>
         </inputEntry>
-        <inputEntry id="UnaryTests_05iyfwy">
+        <inputEntry id="UnaryTests_05iyfwy" expressionLanguage="javascript">
           <text></text>
         </inputEntry>
-        <outputEntry id="LiteralExpression_1dx9evc">
+        <outputEntry id="LiteralExpression_1dx9evc" expressionLanguage="javascript">
           <text>0.05</text>
         </outputEntry>
       </rule>
