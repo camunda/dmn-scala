@@ -1,5 +1,11 @@
 # DMN Scala
 
+[![](https://img.shields.io/badge/Community%20Extension-An%20open%20source%20community%20maintained%20project-FF4700)](https://github.com/camunda-community-hub/community)
+
+[![](https://img.shields.io/badge/Lifecycle-Incubating-blue)](https://github.com/Camunda-Community-Hub/community/blob/main/extension-lifecycle.md#incubating-)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Build project with Maven](https://github.com/camunda-community-hub/dmn-scala/actions/workflows/build.yml/badge.svg)](https://github.com/camunda-community-hub/dmn-scala/actions/workflows/build.yml)
+
 An engine to execute decisions according to the [DMN 1.1 specification](http://www.omg.org/spec/DMN/About-DMN/). 
 
 The engine uses the [Camunda DMN model api](https://github.com/camunda/camunda-dmn-model) for parsing DMN files and the [FEEL-Scala engine](https://github.com/camunda/feel-scala) to evaluate FEEL expressions.
