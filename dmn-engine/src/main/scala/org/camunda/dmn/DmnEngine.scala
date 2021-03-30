@@ -2,14 +2,8 @@ package org.camunda.dmn
 
 import java.io.InputStream
 import java.util.ServiceLoader
-import org.camunda.dmn.Audit.{
-  AuditLog,
-  AuditLogEntry,
-  AuditLogListener,
-  ContextEvaluationResult,
-  EvaluationResult,
-  SingleEvaluationResult
-}
+
+import org.camunda.dmn.Audit._
 import org.camunda.dmn.evaluation._
 import org.camunda.dmn.parser._
 import org.camunda.feel.FeelEngine
@@ -117,11 +111,8 @@ class DmnEngine(configuration: DmnEngine.Configuration =
 
   val parser = new DmnParser(
     configuration = configuration,
-    parser = exp =>
-      feelEngine
-        .parseExpression(exp)
-        .left
-        .map(_.message)
+    parser = feelEngine.parseExpression(_).left.map(_.message),
+    unaryTestsParser = feelEngine.parseUnaryTests(_).left.map(_.message)
   )
 
   val decisionEval = new DecisionEvaluator(eval = this.evalExpression,

@@ -21,7 +21,6 @@ import org.camunda.bpm.model.dmn.instance.{
 import org.camunda.dmn.DmnEngine.{Configuration, Failure}
 import org.camunda.feel.impl.parser.FeelParser
 import org.camunda.feel.syntaxtree._
-import org.camunda.feel.impl.parser.FeelParser.{NoSuccess, Success}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -34,7 +33,8 @@ object DmnParser {
 }
 
 class DmnParser(configuration: Configuration,
-                parser: String => Either[String, ParsedExpression]) {
+                parser: String => Either[String, ParsedExpression],
+                unaryTestsParser: String => Either[String, ParsedExpression]) {
 
   import DmnParser._
 
@@ -432,11 +432,11 @@ class DmnParser(configuration: Configuration,
             var escapedExpression =
               escapeNamesInExpression(expression, ctx.namesToEscape)
 
-            FeelParser.parseUnaryTests(escapedExpression) match {
-              case Success(exp, _) => ParsedExpression(exp, expression)
-              case e: NoSuccess => {
+            unaryTestsParser(escapedExpression) match {
+              case Right(parsedExpression) => parsedExpression
+              case Left(failure) => {
                 ctx.failures += Failure(
-                  s"Failed to parse FEEL unary-tests '$expression':\n$e")
+                  s"Failed to parse FEEL unary-tests '$expression': $failure")
                 ParsedExpression(ConstNull, expression)
               }
             }

@@ -17,12 +17,12 @@
   <name>DMN Scala Root</name>
 
   <properties>
-    <feel.version>1.12.2</feel.version>
-    <camunda.version>7.13.0</camunda.version>
-    <zeebe.version>0.24.4</zeebe.version>
+    <feel.version>1.13.1</feel.version>
+    <camunda.version>7.14.0</camunda.version>
+    <zeebe.version>0.26.1</zeebe.version>
     <version.java>11</version.java>
-    <scala.version>2.13.0</scala.version>
-    <scala.binary.version>2.13.0</scala.binary.version>
+    <scala.version>2.13.5</scala.version>
+    <scala.binary.version>2.13.5</scala.binary.version>
     <encoding>UTF-8</encoding>
     <project.build.sourceEncoding>${encoding}</project.build.sourceEncoding>
     <project.build.resourceEncoding>${encoding}</project.build.resourceEncoding>
@@ -151,25 +151,25 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>1.7.25</version>
+        <version>1.7.30</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-api</artifactId>
-        <version>2.13.3</version>
+        <version>2.14.1</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-core</artifactId>
-        <version>2.13.3</version>
+        <version>2.14.1</version>
       </dependency>
 
       <dependency>
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-slf4j-impl</artifactId>
-        <version>2.13.3</version>
+        <version>2.14.1</version>
       </dependency>
 
       <dependency>
