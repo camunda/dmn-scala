@@ -378,32 +378,38 @@ class DmnParser(configuration: Configuration,
       implicit
       ctx: ParsingContext): ParsedExpression = {
 
-    val expression = lt.getText.getTextContent
-
-    val language =
-      Option(lt.getExpressionLanguage).map(_.toLowerCase()).getOrElse("feel")
-    if (!feelNameSpaces.contains(language)) {
+    if (lt == null || lt.getText == null) {
       ctx.failures += Failure(
-        s"Expression language '$language' is not supported")
-      ParsedExpression(ConstNull, expression)
-
+        "The DMN is not valid - there are missing definitions and/ or ids.")
+      ParsedExpression(ConstNull, "-")
     } else {
-      ctx.parsedExpressions.getOrElseUpdate(
-        expression, {
+      val expression = lt.getText.getTextContent
 
-          var escapedExpression =
-            escapeNamesInExpression(expression, ctx.namesToEscape)
+      val language =
+        Option(lt.getExpressionLanguage).map(_.toLowerCase()).getOrElse("feel")
+      if (!feelNameSpaces.contains(language)) {
+        ctx.failures += Failure(
+          s"Expression language '$language' is not supported")
+        ParsedExpression(ConstNull, expression)
 
-          parser(escapedExpression) match {
-            case Right(parsedExpression) => parsedExpression
-            case Left(failure) => {
-              ctx.failures += Failure(
-                s"Failed to parse FEEL expression '$expression': $failure")
-              ParsedExpression(ConstNull, expression)
+      } else {
+        ctx.parsedExpressions.getOrElseUpdate(
+          expression, {
+
+            var escapedExpression =
+              escapeNamesInExpression(expression, ctx.namesToEscape)
+
+            parser(escapedExpression) match {
+              case Right(parsedExpression) => parsedExpression
+              case Left(failure) => {
+                ctx.failures += Failure(
+                  s"Failed to parse FEEL expression '$expression': $failure")
+                ParsedExpression(ConstNull, expression)
+              }
             }
           }
-        }
-      )
+        )
+      }
     }
   }
 
