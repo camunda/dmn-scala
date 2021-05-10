@@ -6,14 +6,16 @@ import org.scalatest.matchers.should.Matchers
 
 class DmnEngineTest extends AnyFlatSpec with Matchers {
 
-  val engine = new DmnEngine
+  private val engine = new DmnEngine
 
-  def discountDecision =
+  private def discountDecision =
     getClass.getResourceAsStream("/decisiontable/discount.dmn")
-  def invalidExpressionDecision =
+  private def invalidExpressionDecision =
     getClass.getResourceAsStream("/decisiontable/invalid-expression.dmn")
-  def expressionLanguageDecision =
+  private def expressionLanguageDecision =
     getClass.getResourceAsStream("/decisiontable/expression-language.dmn")
+  private def emptyExpressionDecision =
+    getClass.getResourceAsStream("/decisiontable/empty-expression.dmn")
 
   "A DMN engine" should "evaluate a decision table" in {
 
@@ -84,6 +86,18 @@ class DmnEngineTest extends AnyFlatSpec with Matchers {
 
     failure.message should include(
       "Expression language 'groovy' is not supported")
+  }
+
+  it should "report parse failures if an expression has no content" in {
+
+    val parseResult = engine.parse(emptyExpressionDecision)
+
+    parseResult.isLeft should be(true)
+
+    val failure = parseResult.left.get
+
+    failure.message should include(
+      "The expression 'inputExpression1' must not be empty.")
   }
 
 }

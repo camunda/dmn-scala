@@ -4,23 +4,9 @@ import java.io.InputStream
 
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.impl.DmnModelConstants
-import org.camunda.bpm.model.dmn.instance.{
-  BusinessKnowledgeModel,
-  Context,
-  Decision,
-  DecisionTable,
-  Expression,
-  FunctionDefinition,
-  Invocation,
-  LiteralExpression,
-  Relation,
-  UnaryTests,
-  Variable,
-  List => DmnList
-}
+import org.camunda.bpm.model.dmn.instance.{BusinessKnowledgeModel, Context, Decision, DecisionTable, Expression, FunctionDefinition, Invocation, LiteralExpression, Relation, UnaryTests, Variable, List => DmnList}
 import org.camunda.dmn.DmnEngine.{Configuration, Failure}
-import org.camunda.feel.impl.parser.FeelParser
-import org.camunda.feel.syntaxtree._
+import org.camunda.feel.syntaxtree.{ParsedExpression, _}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -372,32 +358,46 @@ class DmnParser(configuration: Configuration,
       implicit
       ctx: ParsingContext): ParsedExpression = {
 
-    val expression = lt.getText.getTextContent
+    val result = for {
+      expression <- validateNotEmpty(lt)
+      _ <- validateExpressionLanguage(lt)
+      parsedExpression <- parseFeelExpression(expression)
+    } yield parsedExpression
 
-    val language =
-      Option(lt.getExpressionLanguage).map(_.toLowerCase()).getOrElse("feel")
-    if (!feelNameSpaces.contains(language)) {
-      ctx.failures += Failure(
-        s"Expression language '$language' is not supported")
-      ParsedExpression(ConstNull, expression)
+    result match {
+      case Right(parsedExpression) => parsedExpression
+      case Left(failure) =>
+        ctx.failures += failure
+        ParsedExpression(ConstNull, "")
+    }
+  }
 
-    } else {
-      ctx.parsedExpressions.getOrElseUpdate(
-        expression, {
-
-          var escapedExpression =
-            escapeNamesInExpression(expression, ctx.namesToEscape)
-
-          parser(escapedExpression) match {
-            case Right(parsedExpression) => parsedExpression
-            case Left(failure) => {
-              ctx.failures += Failure(
-                s"Failed to parse FEEL expression '$expression': $failure")
-              ParsedExpression(ConstNull, expression)
-            }
-          }
-        }
+  private def validateNotEmpty(lt: LiteralExpression): Either[Failure, String] =
+    Option(lt.getText).map(_.getTextContent)
+      .toRight ( Failure(s"The expression '${lt.getId}' must not be empty.")
       )
+
+  private def validateExpressionLanguage(lt: LiteralExpression): Either[Failure, Unit] = {
+    val language = Option(lt.getExpressionLanguage).map(_.toLowerCase).getOrElse("feel")
+    if (feelNameSpaces.contains(language)) {
+      Right(())
+    } else {
+      Left(Failure(s"Expression language '$language' is not supported"))
+    }
+  }
+
+  private def parseFeelExpression(expression: String)(implicit ctx: ParsingContext): Either[Failure, ParsedExpression] = {
+    ctx.parsedExpressions.get(expression) match {
+      case Some(parsedExpression) => Right(parsedExpression)
+      case None => {
+        val escapedExpression =
+          escapeNamesInExpression(expression, ctx.namesToEscape)
+
+        parser(escapedExpression) match {
+          case Right(parsedExpression) => Right(parsedExpression)
+          case Left(failure) => Left(Failure(s"Failed to parse FEEL expression '$expression': $failure"))
+        }
+      }
     }
   }
 
