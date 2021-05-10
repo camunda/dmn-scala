@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/DMN/20151101/dmn.xsd" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="definitions_0zcssbj" name="definitions" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="holidays" name="Holidays">
+    <decisionTable id="decisionTable" hitPolicy="OUTPUT ORDER">
+      <input id="input1" label="Age" camunda:inputVariable="">
+        <inputExpression id="inputExpression1" typeRef="string">
+          <text>age</text>
+        </inputExpression>
+      </input>
+      <input id="InputClause_0kk8vt9" label="Years of Service" camunda:inputVariable="">
+        <inputExpression id="LiteralExpression_1bfan5f" typeRef="string">
+          <text>yearsOfService</text>
+        </inputExpression>
+      </input>
+      <output id="output1" label="Holidays" name="holidays" typeRef="string">
+        <outputValues>
+          <text>22, 5, 3, 2</text>
+        </outputValues>
+      </output>
+      <rule id="row-723033347-18">
+        <inputEntry id="UnaryTests_0g7t3bw">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0z3e2v7">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1dqdwr1">
+          <text>22</text>
+        </outputEntry>
+      </rule>
+      <rule id="row-723033347-19">
+        <description></description>
+        <inputEntry id="UnaryTests_1jt8vq2">
+          <text>&gt;= 60</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1fc20nm">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1pokllr">
+          <text>3</text>
+        </outputEntry>
+      </rule>
+      <rule id="row-723033347-20">
+        <inputEntry id="UnaryTests_0685dz2">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0zfp1ry">
+          <text>&gt;= 30</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1j87snm">
+          <text>3</text>
+        </outputEntry>
+      </rule>
+      <rule id="row-723033347-21">
+        <inputEntry id="UnaryTests_08xwkxd">
+          <text>&lt; 18</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1b4cimy">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0t57ufh">
+          <text>5</text>
+        </outputEntry>
+      </rule>
+      <rule id="row-723033347-22">
+        <inputEntry id="UnaryTests_1rhzdav">
+          <text>&gt;= 60</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1dso7sm">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_02ppb2f">
+          <text>5</text>
+        </outputEntry>
+      </rule>
+      <rule id="row-723033347-23">
+        <inputEntry id="UnaryTests_1fbj8d6">
+          <text></text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_1s2stdy">
+          <text>&gt;= 30</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_16eypdu">
+          <text>5</text>
+        </outputEntry>
+      </rule>
+      <rule id="row-723033347-24">
+        <inputEntry id="UnaryTests_01o0uf5">
+          <text>[18..60)</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0lghlmu">
+          <text>[15..30)</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_05hl6vs">
+          <text>2</text>
+        </outputEntry>
+      </rule>
+      <rule id="row-723033347-25">
+        <inputEntry id="UnaryTests_01rmzbw">
+          <text>[45..60)</text>
+        </inputEntry>
+        <inputEntry id="UnaryTests_0qu8951">
+          <text>&lt; 30</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0l3zwzv">
+          <text>2</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>
