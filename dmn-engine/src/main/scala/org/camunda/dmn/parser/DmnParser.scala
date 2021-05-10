@@ -200,12 +200,6 @@ class DmnParser(configuration: Configuration,
     val rules = decisionTable.getRules.asScala
     val outputs = decisionTable.getOutputs.asScala
 
-    val defaultOutputValues = outputs
-      .map(
-        o =>
-          Option(o.getDefaultOutputEntry)
-            .map(parseFeelExpression))
-
     val parsedOutputs = outputs.map(o => {
       val value = Option(o.getOutputValues).map(_.getText.getTextContent)
       val defaultValue =
