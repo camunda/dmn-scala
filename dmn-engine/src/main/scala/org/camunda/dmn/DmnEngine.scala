@@ -102,10 +102,18 @@ class DmnEngine(configuration: DmnEngine.Configuration =
 
   import DmnEngine._
 
-  val valueMapper = loadValueMapper()
+  private val valueMapper = loadValueMapper()
+  private val functionProvider = loadFunctionProvider()
+
+  logger.info(
+    s"DMN-Engine created. [" +
+      s"value-mapper: $valueMapper, " +
+      s"function-provider: $functionProvider, " +
+      s"audit-loggers: $auditLogListeners, " +
+      s"configuration: $configuration]")
 
   val feelEngine = new FeelEngine(
-    functionProvider = loadFunctionProvider(),
+    functionProvider = functionProvider,
     valueMapper = ValueMapper.CompositeValueMapper(
       List(new NoUnpackValueMapper(valueMapper))))
 
