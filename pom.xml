@@ -18,7 +18,7 @@
 
   <properties>
     <feel.version>1.13.1</feel.version>
-    <camunda.version>7.14.0</camunda.version>
+    <camunda.version>7.15.0</camunda.version>
     <zeebe.version>0.26.1</zeebe.version>
     <version.java>11</version.java>
     <scala.version>2.13.5</scala.version>
