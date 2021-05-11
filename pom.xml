@@ -299,27 +299,10 @@
   </licenses>
 
   <scm>
-    <connection>scm:git:git@github.com:camunda/dmn-scala.git</connection>
-    <url>scm:git:git@github.com:camunda/dmn-scala.git</url>
-    <developerConnection>scm:git:git@github.com:camunda/dmn-scala.git</developerConnection>
+    <connection>scm:git:git@github.com:camunda-community-hub/dmn-scala.git</connection>
+    <url>scm:git:git@github.com:camunda-community-hub/dmn-scala.git</url>
+    <developerConnection>scm:git:git@github.com:camunda-community-hub/dmn-scala.git</developerConnection>
     <tag>1.0.0</tag>
   </scm>
-
-  <distributionManagement>
-    <repository>
-      <id>camunda-nexus</id>
-      <name>Camunda Platform community extensions</name>
-      <url>https://app.camunda.com/nexus/content/repositories/camunda-bpm-community-extensions</url>
-    </repository>
-    <snapshotRepository>
-      <id>camunda-nexus</id>
-      <name>Camunda Platform community extensions snapshots</name>
-      <url>
-        https://app.camunda.com/nexus/content/repositories/camunda-bpm-community-extensions-snapshots
-      </url>
-      <!-- for maven 2 compatibility -->
-      <uniqueVersion>true</uniqueVersion>
-    </snapshotRepository>
-  </distributionManagement>
 
 </project>
