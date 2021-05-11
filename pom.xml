@@ -138,7 +138,7 @@
       <dependency>
         <groupId>org.scalatest</groupId>
         <artifactId>scalatest-flatspec_2.13</artifactId>
-        <version>3.2.2</version>
+        <version>3.3.0-SNAP3</version>
       </dependency>
 
       <dependency>
