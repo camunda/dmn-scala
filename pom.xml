@@ -120,7 +120,7 @@
       <dependency>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-webapp</artifactId>
-        <version>9.4.34.v20201102</version>
+        <version>11.0.2</version>
       </dependency>
 
       <dependency>
@@ -175,7 +175,7 @@
       <dependency>
         <groupId>com.h2database</groupId>
         <artifactId>h2</artifactId>
-        <version>1.4.193</version>
+        <version>1.4.200</version>
       </dependency>
 
     </dependencies>
@@ -268,7 +268,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
-            <version>1.6</version>
+            <version>3.0.1</version>
             <executions>
                 <execution>
                     <id>sign-artifacts</id>
