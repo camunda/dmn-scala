@@ -96,7 +96,7 @@
       <dependency>
         <groupId>org.scalatra</groupId>
         <artifactId>scalatra_2.13</artifactId>
-        <version>2.7.0</version>
+        <version>2.7.1</version>
       </dependency>
 
       <dependency>
@@ -126,7 +126,7 @@
       <dependency>
         <groupId>javax.servlet</groupId>
         <artifactId>javax.servlet-api</artifactId>
-        <version>3.1.0</version>
+        <version>4.0.1</version>
       </dependency>
 
       <dependency>
@@ -144,7 +144,7 @@
       <dependency>
         <groupId>org.scalatestplus</groupId>
         <artifactId>junit-4-13_2.13</artifactId>
-        <version>3.2.2.0</version>
+        <version>3.3.0.0-SNAP3</version>
         <scope>test</scope>
       </dependency>
 
