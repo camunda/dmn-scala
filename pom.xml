@@ -4,7 +4,7 @@
 
   <groupId>org.camunda.bpm.extension.dmn.scala</groupId>
   <artifactId>dmn-scala-root</artifactId>
-  <version>1.6.3</version>
+  <version>1.6.4-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <parent>
