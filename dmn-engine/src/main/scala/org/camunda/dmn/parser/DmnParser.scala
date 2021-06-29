@@ -470,7 +470,7 @@ class DmnParser(configuration: Configuration,
     (expression /: namesWithSpaces)(
       (e, name) =>
         e.replaceAll("""([(,.]|\s|^)(""" + name + """)([(),.]|\s|$)""",
-                     "$1'$2'$3"))
+                     "$1`$2`$3"))
   }
 
   private def getNamesToEscape(model: DmnModelInstance): Iterable[String] = {
