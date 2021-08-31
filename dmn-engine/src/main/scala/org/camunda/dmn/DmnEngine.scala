@@ -123,8 +123,8 @@ class DmnEngine(configuration: DmnEngine.Configuration =
 
   val parser = new DmnParser(
     configuration = configuration,
-    parser = feelEngine.parseExpression(_).left.map(_.message),
-    unaryTestsParser = feelEngine.parseUnaryTests(_).left.map(_.message)
+    feelParser = feelEngine.parseExpression(_).left.map(_.message),
+    feelUnaryTestsParser = feelEngine.parseUnaryTests(_).left.map(_.message)
   )
 
   val decisionEval = new DecisionEvaluator(eval = this.evalExpression,

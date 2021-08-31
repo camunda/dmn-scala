@@ -2,8 +2,8 @@ package org.camunda.dmn.evaluation
 
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
-import org.camunda.dmn.parser.{ParsedBusinessKnowledgeModel, ParsedInvocation}
-import org.camunda.feel.syntaxtree.{ParsedExpression, Val}
+import org.camunda.dmn.parser.{ParsedBusinessKnowledgeModel, ParsedExpression, ParsedInvocation}
+import org.camunda.feel.syntaxtree.Val
 
 class InvocationEvaluator(
     eval: (ParsedExpression, EvalContext) => Either[Failure, Val],

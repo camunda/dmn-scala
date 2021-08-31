@@ -2,13 +2,8 @@ package org.camunda.dmn.evaluation
 
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
-import org.camunda.dmn.parser.ParsedFunctionDefinition
-import org.camunda.feel.syntaxtree.{
-  ParsedExpression,
-  Val,
-  ValError,
-  ValFunction
-}
+import org.camunda.dmn.parser.{ParsedExpression, ParsedFunctionDefinition}
+import org.camunda.feel.syntaxtree.{Val, ValError, ValFunction}
 
 class FunctionDefinitionEvaluator(
     eval: (ParsedExpression, EvalContext) => Either[Failure, Val]) {
