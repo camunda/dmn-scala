@@ -20,9 +20,8 @@ class CamundaDmnEnginePlugin extends AbstractProcessEnginePlugin {
           throw new ProcessEngineException("history listener is not created"))
     })
 
-    val dmnEngine = new CamundaDmnEngine(
-      new DmnEngine(auditLogListeners = List(auditLogListener)),
-      auditLogListener.onEvalDecision)
+    val dmnEngine =
+      new CamundaDmnEngine(new DmnEngine(), auditLogListener.onEvalDecision)
 
     // replace the default Camunda DMN engine
     config.setDmnEngine(dmnEngine)

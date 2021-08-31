@@ -3,7 +3,6 @@ package org.camunda.dmn.camunda.plugin
 import java.io.InputStream
 import java.util.stream.Collectors
 import java.util.{List => JList, Map => JMap}
-
 import org.camunda.bpm.dmn.engine.impl.{
   DefaultDmnEngineConfiguration,
   DmnDecisionResultEntriesImpl,
@@ -20,6 +19,7 @@ import org.camunda.bpm.engine.variable.Variables
 import org.camunda.bpm.engine.variable.context.VariableContext
 import org.camunda.bpm.model.dmn.DmnModelInstance
 import org.camunda.bpm.model.dmn.instance.Decision
+import org.camunda.dmn.Audit.AuditLog
 import org.camunda.dmn.DmnEngine
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.parser.{
@@ -34,10 +34,7 @@ import scala.util.Either
 
 object CamundaDmnEngine {
 
-  type EvalListener = (
-      DmnDecision,
-      String,
-      () => Either[Failure, EvalResult]) => Either[Failure, EvalResult]
+  type EvalListener = (DmnDecision, AuditLog) => Unit
 
 }
 
@@ -145,12 +142,14 @@ class CamundaDmnEngine(engine: DmnEngine, onEval: CamundaDmnEngine.EvalListener)
 
         dmn.decisionsById(id).logic
 
-        val result = onEval(decision, id, () => engine.eval(dmn, id, variables))
+        val result: DecisionResult = engine.eval(dmn, id, variables)
 
         result match {
-          case Left(failure) =>
-            throw new ProcessEngineException(failure.toString)
-          case Right(result) => createDecisionResult(result, decision)
+          case Left(EvalFailure(failure, _)) =>
+            throw new ProcessEngineException(failure.message)
+          case Right(result) =>
+            onEval(decision, result.auditLog)
+            createDecisionResult(result, decision)
         }
       }
       case other =>
