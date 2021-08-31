@@ -2,11 +2,9 @@ package org.camunda.dmn.parser
 
 import org.camunda.bpm.model.dmn.DmnModelInstance
 
-import scala.collection.JavaConverters._
-import org.camunda.bpm.model.dmn.instance.Decision
 import org.camunda.bpm.model.dmn.HitPolicy
 import org.camunda.bpm.model.dmn.BuiltinAggregator
-import org.camunda.feel.syntaxtree.ParsedExpression
+import org.camunda.feel
 
 case class ParsedDmn(model: DmnModelInstance,
                      decisions: Iterable[ParsedDecision]) {
@@ -16,6 +14,18 @@ case class ParsedDmn(model: DmnModelInstance,
   val decisionsByName: Map[String, ParsedDecision] =
     decisions.map(d => d.name -> d).toMap
 }
+
+// ---------------
+
+sealed trait ParsedExpression
+
+case class ExpressionFailure(failure: String) extends ParsedExpression
+
+case class FeelExpression(expression: feel.syntaxtree.ParsedExpression) extends ParsedExpression
+
+case object EmptyExpression extends ParsedExpression
+
+// ---------------
 
 sealed trait ParsedDecisionLogicContainer {
   val id: String

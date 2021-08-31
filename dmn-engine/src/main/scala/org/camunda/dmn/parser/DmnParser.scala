@@ -19,7 +19,7 @@ import org.camunda.bpm.model.dmn.instance.{
   List => DmnList
 }
 import org.camunda.dmn.DmnEngine.{Configuration, Failure}
-import org.camunda.feel.syntaxtree.{ParsedExpression, _}
+import org.camunda.feel
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -36,8 +36,8 @@ object DmnParser {
 }
 
 class DmnParser(configuration: Configuration,
-                parser: String => Either[String, ParsedExpression],
-                unaryTestsParser: String => Either[String, ParsedExpression]) {
+                feelParser: String => Either[String, feel.syntaxtree.ParsedExpression],
+                feelUnaryTestsParser: String => Either[String, feel.syntaxtree.ParsedExpression]) {
 
   import DmnParser._
 
@@ -45,8 +45,8 @@ class DmnParser(configuration: Configuration,
 
     val namesToEscape = getNamesToEscape(model)
 
-    val parsedExpressions = mutable.Map[String, ParsedExpression]()
-    val parsedUnaryTest = mutable.Map[String, ParsedExpression]()
+    val parsedFeelExpressions = mutable.Map[String, ParsedExpression]()
+    val parsedFeelUnaryTest = mutable.Map[String, ParsedExpression]()
 
     val decisions = mutable.Map[String, ParsedDecision]()
     val bkms = mutable.Map[String, ParsedBusinessKnowledgeModel]()
@@ -55,10 +55,14 @@ class DmnParser(configuration: Configuration,
   }
 
   object ParsingFailure
-      extends ParsedLiteralExpression(ParsedExpression(ConstNull, "<failure>"))
+    extends ParsedLiteralExpression(ExpressionFailure("<failure>"))
 
   object EmptyLogic
-      extends ParsedLiteralExpression(ParsedExpression(ConstNull, "<empty>"))
+    extends ParsedLiteralExpression(FeelExpression(
+      feel.syntaxtree.ParsedExpression(
+        expression = feel.syntaxtree.ConstNull,
+        text = "<empty>")
+    ))
 
   def parse(stream: InputStream): Either[Failure, ParsedDmn] = {
 
@@ -378,14 +382,13 @@ class DmnParser(configuration: Configuration,
     val result = for {
       expression <- validateNotEmpty(lt)
       _ <- validateExpressionLanguage(lt)
-      parsedExpression <- parseFeelExpression(expression)
-    } yield parsedExpression
+    } yield parseFeelExpression(expression)
 
     result match {
-      case Right(parsedExpression) => parsedExpression
+      case Right(expression) => expression
       case Left(failure) =>
         ctx.failures += failure
-        ParsedExpression(ConstNull, "")
+        ExpressionFailure(failure = failure.message)
     }
   }
 
@@ -406,22 +409,19 @@ class DmnParser(configuration: Configuration,
   }
 
   private def parseFeelExpression(expression: String)(
-      implicit ctx: ParsingContext): Either[Failure, ParsedExpression] = {
-    ctx.parsedExpressions.get(expression) match {
-      case Some(parsedExpression) => Right(parsedExpression)
-      case None => {
-        val escapedExpression =
-          escapeNamesInExpression(expression, ctx.namesToEscape)
+    implicit ctx: ParsingContext): ParsedExpression = {
+    ctx.parsedFeelExpressions.getOrElseUpdate(expression, {
+      val escapedExpression =
+        escapeNamesInExpression(expression, ctx.namesToEscape)
 
-        parser(escapedExpression) match {
-          case Right(parsedExpression) => Right(parsedExpression)
-          case Left(failure) =>
-            Left(
-              Failure(
-                s"Failed to parse FEEL expression '$expression': $failure"))
-        }
+      feelParser(escapedExpression) match {
+        case Right(parsedExpression) => FeelExpression(expression = parsedExpression)
+        case Left(failure) =>
+          ctx.failures += Failure(
+            s"Failed to parse FEEL expression '$expression': $failure")
+          ExpressionFailure(failure = s"Failed to parse FEEL expression '$expression': $failure")
       }
-    }
+    })
   }
 
   private def parseUnaryTests(unaryTests: UnaryTests)(
@@ -436,25 +436,25 @@ class DmnParser(configuration: Configuration,
     if (!feelNameSpaces.contains(language)) {
       ctx.failures += Failure(
         s"Expression language '$language' is not supported")
-      ParsedExpression(ConstNull, expression)
+      ExpressionFailure(failure = s"Expression language '$language' is not supported")
 
     } else {
-      ctx.parsedUnaryTest.getOrElseUpdate(
+      ctx.parsedFeelUnaryTest.getOrElseUpdate(
         expression, {
 
           if (expression.isEmpty()) {
-            ParsedExpression(ConstBool(true), expression)
+            EmptyExpression
           } else {
 
             var escapedExpression =
               escapeNamesInExpression(expression, ctx.namesToEscape)
 
-            unaryTestsParser(escapedExpression) match {
-              case Right(parsedExpression) => parsedExpression
+            feelUnaryTestsParser(escapedExpression) match {
+              case Right(parsedExpression) => FeelExpression(expression = parsedExpression)
               case Left(failure) => {
                 ctx.failures += Failure(
                   s"Failed to parse FEEL unary-tests '$expression': $failure")
-                ParsedExpression(ConstNull, expression)
+                ExpressionFailure(failure = s"Failed to parse FEEL unary-tests '$expression': $failure")
               }
             }
           }
