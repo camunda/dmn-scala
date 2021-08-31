@@ -24,7 +24,10 @@ class StandaloneEngine(engine: DmnEngine, repository: DecisionRepository) {
       variables: Map[String, Any]): Either[Failure, EvalResult] = {
     repository
       .getDecisionById(id)
-      .map(d => engine.eval(d.parsedDmn, id, variables))
+      .map(d =>
+        engine.eval(d.parsedDmn, id, variables).left.map {
+          case EvalFailure(failure, _) => failure
+      })
       .getOrElse(Left(Failure(s"No decision found with id '$id'")))
   }
 
@@ -33,7 +36,10 @@ class StandaloneEngine(engine: DmnEngine, repository: DecisionRepository) {
       variables: Map[String, Any]): Either[Failure, EvalResult] = {
     repository
       .getDecisionByName(name)
-      .map(d => engine.evalByName(d.parsedDmn, name, variables))
+      .map(d =>
+        engine.evalByName(d.parsedDmn, name, variables).left.map {
+          case EvalFailure(failure, _) => failure
+      })
       .getOrElse(Left(Failure(s"No decision found with name '$name'")))
   }
 
