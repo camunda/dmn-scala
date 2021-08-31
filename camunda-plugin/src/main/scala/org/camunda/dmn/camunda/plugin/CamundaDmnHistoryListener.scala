@@ -19,27 +19,17 @@ import org.camunda.feel.valuemapper.ValueMapper._
 
 import scala.jdk.CollectionConverters._
 
-class CamundaDmnHistoryListener(listener: () => DmnDecisionEvaluationListener)
-    extends AuditLogListener {
+class CamundaDmnHistoryListener(listener: () => DmnDecisionEvaluationListener) {
 
   // The Camunda history event producer expect decisions of type DmnDecision.
   // Since this is not part of the DMN engine, I need to pass it from the evaluation.
 
-  val context = new ThreadLocal[DmnDecision]
-
-  def onEvalDecision[T](decision: DmnDecision, id: String, eval: () => T): T = {
-    context.set(decision)
-
-    try {
-      eval()
-    } finally {
-      context.remove()
-    }
+  def onEvalDecision(decision: DmnDecision, auditLog: AuditLog): Unit = {
+    transformLogToHistoryEvents(decision, auditLog)
   }
 
-  private def decisionById(id: String): Option[DmnDecision] = {
-    val decision: DmnDecision = context.get
-
+  private def decisionById(decision: DmnDecision,
+                           id: String): Option[DmnDecision] = {
     Option(decision)
       .map(getDecisionsById(_).get(id))
       .getOrElse(throw new ProcessEngineException(
@@ -56,18 +46,11 @@ class CamundaDmnHistoryListener(listener: () => DmnDecisionEvaluationListener)
 
   // Transforming the audit log from the DMN engine to Camunda history events.
 
-  override def onEval(log: AuditLog) {
-    transformLogToHistoryEvents(log)
-  }
-
-  override def onFailure(log: AuditLog) {
-    // don't persist the history if the evaluation fails
-  }
-
-  private def transformLogToHistoryEvents(log: AuditLog) = {
+  private def transformLogToHistoryEvents(decision: DmnDecision,
+                                          log: AuditLog): Unit = {
     val evalEvent = new DmnDecisionEvaluationEventImpl();
 
-    val rootDecision = decisionById(log.rootEntry.id).getOrElse {
+    val rootDecision = decisionById(decision, log.rootEntry.id).getOrElse {
       throw new ProcessEngineException(
         s"no decision found with id '${log.rootEntry.id}'")
     }
@@ -76,7 +59,7 @@ class CamundaDmnHistoryListener(listener: () => DmnDecisionEvaluationListener)
     evalEvent.setDecisionResult(decisionResult)
 
     val requiredResults = log.requiredEntries
-      .flatMap(e => decisionById(e.id).map(d => d -> e))
+      .flatMap(e => decisionById(decision, e.id).map(d => d -> e))
       .map { case (decision, entry) => createEvaluationEvent(decision, entry) }
 
     evalEvent.setRequiredDecisionResults(requiredResults.asJava)
