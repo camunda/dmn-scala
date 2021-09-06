@@ -19,7 +19,7 @@
   <properties>
     <feel.version>1.13.1</feel.version>
     <camunda.version>7.15.0</camunda.version>
-    <zeebe.version>0.26.4</zeebe.version>
+    <zeebe.version>0.26.5</zeebe.version>
     <version.java>11</version.java>
     <scala.version>2.13.6</scala.version>
     <scala.binary.version>2.13.6</scala.binary.version>
@@ -151,7 +151,7 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>1.7.31</version>
+        <version>1.7.32</version>
       </dependency>
 
       <dependency>
