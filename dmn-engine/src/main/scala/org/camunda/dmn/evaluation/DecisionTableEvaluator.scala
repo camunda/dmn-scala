@@ -3,10 +3,30 @@ package org.camunda.dmn.evaluation
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
 import org.camunda.feel._
-import org.camunda.feel.syntaxtree.{Val, ValBoolean, ValContext, ValError, ValList, ValNull, ValNumber, ValString}
+import org.camunda.feel.syntaxtree.{
+  Val,
+  ValBoolean,
+  ValContext,
+  ValError,
+  ValList,
+  ValNull,
+  ValNumber,
+  ValString
+}
 import org.camunda.bpm.model.dmn._
-import org.camunda.dmn.parser.{ParsedDecisionTable, ParsedExpression, ParsedInput, ParsedOutput, ParsedRule}
-import org.camunda.dmn.Audit.{DecisionTableEvaluationResult, EvaluatedInput, EvaluatedOutput, EvaluatedRule}
+import org.camunda.dmn.parser.{
+  ParsedDecisionTable,
+  ParsedExpression,
+  ParsedInput,
+  ParsedOutput,
+  ParsedRule
+}
+import org.camunda.dmn.Audit.{
+  DecisionTableEvaluationResult,
+  EvaluatedInput,
+  EvaluatedOutput,
+  EvaluatedRule
+}
 import org.camunda.feel.context.Context.StaticContext
 
 class DecisionTableEvaluator(

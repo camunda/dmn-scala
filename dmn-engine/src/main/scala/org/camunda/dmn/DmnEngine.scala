@@ -64,12 +64,14 @@ object DmnEngine {
   }
 
   case class Configuration(escapeNamesWithSpaces: Boolean = false,
-                           escapeNamesWithDashes: Boolean = false)
+                           escapeNamesWithDashes: Boolean = false,
+                           lazyEvaluation: Boolean = false)
 
   class Builder {
 
     private var escapeNamesWithSpaces_ = false
     private var escapeNamesWithDashes_ = false
+    private var lazyEvaluation_ = false
     private var auditLogListeners_ = List[AuditLogListener]().toBuffer
 
     def escapeNamesWithSpaces(enabled: Boolean): Builder = {
@@ -82,6 +84,11 @@ object DmnEngine {
       this
     }
 
+    def lazyEvaluation(enabled: Boolean): Builder = {
+      lazyEvaluation_ = enabled
+      this
+    }
+
     def addAuditListener(listener: AuditLogListener): Builder = {
       auditLogListeners_ += listener
       this
@@ -89,10 +96,10 @@ object DmnEngine {
 
     def build: DmnEngine =
       new DmnEngine(
-        configuration = DmnEngine.Configuration(escapeNamesWithSpaces =
-                                                  escapeNamesWithSpaces_,
-                                                escapeNamesWithDashes =
-                                                  escapeNamesWithDashes_),
+        configuration = DmnEngine.Configuration(
+          escapeNamesWithSpaces = escapeNamesWithSpaces_,
+          escapeNamesWithDashes = escapeNamesWithDashes_,
+          lazyEvaluation = lazyEvaluation_),
         auditLogListeners = auditLogListeners_.toList
       )
 
