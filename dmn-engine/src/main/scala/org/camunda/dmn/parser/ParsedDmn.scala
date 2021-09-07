@@ -21,7 +21,8 @@ sealed trait ParsedExpression
 
 case class ExpressionFailure(failure: String) extends ParsedExpression
 
-case class FeelExpression(expression: feel.syntaxtree.ParsedExpression) extends ParsedExpression
+case class FeelExpression(expression: feel.syntaxtree.ParsedExpression)
+    extends ParsedExpression
 
 case object EmptyExpression extends ParsedExpression
 

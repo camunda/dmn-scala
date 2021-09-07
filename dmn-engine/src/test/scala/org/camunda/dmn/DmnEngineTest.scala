@@ -59,7 +59,7 @@ class DmnEngineTest extends AnyFlatSpec with Matchers {
 
     parseResult.isLeft should be(true)
     parseResult.left.map(
-      _.message should include("Failed to parse FEEL unary-tests '> 10L'"))
+      _.message should include("FEEL unary-tests: failed to parse expression"))
   }
 
   it should "report parse failures on evaluation" in {
@@ -69,7 +69,7 @@ class DmnEngineTest extends AnyFlatSpec with Matchers {
 
     result.isLeft should be(true)
     result.left.map(
-      _.message should include("Failed to parse FEEL unary-tests '> 10L'"))
+      _.message should include("FEEL unary-tests: failed to parse expression"))
   }
 
   it should "report an evaluation failure" in {
