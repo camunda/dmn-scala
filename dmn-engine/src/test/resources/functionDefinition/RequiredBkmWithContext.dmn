@@ -1,18 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <definitions xmlns="http://www.omg.org/spec/DMN/20151101/dmn.xsd" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="definitions_16rwaqm" name="definitions" namespace="http://camunda.org/schema/1.0/dmn">
-  <businessKnowledgeModel id="lib" name="Lib">
+  <businessKnowledgeModel id="lib" name="lib">
 	  <encapsulatedLogic>
 	    <context>
 	        <contextEntry>
-	            <variable name="incr"/>
+	            <variable name="incrFn"/>
 	            <literalExpression>
 	                <text>function(x) x + 1</text>
-	            </literalExpression>
-	        </contextEntry>
-	        <contextEntry>
-	            <variable name="decr"/>
-	            <literalExpression>
-	                <text>function(x) x - 1</text>
 	            </literalExpression>
 	        </contextEntry>
 	    </context>
@@ -23,7 +17,7 @@
         <requiredKnowledge href="#lib"/>
     </knowledgeRequirement>
     <literalExpression>
-        <text>incr(4)</text>
+        <text>lib().incrFn(4)</text>
     </literalExpression>
   </decision>
 </definitions>
