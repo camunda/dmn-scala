@@ -11,10 +11,16 @@ class FunctionDefinitionTest
     with Matchers
     with DecisionTest {
 
-  lazy val applicantData = parse("/functionDefinition/ApplicantData.dmn")
-  lazy val userFunction = parse("/functionDefinition/FeelUserFunction.dmn")
-  lazy val contextWithFunction = parse(
-    "/functionDefinition/ContextWithFunction.dmn")
+  private lazy val applicantData = parse("/functionDefinition/ApplicantData.dmn")
+  private lazy val userFunction = parse("/functionDefinition/FeelUserFunction.dmn")
+  private lazy val requiredDecisionWithFunction = parse(
+    "/functionDefinition/RequiredDecisionWithFunction.dmn")
+  private lazy val requiredDecisionWithContext = parse(
+    "/functionDefinition/RequiredDecisionWithContext.dmn")
+  private lazy val requiredBkmWithFunction = parse(
+    "/functionDefinition/RequiredBkmWithFunction.dmn")
+  private lazy val requiredBkmWithContext = parse(
+    "/functionDefinition/RequiredBkmWithContext.dmn")
 
   "A function definition" should "be invoked inside a context" in {
     val rate: BigDecimal = 0.25
@@ -30,8 +36,23 @@ class FunctionDefinitionTest
     eval(userFunction, "userFunction", Map()) should be(5)
   }
 
-  it should "be invoked outside of the context" in {
-    eval(contextWithFunction, "calculation", Map()) should be(5)
+  it should "be invoked from required decision with function" in {
+    eval(requiredDecisionWithFunction, "calculation", Map()) should be(5)
   }
+
+  it should "be invoked from required decision with context" in {
+    eval(requiredDecisionWithContext, "calculation", Map()) should be(5)
+  }
+
+  // TODO (saig0): support invoking required BKM as functions (#12)
+  ignore should "be invoked from required BKM with function" in {
+    eval(requiredBkmWithFunction, "calculation", Map()) should be(5)
+  }
+
+  // TODO (saig0): support invoking required BKM as functions (#12)
+  ignore should "be invoked from required BKM with context" in {
+    eval(requiredBkmWithContext, "calculation", Map()) should be(5)
+  }
+
 
 }
