@@ -1,19 +1,22 @@
 package org.camunda.dmn.parser
 
 import java.io.InputStream
-
 import org.camunda.dmn.logger
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.impl.DmnModelConstants
 import org.camunda.bpm.model.dmn.instance.{
   BusinessKnowledgeModel,
+  Column,
   Context,
   Decision,
   DecisionTable,
   Expression,
+  FormalParameter,
   FunctionDefinition,
+  InformationItem,
   Invocation,
   LiteralExpression,
+  Parameter,
   Relation,
   UnaryTests,
   Variable,
@@ -488,8 +491,11 @@ class DmnParser(
 
   private def getNamesToEscape(model: DmnModelInstance): Iterable[String] = {
 
-    val variables = model.getModelElementsByType(classOf[Variable])
-    val variableNames = variables.asScala.map(_.getName)
+    val names = model
+      .getModelElementsByType(classOf[InformationItem])
+      .asScala
+      .filterNot(classOf[Column].isInstance(_))
+      .map(_.getName)
 
     val nameFilter: (String => Boolean) = {
       if (configuration.escapeNamesWithSpaces && configuration.escapeNamesWithDashes) {
@@ -504,7 +510,7 @@ class DmnParser(
       }
     }
 
-    val namesToEscape = variableNames.filter(nameFilter)
+    val namesToEscape = names.filter(nameFilter)
     namesToEscape.toList.distinct
       .sortBy(_.length)
       .reverse
