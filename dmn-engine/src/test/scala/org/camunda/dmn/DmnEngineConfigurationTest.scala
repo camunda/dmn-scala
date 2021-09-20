@@ -26,6 +26,8 @@ class DmnEngineConfigurationTest extends AnyFlatSpec with Matchers {
     getClass.getResourceAsStream("/config/decision_with_spaces.dmn")
   private def decisionWithDash =
     getClass.getResourceAsStream("/config/decision_with_dash.dmn")
+  private def bkmWithSpacesAndDash =
+    getClass.getResourceAsStream("/config/bkm_with_spaces_and_dash.dmn")
   private def decisionWithInvalidExpression =
     getClass.getResourceAsStream("/config/decision_with_invalid_expression.dmn")
   private def decisionWithOtherInvalidDecision =
@@ -51,6 +53,19 @@ class DmnEngineConfigurationTest extends AnyFlatSpec with Matchers {
 
     result.isRight should be(true)
     result.map(_.value should be("Hello DMN"))
+  }
+
+  it should "invoke a BKM with spaces & dash in parameter" in {
+    val result = engineWithEscapeNames
+      .parse(bkmWithSpacesAndDash)
+      .flatMap(
+        engineWithEscapeNames.eval(_,
+                                   "greeting",
+                                   Map("First Name" -> "Luke",
+                                       "Last-Name" -> "Skywalker")))
+
+    result.isRight should be(true)
+    result.map(_.value should be("Hello Luke Skywalker"))
   }
 
   "A DMN engine with lazy evaluation" should "ignore invalid expression on parsing" in {
