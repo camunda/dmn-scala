@@ -72,7 +72,9 @@
                       <mainClass>org.openjdk.jmh.Main</mainClass>
                     </manifest>
                   </archive>
-                  <descriptor>assembly.xml</descriptor>
+                  <descriptors>
+                    <descriptor>assembly.xml</descriptor>
+                  </descriptors>
                 </configuration>
               </execution>
             </executions>
