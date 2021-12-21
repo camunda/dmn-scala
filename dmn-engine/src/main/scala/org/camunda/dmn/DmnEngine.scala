@@ -2,11 +2,10 @@ package org.camunda.dmn
 
 import java.io.InputStream
 import java.util.ServiceLoader
-
 import org.camunda.dmn.Audit._
 import org.camunda.dmn.evaluation._
 import org.camunda.dmn.parser._
-import org.camunda.feel.FeelEngine
+import org.camunda.feel.{FeelEngine, FeelEngineClock}
 import org.camunda.feel.context.{CustomFunctionProvider, FunctionProvider}
 import org.camunda.feel.syntaxtree.{Val, ValError, ValNull}
 import org.camunda.feel.valuemapper.{CustomValueMapper, ValueMapper}
@@ -73,6 +72,7 @@ object DmnEngine {
     private var escapeNamesWithDashes_ = false
     private var lazyEvaluation_ = false
     private var auditLogListeners_ = List[AuditLogListener]().toBuffer
+    private var clock: FeelEngineClock = FeelEngineClock.SystemClock
 
     def escapeNamesWithSpaces(enabled: Boolean): Builder = {
       escapeNamesWithSpaces_ = enabled
@@ -94,13 +94,19 @@ object DmnEngine {
       this
     }
 
+    def clock(clock: FeelEngineClock): Builder = {
+      this.clock = clock
+      this
+    }
+
     def build: DmnEngine =
       new DmnEngine(
         configuration = DmnEngine.Configuration(
           escapeNamesWithSpaces = escapeNamesWithSpaces_,
           escapeNamesWithDashes = escapeNamesWithDashes_,
           lazyEvaluation = lazyEvaluation_),
-        auditLogListeners = auditLogListeners_.toList
+        auditLogListeners = auditLogListeners_.toList,
+        clock = clock
       )
 
   }
@@ -109,7 +115,8 @@ object DmnEngine {
 
 class DmnEngine(configuration: DmnEngine.Configuration =
                   DmnEngine.Configuration(),
-                auditLogListeners: List[AuditLogListener] = List.empty) {
+                auditLogListeners: List[AuditLogListener] = List.empty,
+                clock: FeelEngineClock = FeelEngineClock.SystemClock) {
 
   import DmnEngine._
 
@@ -126,7 +133,9 @@ class DmnEngine(configuration: DmnEngine.Configuration =
   val feelEngine = new FeelEngine(
     functionProvider = functionProvider,
     valueMapper = ValueMapper.CompositeValueMapper(
-      List(new NoUnpackValueMapper(valueMapper))))
+      List(new NoUnpackValueMapper(valueMapper))),
+    clock = clock
+  )
 
   val parser = new DmnParser(
     configuration = configuration,
