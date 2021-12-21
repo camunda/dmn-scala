@@ -1,13 +1,12 @@
 package org.camunda.dmn
 
 import org.camunda.dmn.DmnEngine._
-import org.camunda.dmn.parser.{
-  ExpressionFailure,
-  ParsedDmn,
-  ParsedLiteralExpression
-}
+import org.camunda.dmn.parser.{ExpressionFailure, ParsedLiteralExpression}
+import org.camunda.feel.FeelEngineClock
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+
+import java.time.{ZoneId, ZonedDateTime}
 
 class DmnEngineConfigurationTest extends AnyFlatSpec with Matchers {
 
@@ -22,6 +21,14 @@ class DmnEngineConfigurationTest extends AnyFlatSpec with Matchers {
       lazyEvaluation = true
     ))
 
+  private val customClock = new FeelEngineClock {
+    override def getCurrentTime: ZonedDateTime = ZonedDateTime.of(
+      2021, 12, 21, 18, 9, 5, 333, ZoneId.of("Europe/Berlin"))
+  }
+  private val engineWithCustomClock = new DmnEngine(
+    clock = customClock
+  )
+
   private def decisionWithSpaces =
     getClass.getResourceAsStream("/config/decision_with_spaces.dmn")
   private def decisionWithDash =
@@ -34,6 +41,8 @@ class DmnEngineConfigurationTest extends AnyFlatSpec with Matchers {
     getClass.getResourceAsStream("/config/with_invalid_decision.dmn")
   private def decisionWithInvalidBkm =
     getClass.getResourceAsStream("/config/with_invalid_bkm.dmn")
+  private def decisionWithSpecificDateTime =
+    getClass.getResourceAsStream("/config/with_specific_date_time.dmn")
 
   "A DMN engine with escaped names" should "evaluate a decision with spaces" in {
 
@@ -111,6 +120,14 @@ class DmnEngineConfigurationTest extends AnyFlatSpec with Matchers {
 
     result.isRight should be(true)
     result.map(_.value should be("Hello DMN"))
+  }
+
+  "A DMN engine with custom clock" should "use that clock in decision" in {
+    val result = engineWithCustomClock.parse(decisionWithSpecificDateTime)
+      .flatMap(engineWithCustomClock.eval(_, "currentTime", Map.empty[String, Any]))
+
+    result.isRight should be(true)
+    result.map(_.value should be(customClock.getCurrentTime))
   }
 
 }
