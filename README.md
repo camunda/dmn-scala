@@ -50,7 +50,7 @@ However, the engine provides also a SPI to add custom functions which are writte
 The engine has a transformer (aka `ValueMapper`) to transform the incoming variables into FEEL types and to transform the decision result back into regular Scala types. 
 
 If you need to transform custom types or change the result types then you can implement a SPI. The implementation is loaded via Java's service loader mechanism. Please have a look at the 
-[documentation](https://camunda.github.io/feel-scala/value-mapper-spi) to see how to implement the SPI.
+[documentation](https://camunda.github.io/feel-scala/docs/reference/developer-guide/value-mapper-spi) to see how to implement the SPI.
 
 ## Contribution
 
