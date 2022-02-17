@@ -43,7 +43,7 @@ You can customize the DMN engine in the following ways.
 The engine comes with a bunch of [built-in functions](https://camunda.github.io/feel-scala/feel-built-in-functions) which are defined by the DMN specification. 
 And it allows you to define own functions as FEEL expressions (using the keyword `function`) or as context entry element.
 
-However, the engine provides also a SPI to add custom functions which are written in Scala / Java. The classes are loaded via Java's service loader mechanism. Please have a look at the [documentation](https://camunda.github.io/feel-scala/function-provider-spi) to see how to implement the SPI.
+However, the engine provides also a SPI to add custom functions which are written in Scala / Java. The classes are loaded via Java's service loader mechanism. Please have a look at the [documentation](https://camunda.github.io/feel-scala/docs/reference/developer-guide/function-provider-spi) to see how to implement the SPI.
 
 ### Transform Custom Types
 
