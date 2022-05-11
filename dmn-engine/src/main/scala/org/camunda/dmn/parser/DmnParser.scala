@@ -211,6 +211,15 @@ class DmnParser(
         "hit policy 'COLLECT' with aggregator is not defined for compound output")
     }
 
+    if (decisionTable.getOutputs.size > 1) {
+      decisionTable.getOutputs
+        .stream()
+        .filter(output => output.getName == null)
+        .forEach(output =>
+          ctx.failures += Failure(
+            s"no output name defined for `${output.getLabel}`"))
+    }
+
     val inputExpressions = decisionTable.getInputs.asScala
       .map(
         i =>

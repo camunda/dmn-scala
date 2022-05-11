@@ -12,6 +12,9 @@ class DecisionTableTest extends AnyFlatSpec with Matchers with DecisionTest {
   lazy val adjustmentsDecision = parse("/decisiontable/adjustments.dmn")
   lazy val adjustmentsWithDefaultOutputDecision = parse(
     "/decisiontable/adjustments_default-output.dmn")
+  lazy val adjustmentsWithEmptyOutputNameDecision =
+    getClass.getResourceAsStream(
+      "/decisiontable/adjustments_empty_output_name.dmn")
 
   lazy val routingRulesDecision = parse("/decisiontable/routingRules.dmn")
   lazy val holidaysDecision = parse("/decisiontable/holidays_output_order.dmn")
@@ -74,4 +77,11 @@ class DecisionTableTest extends AnyFlatSpec with Matchers with DecisionTest {
       Map("discount" -> 0.05, "shipping" -> "Ground"))
   }
 
+  it should "fail if an output name is empty" in {
+    val result = engine.parse(adjustmentsWithEmptyOutputNameDecision)
+
+    result.isLeft should be(true)
+    result.left.map(
+      _.message should be("no output name defined for `Discount`"))
+  }
 }
