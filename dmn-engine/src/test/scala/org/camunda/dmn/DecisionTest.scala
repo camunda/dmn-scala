@@ -12,10 +12,29 @@ trait DecisionTest {
   val engine = new DmnEngine(auditLogListeners = List(new TestAuditLogListener))
 
   def parse(file: String): ParsedDmn = {
-    val stream = getClass.getResourceAsStream(file)
-    engine.parse(stream) match {
-      case Right(dmn)    => dmn
-      case Left(failure) => throw new AssertionError(failure.message)
+    parseDmn(file).dmn
+  }
+
+  def parseDmn(dmn: String): ParsedResult = {
+    val stream = getClass.getResourceAsStream(dmn)
+    new ParsedResult(engine.parse(stream))
+  }
+
+  class ParsedResult(val parserResult: Either[Failure, ParsedDmn]) {
+    def failure: Failure = {
+      parserResult match {
+        case Right(_) =>
+          throw new AssertionError(
+            "Expected parsing to fail, but was successful")
+        case Left(failure) => failure
+      }
+    }
+
+    def dmn: ParsedDmn = {
+      parserResult match {
+        case Right(dmn)    => dmn
+        case Left(failure) => throw new AssertionError(failure.message)
+      }
     }
   }
 

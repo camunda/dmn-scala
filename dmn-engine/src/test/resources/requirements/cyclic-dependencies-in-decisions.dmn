@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" id="Definitions_12e09le" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.0.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.0.0">
+  <decision id="decsion1" name="Decision 1">
+    <informationRequirement id="InformationRequirement_16orpl8">
+      <requiredDecision href="#decision2" />
+    </informationRequirement>
+    <decisionTable id="DecisionTable_1i81hm2">
+      <input id="Input_1" label="Input">
+        <inputExpression id="InputExpression_1" typeRef="string">
+          <text>true</text>
+        </inputExpression>
+      </input>
+      <output id="Output_1" label="Output" name="output" typeRef="string" />
+    </decisionTable>
+  </decision>
+  <decision id="decision2" name="Decision 2">
+    <informationRequirement id="InformationRequirement_0jqslrq">
+      <requiredDecision href="#decision3" />
+    </informationRequirement>
+    <decisionTable id="DecisionTable_0ulasv5">
+      <input id="InputClause_0kw15yv" label="Input">
+        <inputExpression id="LiteralExpression_1fypa69" typeRef="string">
+          <text>true</text>
+        </inputExpression>
+      </input>
+      <output id="OutputClause_1thh253" label="Output" name="output" typeRef="string" />
+    </decisionTable>
+  </decision>
+  <decision id="decision3" name="Decision 3">
+    <informationRequirement id="InformationRequirement_1bcojij">
+      <requiredDecision href="#decsion1" />
+    </informationRequirement>
+    <decisionTable id="DecisionTable_1j1t2kq">
+      <input id="InputClause_0rp90q0" label="Input">
+        <inputExpression id="LiteralExpression_1hwejgo" typeRef="string">
+          <text>true</text>
+        </inputExpression>
+      </input>
+      <output id="OutputClause_0n60ol4" label="Output" name="output" typeRef="string" />
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNShape dmnElementRef="decsion1">
+        <dc:Bounds height="80" width="180" x="160" y="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_09qjf0a" dmnElementRef="decision2">
+        <dc:Bounds height="80" width="180" x="160" y="260" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_0xfe317" dmnElementRef="InformationRequirement_16orpl8">
+        <di:waypoint x="250" y="260" />
+        <di:waypoint x="250" y="180" />
+        <di:waypoint x="250" y="160" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNShape id="DMNShape_0ti9ml5" dmnElementRef="decision3">
+        <dc:Bounds height="80" width="180" x="160" y="430" />
+      </dmndi:DMNShape>
+      <dmndi:DMNEdge id="DMNEdge_0xg84aw" dmnElementRef="InformationRequirement_0jqslrq">
+        <di:waypoint x="250" y="430" />
+        <di:waypoint x="250" y="360" />
+        <di:waypoint x="250" y="340" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_083080p" dmnElementRef="InformationRequirement_1bcojij">
+        <di:waypoint x="250" y="160" />
+        <di:waypoint x="410" y="200" />
+        <di:waypoint x="410" y="380" />
+        <di:waypoint x="250" y="430" />
+      </dmndi:DMNEdge>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>
