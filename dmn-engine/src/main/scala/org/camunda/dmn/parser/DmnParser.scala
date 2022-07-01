@@ -11,15 +11,12 @@ import org.camunda.bpm.model.dmn.instance.{
   Decision,
   DecisionTable,
   Expression,
-  FormalParameter,
   FunctionDefinition,
   InformationItem,
   Invocation,
   LiteralExpression,
-  Parameter,
   Relation,
   UnaryTests,
-  Variable,
   List => DmnList
 }
 import org.camunda.dmn.DmnEngine.{Configuration, Failure}
@@ -88,12 +85,12 @@ class DmnParser(
     val ctx = ParsingContext(model)
 
     val decisions = model.getDefinitions.getDrgElements.asScala
-      .filter(_.isInstanceOf[Decision])
+      .collect { case a: Decision => a }
 
-    decisions.map {
-      case (d: Decision) =>
-        ctx.decisions.getOrElseUpdate(d.getId, parseDecision(d)(ctx))
-    }
+    decisions.foreach(d =>
+      ctx.decisions.getOrElseUpdate(d.getId, parseDecision(d)(ctx)))
+
+    checkDecisionsForCyclicDependencies(decisions, ctx)
 
     if (ctx.failures.isEmpty) {
       Right(ParsedDmn(model, ctx.decisions.values))
@@ -102,9 +99,51 @@ class DmnParser(
       logger.warn("Parsing the DMN reported the following failures:\n{}",
                   ctx.failures.map(_.message).mkString("\n"))
       Right(ParsedDmn(model, ctx.decisions.values))
-
     } else {
       Left(ctx.failures)
+    }
+  }
+
+  private def checkDecisionsForCyclicDependencies(decisions: Iterable[Decision],
+                                                  ctx: ParsingContext) = {
+    val decisionsToRequiredDecisions = decisions
+      .map(
+        d =>
+          d.getId -> d.getInformationRequirements.asScala
+            .flatMap(r => Option(r.getRequiredDecision).map(d => d.getId))
+      )
+      .toMap
+
+    val foundCycle = decisionsToRequiredDecisions
+      .exists(entry =>
+        hasCycle(entry._1, Set.empty, decisionsToRequiredDecisions));
+
+    if (foundCycle) {
+      ctx.failures += Failure(
+        "Invalid DMN model: Cyclic dependencies between decisions detected.")
+    }
+  }
+
+  private def hasCycle(
+      decisionId: String,
+      requiredDecisions: Set[String],
+      decisionsToRequiredDecisions: Map[String, Iterable[String]]): Boolean = {
+    if (requiredDecisions.contains(decisionId)) {
+      true
+    } else if (decisionsToRequiredDecisions
+                 .getOrElse(decisionId, List.empty)
+                 .isEmpty) {
+      false;
+    } else {
+      val requiredDecisionsUpdated = requiredDecisions + decisionId
+
+      decisionsToRequiredDecisions
+        .getOrElse(decisionId, List.empty)
+        .exists(
+          entry =>
+            hasCycle(entry,
+                     requiredDecisionsUpdated,
+                     decisionsToRequiredDecisions))
     }
   }
 
@@ -112,12 +151,12 @@ class DmnParser(
       implicit
       ctx: ParsingContext): ParsedDecision = {
 
-    // TODO be aware of loops
     val informationRequirements = decision.getInformationRequirements.asScala
-    val requiredDecisions = informationRequirements
+    val requiredDecisions = informationRequirements.view
       .map(r => Option(r.getRequiredDecision))
       .flatten
-      .map(d => ctx.decisions.getOrElseUpdate(d.getId, parseDecision(d)))
+      .map(d => ctx.decisions.get(d.getId))
+      .flatten
 
     val knowledgeRequirements = decision.getKnowledgeRequirements.asScala
     val requiredBkms = knowledgeRequirements
