@@ -17,8 +17,8 @@
   <name>DMN Scala Root</name>
 
   <properties>
-    <feel.version>1.13.3</feel.version>
-    <camunda.version>7.16.0</camunda.version>
+    <feel.version>1.15.2</feel.version>
+    <camunda.version>7.18.0</camunda.version>
     <zeebe.version>0.26.5</zeebe.version>
     <version.java>11</version.java>
     <scala.version>2.13.9</scala.version>

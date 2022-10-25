@@ -19,7 +19,7 @@ class DmnEngineSpiTest extends AnyFlatSpec with Matchers {
 
   "A custom value mapper" should "transform the input" in {
 
-    val result = engine.eval(decision, "varInput", Map("in" -> "bar"))
+    val result = engine.eval(decision, "varInput", Map("input" -> "bar"))
 
     result.isRight should be(true)
     result.map(_.value should be("baz"))
