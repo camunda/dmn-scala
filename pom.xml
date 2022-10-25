@@ -33,8 +33,11 @@
     <module>camunda-plugin</module>
     <module>standalone-engine</module>
     <module>engine-rest</module>
-    <module>zeebe-worker</module>
-    <module>engine-benchmark</module>
+    <!--
+      Exclude the Zeebe and benchmark modules. They will be removed soon.
+      <module>zeebe-worker</module>
+      <module>engine-benchmark</module>
+    -->
   </modules>
 
   <dependencyManagement>
