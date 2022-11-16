@@ -1,17 +1,11 @@
 # DMN Scala
 
-[![](https://img.shields.io/badge/Community%20Extension-An%20open%20source%20community%20maintained%20project-FF4700)](https://github.com/camunda-community-hub/community)
-
-[![](https://img.shields.io/badge/Lifecycle-Incubating-blue)](https://github.com/Camunda-Community-Hub/community/blob/main/extension-lifecycle.md#incubating-)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Build project with Maven](https://github.com/camunda-community-hub/dmn-scala/actions/workflows/build.yml/badge.svg)](https://github.com/camunda-community-hub/dmn-scala/actions/workflows/build.yml)
-
-An engine to execute decisions according to the [DMN 1.1 specification](http://www.omg.org/spec/DMN/About-DMN/). 
+An engine to execute decisions according to the [DMN specification](http://www.omg.org/spec/DMN/About-DMN/). 
 
 The engine uses the [Camunda DMN model api](https://github.com/camunda/camunda-dmn-model) for parsing DMN files and the [FEEL-Scala engine](https://github.com/camunda/feel-scala) to evaluate FEEL expressions.
 
 **Features:**
-* support for DMN 1.1 (Compliance Level 3)¹
+* support for the latest version of DMN (Compliance Level 3)¹
   * Decision Table
   * Business Knowledge Model
   * Context
@@ -27,16 +21,39 @@ The engine uses the [Camunda DMN model api](https://github.com/camunda/camunda-d
 
 ## How to use it?
 
-You can use the DMN engine in different ways 
+Add the DMN engine to your project by copying the [jar file](https://github.com/camunda/dmn-scala/releases) _(dmn-engine-${version}.jar)_ or adding the project as dependency.
 
-* [embedded](https://github.com/camunda/dmn-scala/tree/master/dmn-engine#how-to-use-it) as a library into your application
-* [standalone](https://github.com/camunda/dmn-scala/tree/master/engine-rest#how-to-use-it) via REST endpoint
-* [integrated into the Camunda Platform engine](https://github.com/camunda/dmn-scala/tree/master/camunda-plugin#how-to-use-it) via process engine plugin
-* [integrated into Zeebe](https://github.com/camunda/dmn-scala/tree/master/zeebe-worker#how-to-use-it) as job worker
+```xml
+<dependency>
+  <groupId>org.camunda.bpm.extension.dmn.scala</groupId>
+  <artifactId>dmn-engine</artifactId>
+  <version>${version}</version>
+</dependency>
+```
 
-## Extensions
+Create a new instance of the class 'DmnEngine'.
+Use this instance to parse and evaluate a DMN decision.
 
-You can customize the DMN engine in the following ways.
+```scala
+object MyProgram {
+  
+  val engine = new DmnEngine
+  
+  def evaluate(stream: InputStream, decisionId: String, context: Map[String, Any]) {
+    
+  val result = 
+    engine
+      .parse(stream)
+      .flatMap(dmn => engine.eval(dmn, decisionId, context))
+        
+    result match {
+      case Left(failure)    => // ...
+      case Right(NilResult) => // ...
+      case Right(r)         => // ...
+    }
+  }  
+}
+```
 
 ### Provide Custom Functions
 

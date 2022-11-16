@@ -3,9 +3,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.camunda.bpm.extension.dmn.scala</groupId>
-  <artifactId>dmn-scala-root</artifactId>
-  <version>1.7.5-SNAPSHOT</version>
-  <packaging>pom</packaging>
+  <artifactId>dmn-engine</artifactId>
+  <name>DMN Scala Engine</name>
+  <version>2.0.0-SNAPSHOT</version>
 
   <parent>
     <groupId>org.camunda</groupId>
@@ -14,12 +14,9 @@
     <relativePath />
   </parent>
 
-  <name>DMN Scala Root</name>
-
   <properties>
     <feel.version>1.15.2</feel.version>
-    <camunda.version>7.18.0</camunda.version>
-    <zeebe.version>0.26.5</zeebe.version>
+    <camunda-model-api.version>7.18.0</camunda-model-api.version>
     <version.java>11</version.java>
     <scala.version>2.13.10</scala.version>
     <scala.binary.version>2.13.6</scala.binary.version>
@@ -28,61 +25,8 @@
     <project.build.resourceEncoding>${encoding}</project.build.resourceEncoding>
   </properties>
 
-  <modules>
-    <module>dmn-engine</module>
-    <module>camunda-plugin</module>
-    <module>standalone-engine</module>
-    <module>engine-rest</module>
-    <!--
-      Exclude the Zeebe and benchmark modules. They will be removed soon.
-      <module>zeebe-worker</module>
-      <module>engine-benchmark</module>
-    -->
-  </modules>
-
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>org.camunda.bpm</groupId>
-        <artifactId>camunda-bom</artifactId>
-        <version>${camunda.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-
-      <dependency>
-        <groupId>io.zeebe</groupId>
-        <artifactId>zeebe-bom</artifactId>
-        <version>${zeebe.version}</version>
-        <scope>import</scope>
-        <type>pom</type>
-      </dependency>
-
-      <dependency>
-        <groupId>io.netty</groupId>
-        <artifactId>netty-bom</artifactId>
-        <version>4.1.73.Final</version>
-        <scope>import</scope>
-        <type>pom</type>
-      </dependency>
-
-      <dependency>
-        <groupId>org.scala-lang</groupId>
-        <artifactId>scala-library</artifactId>
-        <version>${scala.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.camunda.bpm.extension.dmn.scala</groupId>
-        <artifactId>dmn-engine</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.camunda.bpm.extension.dmn.scala</groupId>
-        <artifactId>dmn-engine-standalone</artifactId>
-        <version>${project.version}</version>
-      </dependency>
 
       <dependency>
         <groupId>org.camunda.feel</groupId>
@@ -91,64 +35,15 @@
       </dependency>
 
       <dependency>
-        <groupId>org.camunda.bpm.extension.feel.scala</groupId>
-        <artifactId>feel-engine-factory</artifactId>
-        <version>${feel.version}</version>
+        <groupId>org.camunda.bpm.model</groupId>
+        <artifactId>camunda-dmn-model</artifactId>
+        <version>${camunda-model-api.version}</version>
       </dependency>
 
       <dependency>
-        <groupId>org.scalatra</groupId>
-        <artifactId>scalatra_2.13</artifactId>
-        <version>2.7.1</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.scalatra</groupId>
-        <artifactId>scalatra-scalatest_2.13</artifactId>
-        <version>2.7.1</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.scalatra</groupId>
-        <artifactId>scalatra-json_2.13</artifactId>
-        <version>2.7.0</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.json4s</groupId>
-        <artifactId>json4s-jackson_2.13</artifactId>
-        <version>3.6.9</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-webapp</artifactId>
-        <version>9.4.34.v20201102</version>
-      </dependency>
-
-      <dependency>
-        <groupId>javax.servlet</groupId>
-        <artifactId>javax.servlet-api</artifactId>
-        <version>4.0.1</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.scalatest</groupId>
-        <artifactId>scalatest_2.13</artifactId>
-        <version>3.2.2</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.scalatest</groupId>
-        <artifactId>scalatest-flatspec_2.13</artifactId>
-        <version>3.2.2</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.scalatestplus</groupId>
-        <artifactId>junit-4-13_2.13</artifactId>
-        <version>3.3.0.0-SNAP3</version>
-        <scope>test</scope>
+        <groupId>org.scala-lang</groupId>
+        <artifactId>scala-library</artifactId>
+        <version>${scala.version}</version>
       </dependency>
 
       <dependency>
@@ -176,13 +71,56 @@
       </dependency>
 
       <dependency>
-        <groupId>com.h2database</groupId>
-        <artifactId>h2</artifactId>
-        <version>1.4.200</version>
+        <groupId>org.scalatest</groupId>
+        <artifactId>scalatest_2.13</artifactId>
+        <version>3.2.10</version>
       </dependency>
 
     </dependencies>
   </dependencyManagement>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>org.camunda.feel</groupId>
+      <artifactId>feel-engine</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.camunda.bpm.model</groupId>
+      <artifactId>camunda-dmn-model</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.scalatest</groupId>
+      <artifactId>scalatest_2.13</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+  </dependencies>
 
   <build>
     <defaultGoal>clean install</defaultGoal>
@@ -241,6 +179,14 @@
           <junitxml>.</junitxml>
           <filereports>TestSuite.txt</filereports>
         </configuration>
+        <executions>
+          <execution>
+            <id>test</id>
+            <goals>
+              <goal>test</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
 
       <plugin>
@@ -262,37 +208,6 @@
     </plugins>
 
   </build>
-
-  <profiles>
-    <profile>
-      <id>community-action-maven-release</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-gpg-plugin</artifactId>
-            <version>3.0.1</version>
-            <executions>
-                <execution>
-                    <id>sign-artifacts</id>
-                    <phase>verify</phase>
-                    <goals>
-                        <goal>sign</goal>
-                    </goals>
-                </execution>
-            </executions>
-            <configuration>
-                <!-- Prevent gpg from using pinentry programs -->
-                <gpgArguments>
-                    <arg>--pinentry-mode</arg>
-                    <arg>loopback</arg>
-                </gpgArguments>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
 
   <licenses>
     <license>
