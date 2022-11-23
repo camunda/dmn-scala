@@ -23,6 +23,8 @@
     <encoding>UTF-8</encoding>
     <project.build.sourceEncoding>${encoding}</project.build.sourceEncoding>
     <project.build.resourceEncoding>${encoding}</project.build.resourceEncoding>
+
+    <license.header>com/mycila/maven/plugin/license/templates/APACHE-2.txt</license.header>
   </properties>
 
   <dependencyManagement>
@@ -205,6 +207,40 @@
           </execution>
         </executions>
       </plugin>
+
+      <!-- LICENSE PLUGIN -->
+      <plugin>
+        <groupId>com.mycila</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <version>4.1</version>
+        <configuration>
+          <header>${license.header}</header>
+          <properties>
+            <owner>Camunda Services GmbH</owner>
+            <email>info@camunda.com</email>
+            <year>2022</year>
+          </properties>
+          <skipExistingHeaders>false</skipExistingHeaders>
+          <includes>
+            <include>**/*.scala</include>
+            <include>**/*.java</include>
+          </includes>
+          <mapping>
+            <java>SLASHSTAR_STYLE</java>
+            <scala>SLASHSTAR_STYLE</scala>
+          </mapping>
+        </configuration>
+        <executions>
+          <execution>
+            <id>add-license-header</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>format</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
     </plugins>
 
   </build>
