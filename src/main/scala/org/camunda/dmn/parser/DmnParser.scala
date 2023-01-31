@@ -19,7 +19,21 @@ import java.io.InputStream
 import org.camunda.dmn.logger
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.impl.DmnModelConstants
-import org.camunda.bpm.model.dmn.instance.{BusinessKnowledgeModel, Column, Context, Decision, DecisionTable, Expression, FunctionDefinition, InformationItem, Invocation, ItemDefinition, LiteralExpression, Relation, UnaryTests, List => DmnList}
+import org.camunda.bpm.model.dmn.instance.{
+  BusinessKnowledgeModel,
+  Column,
+  Context,
+  Decision,
+  DecisionTable,
+  Expression,
+  FunctionDefinition,
+  InformationItem,
+  Invocation,
+  ItemDefinition,
+  LiteralExpression,
+  Relation,
+  UnaryTests,
+  List => DmnList}
 import org.camunda.dmn.DmnEngine.{Configuration, Failure}
 import org.camunda.feel
 
