@@ -31,6 +31,7 @@ import org.camunda.bpm.model.dmn.instance.{
   Invocation,
   ItemDefinition,
   LiteralExpression,
+  NamedElement,
   Relation,
   UnaryTests,
   List => DmnList}
@@ -554,7 +555,7 @@ class DmnParser(
 
   private def getNamesToEscape(model: DmnModelInstance): Iterable[String] = {
 
-    val elementTypes =
+    val elementTypes: List[Class[_ >: InformationItem with ItemDefinition <: NamedElement]] =
       List(classOf[InformationItem], classOf[ItemDefinition])
 
     val names = elementTypes.flatMap(elementType =>
