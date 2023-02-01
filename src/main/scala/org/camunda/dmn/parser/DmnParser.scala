@@ -558,8 +558,7 @@ class DmnParser(
     val elementTypes: List[Class[_ >: InformationItem with ItemDefinition <: NamedElement]] =
       List(classOf[InformationItem], classOf[ItemDefinition])
 
-    val names = elementTypes.flatMap(elementType =>
-        model.getModelElementsByType(elementType).asScala)
+    val names = elementTypes.flatMap(elementType => model.getModelElementsByType(elementType).asScala)
       .filterNot(classOf[Column].isInstance(_))
       .map(_.getName)
 
