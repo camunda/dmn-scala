@@ -75,10 +75,10 @@ class DmnEngineConfigurationTest extends AnyFlatSpec with Matchers {
 
     val result = engineWithEscapeNames
       .parse(decisionWithSpacesInItemDefinitionAndItemComponents)
-      .flatMap(engineWithEscapeNames.eval(_, "greeting", Map("name" -> "DMN")))
+      .flatMap(engineWithEscapeNames.eval(_, "greeting", Map("name" -> "Luke", "Last Name" -> "Skywalker")))
 
     result.isRight should be(true)
-    result.map(_.value should be("Hello DMN"))
+    result.map(_.value should be("Hello Luke Skywalker"))
   }
 
   it should "evaluate a decision with dash" in {

@@ -5,14 +5,11 @@
              xmlns:feel="http://www.omg.org/spec/FEEL/20140401">
 
     <itemDefinition id="greetingData" name="Greeting Data" isCollection="false">
-        <itemComponent id="firstName" name="First Name" isCollection="false">
-            <typeRef>string</typeRef>
-        </itemComponent>
         <itemComponent id="lastName" name="Last Name" isCollection="false">
             <typeRef>string</typeRef>
         </itemComponent>
     </itemDefinition>
-    
+
     <decision name="GreetingMessage" id="greeting">
         <informationRequirement>
             <requiredInput href="#greetingDataVariable" />
@@ -25,8 +22,10 @@
                 </literalExpression>
             </contextEntry>
             <contextEntry>
+                <!-- First Name is escaped via the fact it is defined as a variable within this context -->
+                <!-- Last Name is escaped via the Item Definition -->
                 <literalExpression>
-                    <text>"Hello " + First Name</text>
+                    <text>"Hello " + First Name + " " + Last Name</text>
                 </literalExpression>
             </contextEntry>
         </context>
@@ -34,7 +33,7 @@
 
     <inputData id="greetingDataInput" name="greetingData">
         <extensionElements />
-        <variable id="greetingDataVariable" name="greetingData" typeRef="Greeting Data" />
+        <variable id="greetingDataVariable" name="greetingData" typeRef="GreetingData" />
     </inputData>
 
 </definitions>
