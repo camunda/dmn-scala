@@ -34,7 +34,8 @@ import org.camunda.bpm.model.dmn.instance.{
   NamedElement,
   Relation,
   UnaryTests,
-  List => DmnList}
+  List => DmnList
+}
 import org.camunda.dmn.DmnEngine.{Configuration, Failure}
 import org.camunda.feel
 
