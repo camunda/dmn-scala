@@ -23,7 +23,7 @@
             </contextEntry>
             <contextEntry>
                 <!-- First Name is escaped via the fact it is defined as a variable within this context -->
-                <!-- Last Name is escaped via the Item Definition -->
+                <!-- Last Name is escaped via the Item Definition / Item Component reference -->
                 <literalExpression>
                     <text>"Hello " + First Name + " " + Last Name</text>
                 </literalExpression>
