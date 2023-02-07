@@ -267,6 +267,8 @@
             <exclude>org/camunda/dmn/**/*$</exclude>
             <exclude>org/camunda/dmn/**/*$anonfun*</exclude>
           </excludes>
+          <!-- Specifically ignore functions that may have changed -->
+          <ignoredDifferencesFile>api-check-ignore.xml</ignoredDifferencesFile>
         </configuration>
       </plugin>
 

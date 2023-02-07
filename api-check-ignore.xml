@@ -1,0 +1,40 @@
+<differences>
+    <!-- ignore errors originating in changes to compiler generated anonymous functions -->
+    <difference>
+        <className>org/camunda/dmn/**</className>
+        <!-- method removed -->
+        <differenceType>7002</differenceType>
+        <method>*$anonfun*</method>
+    </difference>
+    <difference>
+        <className>org/camunda/dmn/**</className>
+        <!-- num method params -->
+        <differenceType>7004</differenceType>
+        <method>*$anonfun*</method>
+        <from>*</from>
+        <to>*</to>
+    </difference>
+    <difference>
+        <className>org/camunda/dmn/**</className>
+        <!-- method param type -->
+        <differenceType>7005</differenceType>
+        <method>*$anonfun*</method>
+        <!--don't care what the type has changed to-->
+        <from>*</from>
+        <to>*</to>
+    </difference>
+    <difference>
+        <className>org/camunda/dmn/**</className>
+        <!-- return type -->
+        <differenceType>7006</differenceType>
+        <method>*$anonfun*</method>
+        <from>*</from>
+        <to>*</to>
+    </difference>
+    <difference>
+        <className>org/camunda/dmn/**</className>
+        <!-- method added -->
+        <differenceType>7011</differenceType>
+        <method>*$anonfun*</method>
+    </difference>
+</differences>
