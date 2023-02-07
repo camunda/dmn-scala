@@ -31,7 +31,6 @@ import org.camunda.bpm.model.dmn.instance.{
   Invocation,
   ItemDefinition,
   LiteralExpression,
-  NamedElement,
   Relation,
   UnaryTests,
   List => DmnList
