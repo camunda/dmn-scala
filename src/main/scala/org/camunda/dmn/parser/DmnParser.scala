@@ -556,10 +556,8 @@ class DmnParser(
 
   private def getNamesToEscape(model: DmnModelInstance): Iterable[String] = {
 
-    val elementTypes: List[Class[_ >: InformationItem with ItemDefinition <: NamedElement]] =
-      List(classOf[InformationItem], classOf[ItemDefinition])
-
-    val names = elementTypes.flatMap(elementType => model.getModelElementsByType(elementType).asScala)
+    val names = Seq(classOf[InformationItem], classOf[ItemDefinition]).flatMap(elementType =>
+      model.getModelElementsByType(elementType).asScala)
       .filterNot(classOf[Column].isInstance(_))
       .map(_.getName)
 
