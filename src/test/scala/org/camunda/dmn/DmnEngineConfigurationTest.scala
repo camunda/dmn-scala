@@ -71,7 +71,7 @@ class DmnEngineConfigurationTest extends AnyFlatSpec with Matchers {
     result.map(_.value should be("Hello DMN"))
   }
 
-  "A DMN engine with escaped names" should "evaluate a decision with spaces in item definitions and item components" in {
+  it should "evaluate a decision with spaces in item definitions and item components" in {
 
     val result = engineWithEscapeNames
       .parse(decisionWithSpacesInItemDefinitionAndItemComponents)
