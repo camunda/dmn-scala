@@ -46,6 +46,8 @@ class DmnEngineConfigurationTest extends AnyFlatSpec with Matchers {
 
   private def decisionWithSpaces =
     getClass.getResourceAsStream("/config/decision_with_spaces.dmn")
+  private def decisionWithSpacesInItemDefinitionAndItemComponents =
+    getClass.getResourceAsStream("/config/decision_with_spaces_in_item_definition_and_item_component.dmn")
   private def decisionWithDash =
     getClass.getResourceAsStream("/config/decision_with_dash.dmn")
   private def bkmWithSpacesAndDash =
@@ -67,6 +69,16 @@ class DmnEngineConfigurationTest extends AnyFlatSpec with Matchers {
 
     result.isRight should be(true)
     result.map(_.value should be("Hello DMN"))
+  }
+
+  it should "evaluate a decision with spaces in item definitions and item components" in {
+
+    val result = engineWithEscapeNames
+      .parse(decisionWithSpacesInItemDefinitionAndItemComponents)
+      .flatMap(engineWithEscapeNames.eval(_, "greeting", Map("name" -> "Luke", "greetingData" -> Map("Last Name" -> "Skywalker"))))
+
+    result.isRight should be(true)
+    result.map(_.value should be("Hello Luke Skywalker"))
   }
 
   it should "evaluate a decision with dash" in {

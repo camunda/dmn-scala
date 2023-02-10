@@ -29,6 +29,7 @@ import org.camunda.bpm.model.dmn.instance.{
   FunctionDefinition,
   InformationItem,
   Invocation,
+  ItemDefinition,
   LiteralExpression,
   Relation,
   UnaryTests,
@@ -554,9 +555,8 @@ class DmnParser(
 
   private def getNamesToEscape(model: DmnModelInstance): Iterable[String] = {
 
-    val names = model
-      .getModelElementsByType(classOf[InformationItem])
-      .asScala
+    val names = Seq(classOf[InformationItem], classOf[ItemDefinition]).flatMap(elementType =>
+      model.getModelElementsByType(elementType).asScala)
       .filterNot(classOf[Column].isInstance(_))
       .map(_.getName)
 

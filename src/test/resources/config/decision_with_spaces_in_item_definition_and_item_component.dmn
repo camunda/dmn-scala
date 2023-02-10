@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="_0001-input-data-string" name="0001-input-data-string"
+             namespace="https://github.com/agilepro/dmn-tck"
+             xmlns="http://www.omg.org/spec/DMN/20151101/dmn.xsd"
+             xmlns:feel="http://www.omg.org/spec/FEEL/20140401">
+
+    <itemDefinition id="greetingData" name="Greeting Data" isCollection="false">
+        <itemComponent id="lastName" name="Last Name" isCollection="false">
+            <typeRef>string</typeRef>
+        </itemComponent>
+    </itemDefinition>
+
+    <decision name="GreetingMessage" id="greeting">
+        <informationRequirement>
+            <requiredInput href="#greetingDataVariable" />
+        </informationRequirement>
+        <context>
+            <contextEntry>
+                <variable name="First Name"/>
+                <literalExpression>
+                    <text>name</text>
+                </literalExpression>
+            </contextEntry>
+            <contextEntry>
+                <!-- First Name is escaped via the fact it is defined as a variable within this context -->
+                <!-- Last Name is escaped via the Item Definition / Item Component reference -->
+                <literalExpression>
+                    <text>"Hello " + First Name + " " + greetingData.Last Name</text>
+                </literalExpression>
+            </contextEntry>
+        </context>
+    </decision>
+
+    <inputData id="greetingDataInput" name="greetingData">
+        <extensionElements />
+        <variable id="greetingDataVariable" name="greetingData" typeRef="greetingData" />
+    </inputData>
+
+</definitions>
