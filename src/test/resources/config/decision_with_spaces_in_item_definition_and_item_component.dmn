@@ -33,7 +33,7 @@
 
     <inputData id="greetingDataInput" name="greetingData">
         <extensionElements />
-        <variable id="greetingDataVariable" name="greetingData" typeRef="Greeting Data" />
+        <variable id="greetingDataVariable" name="greetingData" typeRef="greetingData" />
     </inputData>
 
 </definitions>
