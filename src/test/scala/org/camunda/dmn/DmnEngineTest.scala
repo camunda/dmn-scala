@@ -159,7 +159,7 @@ class DmnEngineTest extends AnyFlatSpec with Matchers {
     }
   }
 
-  it should "report a failure if the decision doesn't exist" in {
+  it should "report a failure if no decision exists for the given id" in {
 
     val parseResult = engine.parse(discountDecision)
     parseResult.isRight should be(true)
@@ -173,6 +173,24 @@ class DmnEngineTest extends AnyFlatSpec with Matchers {
       result.isLeft should be(true)
       result.left.map(
         _.failure.message should be("no decision found with id 'not-existing'")
+      )
+    }
+  }
+
+  it should "report a failure if no decision exists for the given name" in {
+
+    val parseResult = engine.parse(discountDecision)
+    parseResult.isRight should be(true)
+
+    parseResult.map { parsedDmn =>
+      val result = engine.evalByName(
+        dmn = parsedDmn,
+        decisionName = "not-existing",
+        variables = Map("customer" -> "Business"))
+
+      result.isLeft should be(true)
+      result.left.map(
+        _.failure.message should be("no decision found with name 'not-existing'")
       )
     }
   }
