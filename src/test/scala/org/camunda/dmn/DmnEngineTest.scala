@@ -28,17 +28,20 @@ class DmnEngineTest extends AnyFlatSpec with Matchers {
 
   private def discountDecision =
     getClass.getResourceAsStream("/decisiontable/discount.dmn")
+
   private def invalidExpressionDecision =
     getClass.getResourceAsStream("/decisiontable/invalid-expression.dmn")
+
   private def expressionLanguageDecision =
     getClass.getResourceAsStream("/decisiontable/expression-language.dmn")
+
   private def emptyExpressionDecision =
     getClass.getResourceAsStream("/decisiontable/empty-expression.dmn")
 
   private def parse(resource: InputStream): ParsedDmn = {
     engine.parse(resource) match {
       case Right(decision) => decision
-      case Left(failure)   => throw new AssertionError(failure)
+      case Left(failure) => throw new AssertionError(failure)
     }
   }
 
@@ -46,8 +49,8 @@ class DmnEngineTest extends AnyFlatSpec with Matchers {
 
     val parsedDmn = parse(discountDecision)
     val result = engine.eval(parsedDmn,
-                             "discount",
-                             Map("customer" -> "Business", "orderSize" -> 7))
+      "discount",
+      Map("customer" -> "Business", "orderSize" -> 7))
 
     result.isRight should be(true)
     result.map(_.value should be(0.1))
@@ -60,8 +63,8 @@ class DmnEngineTest extends AnyFlatSpec with Matchers {
 
     parseResult.map { parsedDmn =>
       val result = engine.eval(parsedDmn,
-                               "discount",
-                               Map("customer" -> "Business", "orderSize" -> 7))
+        "discount",
+        Map("customer" -> "Business", "orderSize" -> 7))
 
       result.isRight should be(true)
       result.map(_.value should be(0.1))
@@ -124,8 +127,8 @@ class DmnEngineTest extends AnyFlatSpec with Matchers {
   it should "evaluate a decision and return the audit log" in {
     val parsedDmn = parse(discountDecision)
     val result = engine.eval(parsedDmn,
-                             "discount",
-                             Map("customer" -> "Business", "orderSize" -> 7))
+      "discount",
+      Map("customer" -> "Business", "orderSize" -> 7))
 
     result.isRight should be(true)
     result.map {
@@ -133,8 +136,8 @@ class DmnEngineTest extends AnyFlatSpec with Matchers {
         value should be(0.1)
 
         auditLog.dmn should be(parsedDmn)
-        auditLog.rootEntry.id should be("discount")
-        auditLog.rootEntry.name should be("Discount")
+        auditLog.entries.head.id should be("discount")
+        auditLog.entries.head.name should be("Discount")
     }
   }
 
@@ -142,8 +145,8 @@ class DmnEngineTest extends AnyFlatSpec with Matchers {
     val parsedDmn = parse(discountDecision)
     val result =
       engine.eval(parsedDmn,
-                  "discount",
-                  Map("customer" -> "Business", "orderSize" -> "foo"))
+        "discount",
+        Map("customer" -> "Business", "orderSize" -> "foo"))
 
     result.isLeft should be(true)
     result.left.map {
@@ -151,8 +154,26 @@ class DmnEngineTest extends AnyFlatSpec with Matchers {
         failure.message should include("failed to evaluate expression '< 10'")
 
         auditLog.dmn should be(parsedDmn)
-        auditLog.rootEntry.id should be("discount")
-        auditLog.rootEntry.name should be("Discount")
+        auditLog.entries.head.id should be("discount")
+        auditLog.entries.head.name should be("Discount")
+    }
+  }
+
+  it should "report a failure if the decision doesn't exist" in {
+
+    val parseResult = engine.parse(discountDecision)
+    parseResult.isRight should be(true)
+
+    parseResult.map { parsedDmn =>
+      val result = engine.eval(
+        dmn = parsedDmn,
+        decisionId = "not-existing",
+        variables = Map("customer" -> "Business"))
+
+      result.isLeft should be(true)
+      result.left.map(
+        _.failure.message should be("no decision found with id 'not-existing'")
+      )
     }
   }
 
