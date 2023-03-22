@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/DMN/20151101/dmn.xsd" xmlns:camunda="http://camunda.org/schema/1.0/dmn" id="definitions_16rwaqm" name="definitions" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="decision" name="Decision">
+    <knowledgeRequirement>
+      <requiredKnowledge href="#calculation"/>
+    </knowledgeRequirement>
+    <literalExpression>
+        <text>Calculation(x, y)</text>
+      </literalExpression>
+  </decision>
+  <businessKnowledgeModel id="calculation" name="Calculation">
+    <encapsulatedLogic>
+      <formalParameter name="a" />
+      <formalParameter name="b" />
+      <context>
+        <contextEntry>
+            <variable name="Sum"/>
+            <literalExpression>
+                <text>a + b</text>
+            </literalExpression>
+        </contextEntry>
+        <contextEntry>
+            <variable name="Multiply"/>
+             <literalExpression>
+                <text>Multiply(a * b)</text>
+            </literalExpression>
+        </contextEntry>
+    </context>
+    </encapsulatedLogic>
+    <variable name="Calculation" />
+    <knowledgeRequirement>
+      <requiredKnowledge href="#multiply"/>
+    </knowledgeRequirement>
+  </businessKnowledgeModel>
+  <businessKnowledgeModel id="multiply" name="Multiply">
+    <encapsulatedLogic>
+      <formalParameter name="a" />
+      <formalParameter name="b" />
+      <literalExpression>
+          <text>a * b</text>
+      </literalExpression>
+    </encapsulatedLogic>
+    <variable name="Multiply" />
+    <knowledgeRequirement>
+      <requiredKnowledge href="#calculation"/>
+    </knowledgeRequirement>
+  </businessKnowledgeModel>
+</definitions>

@@ -28,4 +28,13 @@ class DmnParserTest extends AnyFlatSpec with Matchers with DecisionTest {
       "Invalid DMN model: Cyclic dependencies between decisions detected.")
   }
 
+  "A DMN file with cyclic dependencies between BKMs" should "return an error" in {
+    val failure =
+      parseDmn("/requirements/cyclic-dependencies-in-bkm.dmn").failure
+
+    failure.message should be(
+      "Invalid DMN model: Cyclic dependencies between BKMs detected.")
+  }
+
+
 }
