@@ -27,11 +27,7 @@ object Audit {
     def onFailure(log: AuditLog)
   }
 
-  case class AuditLog(dmn: ParsedDmn, entries: List[AuditLogEntry]) {
-
-    val rootEntry = entries.last
-    val requiredEntries = entries.dropRight(1)
-  }
+  case class AuditLog(dmn: ParsedDmn, entries: List[AuditLogEntry])
 
   case class AuditLogEntry(id: String,
                            name: String,
