@@ -103,10 +103,24 @@ class DmnParser(
     val decisions = model.getDefinitions.getDrgElements.asScala
       .collect { case a: Decision => a }
 
+    val businessKnowledgeModels = model.getDefinitions.getDrgElements.asScala
+      .collect { case a: BusinessKnowledgeModel => a }
+
+    // validate model before parsing it
+    if (hasCyclicDependenciesInDecisions(decisions)) {
+      ctx.failures += Failure(
+        "Invalid DMN model: Cyclic dependencies between decisions detected.")
+      return Left(ctx.failures)
+    }
+
+    if (hasCyclicDependenciesInBkms(businessKnowledgeModels)) {
+      ctx.failures += Failure(
+        "Invalid DMN model: Cyclic dependencies between BKMs detected.")
+      return Left(ctx.failures)
+    }
+
     decisions.foreach(d =>
       ctx.decisions.getOrElseUpdate(d.getId, parseDecision(d)(ctx)))
-
-    checkDecisionsForCyclicDependencies(decisions, ctx)
 
     if (ctx.failures.isEmpty) {
       Right(ParsedDmn(model, ctx.decisions.values))
@@ -120,8 +134,7 @@ class DmnParser(
     }
   }
 
-  private def checkDecisionsForCyclicDependencies(decisions: Iterable[Decision],
-                                                  ctx: ParsingContext) = {
+  private def hasCyclicDependenciesInDecisions(decisions: Iterable[Decision]): Boolean = {
     val decisionsToRequiredDecisions = decisions
       .map(
         d =>
@@ -130,14 +143,23 @@ class DmnParser(
       )
       .toMap
 
-    val foundCycle = decisionsToRequiredDecisions
+    decisionsToRequiredDecisions
       .exists(entry =>
-        hasCycle(entry._1, Set.empty, decisionsToRequiredDecisions));
+        hasCycle(entry._1, Set.empty, decisionsToRequiredDecisions))
+  }
 
-    if (foundCycle) {
-      ctx.failures += Failure(
-        "Invalid DMN model: Cyclic dependencies between decisions detected.")
-    }
+  private def hasCyclicDependenciesInBkms(bkms: Iterable[BusinessKnowledgeModel]): Boolean = {
+    val bkmToRequiredBkms = bkms
+      .map(
+        d =>
+          d.getId -> d.getKnowledgeRequirement.asScala
+            .flatMap(r => Option(r.getRequiredKnowledge).map(d => d.getId))
+      )
+      .toMap
+
+    bkmToRequiredBkms
+      .exists(entry =>
+        hasCycle(entry._1, Set.empty, bkmToRequiredBkms))
   }
 
   private def hasCycle(
