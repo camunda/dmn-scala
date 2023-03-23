@@ -121,31 +121,35 @@ class DmnParser(
   }
 
   private def hasCyclicDependenciesInDecisions(decisions: Iterable[Decision]): Boolean = {
-    val decisionsToRequiredDecisions = decisions
-      .map(
-        d =>
-          d.getId -> d.getInformationRequirements.asScala
-            .flatMap(r => Option(r.getRequiredDecision).map(d => d.getId))
-      )
-      .toMap
+    val dependencies = decisions.map { decision =>
+      val requiredDecisions = decision.getInformationRequirements.asScala
+        .flatMap(requirement => Option(requirement.getRequiredDecision).map(_.getId))
 
-    decisionsToRequiredDecisions
-      .exists(entry =>
-        hasCycle(entry._1, Set.empty, decisionsToRequiredDecisions))
+      decision.getId -> requiredDecisions
+    }.toMap
+
+    decisions.exists(decision =>
+      hasCycle(
+        element = decision.getId,
+        visited = Set.empty,
+        dependencies = dependencies
+      ))
   }
 
   private def hasCyclicDependenciesInBkms(bkms: Iterable[BusinessKnowledgeModel]): Boolean = {
-    val bkmToRequiredBkms = bkms
-      .map(
-        d =>
-          d.getId -> d.getKnowledgeRequirement.asScala
-            .flatMap(r => Option(r.getRequiredKnowledge).map(d => d.getId))
-      )
-      .toMap
+    val dependencies = bkms.map { bkm =>
+      val requiredBkms = bkm.getKnowledgeRequirement.asScala
+        .flatMap(requirement => Option(requirement.getRequiredKnowledge).map(_.getId))
 
-    bkmToRequiredBkms
-      .exists(entry =>
-        hasCycle(entry._1, Set.empty, bkmToRequiredBkms))
+      bkm.getId -> requiredBkms
+    }.toMap
+
+    bkms.exists(bkm =>
+      hasCycle(
+        element = bkm.getId,
+        visited = Set.empty,
+        dependencies = dependencies
+      ))
   }
 
   private def hasCycle(element: String,
