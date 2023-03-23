@@ -19,7 +19,7 @@ import java.io.InputStream
 import org.camunda.dmn.logger
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.impl.DmnModelConstants
-import org.camunda.bpm.model.dmn.instance.{BusinessKnowledgeModel, Column, Context, Decision, DecisionTable, Expression, FunctionDefinition, InformationItem, Invocation, ItemDefinition, LiteralExpression, Relation, UnaryTests, List => DmnList}
+import org.camunda.bpm.model.dmn.instance.{BusinessKnowledgeModel, Column, Context, Decision, DecisionTable, DrgElement, Expression, FunctionDefinition, InformationItem, Invocation, ItemDefinition, LiteralExpression, Relation, UnaryTests, List => DmnList}
 import org.camunda.dmn.DmnEngine.{Configuration, Failure}
 import org.camunda.feel
 
@@ -86,37 +86,43 @@ class DmnParser(
 
     val ctx = ParsingContext(model)
 
-    val decisions = model.getDefinitions.getDrgElements.asScala
-      .collect { case a: Decision => a }
+    val drgElements = model.getDefinitions.getDrgElements.asScala
+    val decisions = drgElements.collect { case d: Decision => d }
 
-    val businessKnowledgeModels = model.getDefinitions.getDrgElements.asScala
-      .collect { case a: BusinessKnowledgeModel => a }
+    checkForCyclicDependencies(drgElements) match {
+      case Left(failure) => Left(List(failure))
+      case _ =>
+        decisions.foreach(d =>
+          ctx.decisions.getOrElseUpdate(d.getId, parseDecision(d)(ctx)))
 
-    // validate model before parsing it
+        if (ctx.failures.isEmpty) {
+          Right(ParsedDmn(model, ctx.decisions.values))
+
+        } else if (configuration.lazyEvaluation) {
+          logger.warn("Parsing the DMN reported the following failures:\n{}",
+            ctx.failures.map(_.message).mkString("\n"))
+          Right(ParsedDmn(model, ctx.decisions.values))
+        } else {
+          Left(ctx.failures)
+        }
+    }
+  }
+
+  private def checkForCyclicDependencies(drgElements: Iterable[DrgElement]): Either[Failure, Unit] = {
+    val decisions = drgElements.collect { case d: Decision => d }
+    val bkms = drgElements.collect { case b: BusinessKnowledgeModel => b }
+
     if (hasCyclicDependenciesInDecisions(decisions)) {
-      ctx.failures += Failure(
-        "Invalid DMN model: Cyclic dependencies between decisions detected.")
-      return Left(ctx.failures)
-    }
+      Left(Failure(
+        "Invalid DMN model: Cyclic dependencies between decisions detected."))
 
-    if (hasCyclicDependenciesInBkms(businessKnowledgeModels)) {
-      ctx.failures += Failure(
-        "Invalid DMN model: Cyclic dependencies between BKMs detected.")
-      return Left(ctx.failures)
-    }
+    } else if (hasCyclicDependenciesInBkms(bkms)) {
+      Left(Failure(
+        "Invalid DMN model: Cyclic dependencies between BKMs detected."))
 
-    decisions.foreach(d =>
-      ctx.decisions.getOrElseUpdate(d.getId, parseDecision(d)(ctx)))
-
-    if (ctx.failures.isEmpty) {
-      Right(ParsedDmn(model, ctx.decisions.values))
-
-    } else if (configuration.lazyEvaluation) {
-      logger.warn("Parsing the DMN reported the following failures:\n{}",
-                  ctx.failures.map(_.message).mkString("\n"))
-      Right(ParsedDmn(model, ctx.decisions.values))
     } else {
-      Left(ctx.failures)
+      // no cyclic dependencies found
+      Right()
     }
   }
 
