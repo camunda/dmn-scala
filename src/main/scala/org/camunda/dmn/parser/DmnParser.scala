@@ -19,25 +19,11 @@ import java.io.InputStream
 import org.camunda.dmn.logger
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.impl.DmnModelConstants
-import org.camunda.bpm.model.dmn.instance.{
-  BusinessKnowledgeModel,
-  Column,
-  Context,
-  Decision,
-  DecisionTable,
-  Expression,
-  FunctionDefinition,
-  InformationItem,
-  Invocation,
-  ItemDefinition,
-  LiteralExpression,
-  Relation,
-  UnaryTests,
-  List => DmnList
-}
+import org.camunda.bpm.model.dmn.instance.{BusinessKnowledgeModel, Column, Context, Decision, DecisionTable, Expression, FunctionDefinition, InformationItem, Invocation, ItemDefinition, LiteralExpression, Relation, UnaryTests, List => DmnList}
 import org.camunda.dmn.DmnEngine.{Configuration, Failure}
 import org.camunda.feel
 
+import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.util.Try
@@ -162,26 +148,15 @@ class DmnParser(
         hasCycle(entry._1, Set.empty, bkmToRequiredBkms))
   }
 
-  private def hasCycle(
-      decisionId: String,
-      requiredDecisions: Set[String],
-      decisionsToRequiredDecisions: Map[String, Iterable[String]]): Boolean = {
-    if (requiredDecisions.contains(decisionId)) {
+  private def hasCycle(element: String,
+                       visited: Set[String],
+                       dependencies: Map[String, Iterable[String]]): Boolean = {
+    if (visited.contains(element)) {
       true
-    } else if (decisionsToRequiredDecisions
-                 .getOrElse(decisionId, List.empty)
-                 .isEmpty) {
-      false;
     } else {
-      val requiredDecisionsUpdated = requiredDecisions + decisionId
-
-      decisionsToRequiredDecisions
-        .getOrElse(decisionId, List.empty)
-        .exists(
-          entry =>
-            hasCycle(entry,
-                     requiredDecisionsUpdated,
-                     decisionsToRequiredDecisions))
+      dependencies.getOrElse(element, Nil).exists(dependency =>
+        hasCycle(dependency, visited + element, dependencies)
+      )
     }
   }
 
