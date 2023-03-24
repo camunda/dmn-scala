@@ -19,25 +19,11 @@ import java.io.InputStream
 import org.camunda.dmn.logger
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.impl.DmnModelConstants
-import org.camunda.bpm.model.dmn.instance.{
-  BusinessKnowledgeModel,
-  Column,
-  Context,
-  Decision,
-  DecisionTable,
-  Expression,
-  FunctionDefinition,
-  InformationItem,
-  Invocation,
-  ItemDefinition,
-  LiteralExpression,
-  Relation,
-  UnaryTests,
-  List => DmnList
-}
+import org.camunda.bpm.model.dmn.instance.{BusinessKnowledgeModel, Column, Context, Decision, DecisionTable, DrgElement, Expression, FunctionDefinition, InformationItem, Invocation, ItemDefinition, LiteralExpression, Relation, UnaryTests, List => DmnList}
 import org.camunda.dmn.DmnEngine.{Configuration, Failure}
 import org.camunda.feel
 
+import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.util.Try
@@ -100,66 +86,91 @@ class DmnParser(
 
     val ctx = ParsingContext(model)
 
-    val decisions = model.getDefinitions.getDrgElements.asScala
-      .collect { case a: Decision => a }
+    val drgElements = model.getDefinitions.getDrgElements.asScala
 
-    decisions.foreach(d =>
-      ctx.decisions.getOrElseUpdate(d.getId, parseDecision(d)(ctx)))
+    checkForCyclicDependencies(drgElements) match {
+      case Left(failure) => Left(List(failure))
+      case _ =>
+        val decisions = drgElements.collect { case d: Decision => d }
 
-    checkDecisionsForCyclicDependencies(decisions, ctx)
+        decisions.foreach(d =>
+          ctx.decisions.getOrElseUpdate(d.getId, parseDecision(d)(ctx)))
 
-    if (ctx.failures.isEmpty) {
-      Right(ParsedDmn(model, ctx.decisions.values))
+        if (ctx.failures.isEmpty) {
+          Right(ParsedDmn(model, ctx.decisions.values))
 
-    } else if (configuration.lazyEvaluation) {
-      logger.warn("Parsing the DMN reported the following failures:\n{}",
-                  ctx.failures.map(_.message).mkString("\n"))
-      Right(ParsedDmn(model, ctx.decisions.values))
-    } else {
-      Left(ctx.failures)
+        } else if (configuration.lazyEvaluation) {
+          logger.warn("Parsing the DMN reported the following failures:\n{}",
+            ctx.failures.map(_.message).mkString("\n"))
+          Right(ParsedDmn(model, ctx.decisions.values))
+        } else {
+          Left(ctx.failures)
+        }
     }
   }
 
-  private def checkDecisionsForCyclicDependencies(decisions: Iterable[Decision],
-                                                  ctx: ParsingContext) = {
-    val decisionsToRequiredDecisions = decisions
-      .map(
-        d =>
-          d.getId -> d.getInformationRequirements.asScala
-            .flatMap(r => Option(r.getRequiredDecision).map(d => d.getId))
+  private def checkForCyclicDependencies(drgElements: Iterable[DrgElement]): Either[Failure, Unit] = {
+    val decisions = drgElements.collect { case d: Decision => d }
+    val bkms = drgElements.collect { case b: BusinessKnowledgeModel => b }
+
+    if (hasCyclicDependenciesInDecisions(decisions)) {
+      Left(Failure(
+        "Invalid DMN model: Cyclic dependencies between decisions detected."))
+
+    } else if (hasCyclicDependenciesInBkms(bkms)) {
+      Left(Failure(
+        "Invalid DMN model: Cyclic dependencies between BKMs detected."))
+
+    } else {
+      // no cyclic dependencies found
+      Right()
+    }
+  }
+
+  private def hasCyclicDependenciesInDecisions(decisions: Iterable[Decision]): Boolean = {
+    val dependencies = decisions.map { decision =>
+      val requiredDecisions = decision.getInformationRequirements.asScala
+        .flatMap(requirement => Option(requirement.getRequiredDecision).map(_.getId))
+
+      decision.getId -> requiredDecisions
+    }.toMap
+
+    decisions.exists(decision =>
+      hasDependencyCycle(
+        visit = List(decision.getId),
+        visited = Set.empty,
+        dependencies = dependencies
+      ))
+  }
+
+  private def hasCyclicDependenciesInBkms(bkms: Iterable[BusinessKnowledgeModel]): Boolean = {
+    val dependencies = bkms.map { bkm =>
+      val requiredBkms = bkm.getKnowledgeRequirement.asScala
+        .flatMap(requirement => Option(requirement.getRequiredKnowledge).map(_.getId))
+
+      bkm.getId -> requiredBkms
+    }.toMap
+
+    bkms.exists(bkm =>
+      hasDependencyCycle(
+        visit = List(bkm.getId),
+        visited = Set.empty,
+        dependencies = dependencies
+      ))
+  }
+
+  @tailrec
+  private def hasDependencyCycle(visit: List[String],
+                        visited: Set[String],
+                        dependencies: Map[String, Iterable[String]]): Boolean = {
+    visit match {
+      case Nil => false
+      case element :: _ if visited.contains(element) => true
+      case element :: tail => hasDependencyCycle(
+        visit = tail ++ dependencies.getOrElse(element, Nil),
+        visited = visited + element,
+        dependencies = dependencies
       )
-      .toMap
-
-    val foundCycle = decisionsToRequiredDecisions
-      .exists(entry =>
-        hasCycle(entry._1, Set.empty, decisionsToRequiredDecisions));
-
-    if (foundCycle) {
-      ctx.failures += Failure(
-        "Invalid DMN model: Cyclic dependencies between decisions detected.")
-    }
-  }
-
-  private def hasCycle(
-      decisionId: String,
-      requiredDecisions: Set[String],
-      decisionsToRequiredDecisions: Map[String, Iterable[String]]): Boolean = {
-    if (requiredDecisions.contains(decisionId)) {
-      true
-    } else if (decisionsToRequiredDecisions
-                 .getOrElse(decisionId, List.empty)
-                 .isEmpty) {
-      false;
-    } else {
-      val requiredDecisionsUpdated = requiredDecisions + decisionId
-
-      decisionsToRequiredDecisions
-        .getOrElse(decisionId, List.empty)
-        .exists(
-          entry =>
-            hasCycle(entry,
-                     requiredDecisionsUpdated,
-                     decisionsToRequiredDecisions))
     }
   }
 
