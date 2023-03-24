@@ -87,11 +87,12 @@ class DmnParser(
     val ctx = ParsingContext(model)
 
     val drgElements = model.getDefinitions.getDrgElements.asScala
-    val decisions = drgElements.collect { case d: Decision => d }
 
     checkForCyclicDependencies(drgElements) match {
       case Left(failure) => Left(List(failure))
       case _ =>
+        val decisions = drgElements.collect { case d: Decision => d }
+
         decisions.foreach(d =>
           ctx.decisions.getOrElseUpdate(d.getId, parseDecision(d)(ctx)))
 
