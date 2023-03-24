@@ -37,4 +37,10 @@
         <differenceType>7011</differenceType>
         <method>*$anonfun*</method>
     </difference>
+    <difference>
+        <className>org/camunda/dmn/Audit$AuditLog</className>
+        <!-- method removed -->
+        <differenceType>7002</differenceType>
+        <method>*</method>
+    </difference>
 </differences>
