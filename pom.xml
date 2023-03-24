@@ -5,7 +5,7 @@
   <groupId>org.camunda.bpm.extension.dmn.scala</groupId>
   <artifactId>dmn-engine</artifactId>
   <name>DMN Scala Engine</name>
-  <version>1.8.0</version>
+  <version>1.8.1-SNAPSHOT</version>
 
   <parent>
     <groupId>org.camunda</groupId>
