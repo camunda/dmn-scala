@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" id="Definitions_0h9zlqh" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.9.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.2.0">
+  <decision id="C" name="C">
+    <variable id="InformationItem_0s8k0bl" name="out" />
+    <informationRequirement id="InformationRequirement_1rlbqu9">
+      <requiredDecision href="#A" />
+    </informationRequirement>
+    <informationRequirement id="InformationRequirement_05m4j2x">
+      <requiredDecision href="#B" />
+    </informationRequirement>
+    <literalExpression id="LiteralExpression_04arz50">
+      <text>[a, b]</text>
+    </literalExpression>
+  </decision>
+  <decision id="B" name="B">
+    <variable id="InformationItem_16zbv4v" name="b" />
+    <informationRequirement id="InformationRequirement_00uf5b7">
+      <requiredDecision href="#A" />
+    </informationRequirement>
+    <literalExpression id="LiteralExpression_0wt75p4">
+      <text>a + 1</text>
+    </literalExpression>
+  </decision>
+  <decision id="A" name="A">
+    <variable id="InformationItem_0kwllv5" name="a" />
+    <literalExpression id="LiteralExpression_10sjfdq">
+      <text>1</text>
+    </literalExpression>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNEdge id="DMNEdge_0tire0n" dmnElementRef="InformationRequirement_00uf5b7">
+        <di:waypoint x="250" y="460" />
+        <di:waypoint x="470" y="380" />
+        <di:waypoint x="470" y="360" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_1qeflao" dmnElementRef="InformationRequirement_1rlbqu9">
+        <di:waypoint x="250" y="460" />
+        <di:waypoint x="240" y="180" />
+        <di:waypoint x="240" y="160" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNEdge id="DMNEdge_1j44nm2" dmnElementRef="InformationRequirement_05m4j2x">
+        <di:waypoint x="470" y="280" />
+        <di:waypoint x="300" y="180" />
+        <di:waypoint x="300" y="160" />
+      </dmndi:DMNEdge>
+      <dmndi:DMNShape id="DMNShape_0elqq7s" dmnElementRef="C">
+        <dc:Bounds height="80" width="180" x="180" y="80" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_182794f" dmnElementRef="B">
+        <dc:Bounds height="80" width="180" x="380" y="280" />
+      </dmndi:DMNShape>
+      <dmndi:DMNShape id="DMNShape_0321hm2" dmnElementRef="A">
+        <dc:Bounds height="80" width="180" x="160" y="460" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>
