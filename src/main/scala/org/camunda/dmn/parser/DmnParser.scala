@@ -137,7 +137,7 @@ class DmnParser(
 
     decisions.exists(decision =>
       hasDependencyCycle(
-        visit = List(decision.getId),
+        visit = decision.getId,
         visited = Set.empty,
         dependencies = dependencies
       ))
@@ -153,23 +153,24 @@ class DmnParser(
 
     bkms.exists(bkm =>
       hasDependencyCycle(
-        visit = List(bkm.getId),
+        visit = bkm.getId,
         visited = Set.empty,
         dependencies = dependencies
       ))
   }
 
-  @tailrec
-  private def hasDependencyCycle(visit: List[String],
+  private def hasDependencyCycle(visit: String,
                         visited: Set[String],
                         dependencies: Map[String, Iterable[String]]): Boolean = {
-    visit match {
-      case Nil => false
-      case element :: _ if visited.contains(element) => true
-      case element :: tail => hasDependencyCycle(
-        visit = tail ++ dependencies.getOrElse(element, Nil),
-        visited = visited + element,
-        dependencies = dependencies
+    if (visited.contains(visit)) {
+      true
+    } else {
+      dependencies.getOrElse(visit, Nil).exists(dependency =>
+        hasDependencyCycle(
+          visit = dependency,
+          visited = visited + visit,
+          dependencies = dependencies
+        )
       )
     }
   }
