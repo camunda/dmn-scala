@@ -19,8 +19,9 @@ import java.io.InputStream
 import org.camunda.dmn.logger
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.impl.DmnModelConstants
-import org.camunda.bpm.model.dmn.instance.{BusinessKnowledgeModel, Column, Context, Decision, DecisionTable, DrgElement, Expression, FunctionDefinition, InformationItem, Invocation, ItemDefinition, LiteralExpression, Relation, UnaryTests, List => DmnList}
+import org.camunda.bpm.model.dmn.instance.{BusinessKnowledgeModel, Column, Context, Decision, DecisionTable, DrgElement, Expression, FunctionDefinition, InformationItem, Invocation, ItemDefinition, LiteralExpression, NamedElement, Relation, UnaryTests, List => DmnList}
 import org.camunda.dmn.DmnEngine.{Configuration, Failure}
+import org.camunda.dmn.model.xml.instance.ImportAwareDmnModelInstanceImpl.ModelQualifiedElementName
 import org.camunda.feel
 
 import scala.annotation.tailrec
@@ -72,12 +73,19 @@ class DmnParser(
 
   def parse(stream: InputStream): Either[Failure, ParsedDmn] = {
 
-    Try(Dmn.readModelFromStream(stream)) match {
+    Try(readModelFromStream(stream)) match {
       case scala.util.Success(model) => {
         parseModel(model).left.map(failures =>
           Failure(failures.map(_.message).mkString("\n")))
       }
       case scala.util.Failure(e) => Left(Failure(s"Failed to parse DMN: $e"))
+    }
+  }
+
+  private def readModelFromStream(stream: InputStream): DmnModelInstance = {
+    configuration.modelInstanceProvider match {
+      case Some(provider) => provider.readModelFromStream(stream)
+      case _ => Dmn.readModelFromStream(stream)
     }
   }
 
@@ -190,7 +198,7 @@ class DmnParser(
     val requiredBkms = knowledgeRequirements
       .map(r => r.getRequiredKnowledge)
       .map(k =>
-        ctx.bkms.getOrElseUpdate(k.getName, parseBusinessKnowledgeModel(k)))
+        ctx.bkms.getOrElseUpdate(k.qualifiedName, parseBusinessKnowledgeModel(k)))
 
     val logic: ParsedDecisionLogic = decision.getExpression match {
       case dt: DecisionTable     => parseDecisionTable(dt)
@@ -208,12 +216,12 @@ class DmnParser(
     val variable = Option(decision.getVariable)
     val resultType = variable.flatMap(v => Option(v.getTypeRef))
     val resultName = variable
-      .map(_.getName)
+      .map(_.qualifiedName)
       .orElse(Option(decision.getId))
-      .getOrElse(decision.getName)
+      .getOrElse(decision.qualifiedName)
 
     ParsedDecision(decision.getId,
-                   decision.getName,
+                   decision.qualifiedName,
                    logic,
                    resultName,
                    resultType,
@@ -230,7 +238,7 @@ class DmnParser(
     val requiredBkms = knowledgeRequirements
       .map(r => r.getRequiredKnowledge)
       .map(k =>
-        ctx.bkms.getOrElseUpdate(k.getName, parseBusinessKnowledgeModel(k)))
+        ctx.bkms.getOrElseUpdate(k.qualifiedName, parseBusinessKnowledgeModel(k)))
 
     Option(bkm.getEncapsulatedLogic)
       .map { encapsulatedLogic =>
@@ -248,10 +256,10 @@ class DmnParser(
         }
 
         val parameters = encapsulatedLogic.getFormalParameters.asScala
-          .map(f => f.getName -> f.getTypeRef)
+          .map(f => f.qualifiedName -> f.getTypeRef)
 
         ParsedBusinessKnowledgeModel(bkm.getId,
-                                     bkm.getName,
+                                     bkm.qualifiedName,
                                      logic,
                                      parameters,
                                      requiredBkms)
@@ -260,7 +268,7 @@ class DmnParser(
       .getOrElse {
 
         ParsedBusinessKnowledgeModel(bkm.getId,
-                                     bkm.getName,
+                                     bkm.qualifiedName,
                                      EmptyLogic,
                                      Iterable.empty,
                                      requiredBkms)
@@ -339,13 +347,13 @@ class DmnParser(
     // TODO verify that every entry has a variable name
     if (Option(lastEntry.getVariable).isDefined) {
       val contextEntries = entries.map(e =>
-        e.getVariable.getName -> parseAnyExpression(e.getExpression))
+        e.getVariable.qualifiedName -> parseAnyExpression(e.getExpression))
 
       ParsedContext(contextEntries, None)
     } else {
       val contextEntries = entries
         .take(entries.size - 1)
-        .map(e => e.getVariable.getName -> parseAnyExpression(e.getExpression))
+        .map(e => e.getVariable.qualifiedName -> parseAnyExpression(e.getExpression))
       val aggregationEntry = parseAnyExpression(lastEntry.getExpression)
 
       ParsedContext(contextEntries, Some(aggregationEntry))
@@ -365,7 +373,7 @@ class DmnParser(
       ctx: ParsingContext): ParsedRelation = {
     val rows = relation.getRows.asScala
     val columns = relation.getColumns.asScala
-    val columNames = columns.map(_.getName)
+    val columNames = columns.map(_.qualifiedName)
 
     rows
       .filterNot(row => row.getExpressions.size == columns.size)
@@ -394,7 +402,7 @@ class DmnParser(
     expression match {
       case lt: LiteralExpression => {
         val expr = parseFeelExpression(lt)
-        val parametersWithTypes = parameters.map(p => p.getName -> p.getTypeRef)
+        val parametersWithTypes = parameters.map(p => p.qualifiedName -> p.getTypeRef)
 
         ParsedFunctionDefinition(expr, parametersWithTypes)
       }
@@ -414,7 +422,7 @@ class DmnParser(
       .map(b =>
         b.getExpression match {
           case lt: LiteralExpression =>
-            Some(b.getParameter.getName -> parseFeelExpression(lt))
+            Some(b.getParameter.qualifiedName -> parseFeelExpression(lt))
           case other => {
             ctx.failures += Failure(
               s"expected binding with literal expression but found '$other'")
@@ -561,28 +569,27 @@ class DmnParser(
 
     (expression /: namesWithSpaces)(
       (e, name) =>
-        e.replaceAll("""([(,.]|\s|^)(""" + name + """)([(),.]|\s|$)""",
+        e.replaceAll("""([(,.+-=]|\s|^)(""" + name + """)([(),.+-=]|\s|$)""",
                      "$1`$2`$3"))
   }
 
   private def getNamesToEscape(model: DmnModelInstance): Iterable[String] = {
 
-    val names = Seq(classOf[InformationItem], classOf[ItemDefinition]).flatMap(elementType =>
-      model.getModelElementsByType(elementType).asScala)
-      .filterNot(classOf[Column].isInstance(_))
-      .map(_.getName)
+    val names =
+      Seq(model.getModel.getType(classOf[InformationItem]), model.getModel.getType(classOf[ItemDefinition])).
+        flatMap(elementType => model.getModelElementsByType(elementType).asScala)
+        .filterNot(classOf[Column].isInstance(_))
+        .flatMap {
+          case named: NamedElement => Some(named.qualifiedName)
+          case _ => None
+        }
 
     val nameFilter: (String => Boolean) = {
-      if (configuration.escapeNamesWithSpaces && configuration.escapeNamesWithDashes) {
-        name =>
-          name.contains(" ") || name.contains("-")
-      } else if (configuration.escapeNamesWithSpaces) { name =>
-        name.contains(" ")
-      } else if (configuration.escapeNamesWithDashes) { name =>
-        name.contains("-")
-      } else { name =>
-        false
-      }
+      name => List(
+        configuration.escapeNamesWithSpaces && name.contains(" "),
+        configuration.escapeNamesWithDashes && name.contains("-"),
+        configuration.modelInstanceProvider.isDefined && name.contains("."))
+        .reduce((a,b)=>a||b)
     }
 
     val namesToEscape = names.filter(nameFilter)

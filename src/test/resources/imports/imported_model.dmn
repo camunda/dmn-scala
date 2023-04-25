@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dmn:definitions xmlns:dmn="http://www.omg.org/spec/DMN/20180521/MODEL/" xmlns="https://kiegroup.org/dmn/_3E16EB33-B064-4615-8BCC-854D8FF8C8DA" xmlns:feel="http://www.omg.org/spec/DMN/20180521/FEEL/" xmlns:kie="http://www.drools.org/kie/dmn/1.2" xmlns:dmndi="http://www.omg.org/spec/DMN/20180521/DMNDI/" xmlns:di="http://www.omg.org/spec/DMN/20180521/DI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" id="_338FD814-F34C-474E-A74F-EDB27BF6EF98" name="imported_model" typeLanguage="http://www.omg.org/spec/DMN/20180521/FEEL/" namespace="https://kiegroup.org/dmn/_3E16EB33-B064-4615-8BCC-854D8FF8C8DA">
+  <dmn:extensionElements/>
+  <dmn:businessKnowledgeModel id="_5F1096C4-BAD3-4FB7-BB3B-8FF038CE70D2" name="quotient">
+    <dmn:extensionElements/>
+    <dmn:variable id="_E1178753-F5FE-4B04-8242-88A42AFE7ED2" name="quotient" typeRef="number"/>
+    <dmn:encapsulatedLogic id="_26FEA4AD-8600-4010-92A5-E71D25280AA3" kind="FEEL">
+      <dmn:formalParameter id="_118CF864-B1A5-42E4-9E6D-DB8B11DCEC27" name="dividend" typeRef="number"/>
+      <dmn:formalParameter id="_F3EF13D5-27CB-4DDD-9EBF-F0688FB20692" name="divisor" typeRef="number"/>
+      <dmn:literalExpression id="_F2C3D304-3572-4E84-82CD-683296105CF6">
+        <dmn:text>dividend / divisor</dmn:text>
+      </dmn:literalExpression>
+    </dmn:encapsulatedLogic>
+  </dmn:businessKnowledgeModel>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="_C58D76F9-467A-4C0A-BD3F-2EDB6E907441" name="DRG">
+      <di:extension>
+        <kie:ComponentsWidthsExtension>
+          <kie:ComponentWidths dmnElementRef="_F2C3D304-3572-4E84-82CD-683296105CF6">
+            <kie:width>497</kie:width>
+          </kie:ComponentWidths>
+          <kie:ComponentWidths dmnElementRef="_26FEA4AD-8600-4010-92A5-E71D25280AA3">
+            <kie:width>50</kie:width>
+            <kie:width>497</kie:width>
+          </kie:ComponentWidths>
+        </kie:ComponentsWidthsExtension>
+      </di:extension>
+      <dmndi:DMNShape id="dmnshape-drg-_5F1096C4-BAD3-4FB7-BB3B-8FF038CE70D2" dmnElementRef="_5F1096C4-BAD3-4FB7-BB3B-8FF038CE70D2" isCollapsed="false">
+        <dmndi:DMNStyle>
+          <dmndi:FillColor red="255" green="255" blue="255"/>
+          <dmndi:StrokeColor red="0" green="0" blue="0"/>
+          <dmndi:FontColor red="0" green="0" blue="0"/>
+        </dmndi:DMNStyle>
+        <dc:Bounds x="388" y="134" width="100" height="50"/>
+        <dmndi:DMNLabel/>
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</dmn:definitions>
