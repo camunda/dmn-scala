@@ -15,17 +15,20 @@
  */
 package org.camunda.dmn
 
+import org.camunda.bpm.model.dmn.DmnModelInstance
+
 import java.io.InputStream
 import java.util.ServiceLoader
 import org.camunda.dmn.Audit._
 import org.camunda.dmn.evaluation._
+import org.camunda.dmn.model.xml.instance.DmnModelInstanceProvider
 import org.camunda.dmn.parser._
 import org.camunda.feel.{FeelEngine, FeelEngineClock}
 import org.camunda.feel.context.{CustomFunctionProvider, FunctionProvider}
 import org.camunda.feel.syntaxtree.{Val, ValError, ValNull}
 import org.camunda.feel.valuemapper.{CustomValueMapper, ValueMapper}
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.collection.mutable.{ListBuffer => mutableList}
 import scala.reflect.{ClassTag, classTag}
 
@@ -79,13 +82,15 @@ object DmnEngine {
 
   case class Configuration(escapeNamesWithSpaces: Boolean = false,
                            escapeNamesWithDashes: Boolean = false,
-                           lazyEvaluation: Boolean = false)
+                           lazyEvaluation: Boolean = false,
+                           modelInstanceProvider: Option[DmnModelInstanceProvider] = None)
 
   class Builder {
 
     private var escapeNamesWithSpaces_ = false
     private var escapeNamesWithDashes_ = false
     private var lazyEvaluation_ = false
+    private var modelInstanceProvider_ : Option[DmnModelInstanceProvider] = None
     private var auditLogListeners_ = List[AuditLogListener]().toBuffer
     private var clock: FeelEngineClock = FeelEngineClock.SystemClock
 
@@ -104,6 +109,11 @@ object DmnEngine {
       this
     }
 
+    def modelInstanceProvider(provider: DmnModelInstanceProvider): Builder = {
+      modelInstanceProvider_ = Some(provider)
+      this
+    }
+
     def addAuditListener(listener: AuditLogListener): Builder = {
       auditLogListeners_ += listener
       this
@@ -119,7 +129,8 @@ object DmnEngine {
         configuration = DmnEngine.Configuration(
           escapeNamesWithSpaces = escapeNamesWithSpaces_,
           escapeNamesWithDashes = escapeNamesWithDashes_,
-          lazyEvaluation = lazyEvaluation_),
+          lazyEvaluation = lazyEvaluation_,
+          modelInstanceProvider = modelInstanceProvider_),
         auditLogListeners = auditLogListeners_.toList,
         clock = clock
       )
@@ -137,6 +148,7 @@ class DmnEngine(configuration: DmnEngine.Configuration =
 
   private val valueMapper = loadValueMapper()
   private val functionProvider = loadFunctionProvider()
+  private val loadedModels: Map[String, DmnModelInstance] = Map.empty
 
   logger.info(
     s"DMN-Engine created. [" +

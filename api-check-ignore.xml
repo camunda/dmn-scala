@@ -43,4 +43,12 @@
         <differenceType>7002</differenceType>
         <method>*</method>
     </difference>
+    <difference>
+        <className>org/camunda/dmn/DmnEngine$Configuration</className>
+        <method>*Configuration*</method>
+        <!-- num params changed -->
+        <differenceType>7004</differenceType>
+        <from>3</from>
+        <to>4</to>
+    </difference>
 </differences>
