@@ -569,7 +569,7 @@ class DmnParser(
 
     (expression /: namesWithSpaces)(
       (e, name) =>
-        e.replaceAll("""([(,.+-=]|\s|^)(""" + name + """)([(),.+-=]|\s|$)""",
+        e.replaceAll("""([(),.+-/=:]|\[|\]|\*|\s|^)(""" + name + """)([(),.+-/=:]|\[|\]|\*|\s|$)""",
                      "$1`$2`$3"))
   }
 
