@@ -17,12 +17,9 @@ package org.camunda.dmn.evaluation
 
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
-import org.camunda.feel.syntaxtree.{Val, ValFunction}
-import org.camunda.dmn.parser.{
-  ParsedDecision,
-  ParsedDecisionLogic,
-  ParsedBusinessKnowledgeModel
-}
+import org.camunda.feel.syntaxtree.{Val, ValContext, ValFunction}
+import org.camunda.dmn.parser.{ParsedBusinessKnowledgeModel, ParsedDecision, ParsedDecisionLogic}
+import org.camunda.feel.context.Context.StaticContext
 
 class DecisionEvaluator(
     eval: (ParsedDecisionLogic, EvalContext) => Either[Failure, Val],
@@ -45,8 +42,21 @@ class DecisionEvaluator(
         evalRequiredKnowledge(decision.requiredBkms, context)
           .flatMap(functions => {
 
+            // todo: replace the hack to wrap the imported BKMs into a context, maybe move to the BKM evaluation logic
+            val importedFunctions = functions
+              .filter { case (name, _) => name.contains(".") }
+              .map { case (name, function) =>
+                val Array(prefix: String, functionName: String) = name.split('.')
+                prefix -> ValContext(StaticContext(
+                  variables = Map.empty,
+                  functions = Map(functionName -> List(function))
+                ))
+              }
+
+            val embeddedFunctions = functions.filterNot { case (name, _) => name.contains(".") }
+
             val decisionEvaluationContext = context.copy(
-              variables = context.variables ++ decisionResults ++ functions,
+              variables = context.variables ++ decisionResults ++ embeddedFunctions ++ importedFunctions,
               currentElement = decision)
 
             eval(decision.logic, decisionEvaluationContext)
