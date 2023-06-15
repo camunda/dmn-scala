@@ -1,9 +1,15 @@
 package org.camunda.dmn
 
+import org.camunda.dmn.parser.InMemoryDmnRepository
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 class DmnImportTest extends AnyFlatSpec with Matchers with DecisionTest{
+
+  override val engine = new DmnEngine(
+    auditLogListeners = List(new TestAuditLogListener),
+    dmnRepository = new InMemoryDmnRepository()
+  )
 
   private val importedDecision = parse("/tck/0086-import/Imported_Model.dmn")
   private val importingDecision = parse("/tck/0086-import/0086-import.dmn")

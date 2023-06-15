@@ -22,7 +22,9 @@ import org.camunda.bpm.model.dmn.BuiltinAggregator
 import org.camunda.feel
 
 case class ParsedDmn(model: DmnModelInstance,
-                     decisions: Iterable[ParsedDecision]) {
+                     decisions: Iterable[ParsedDecision],
+                     bkms: Iterable[ParsedBusinessKnowledgeModel],
+                     namespace: String) {
 
   val decisionsById: Map[String, ParsedDecision] =
     decisions.map(d => d.id -> d).toMap
@@ -58,13 +60,27 @@ case class ParsedDecision(id: String,
                           requiredBkms: Iterable[ParsedBusinessKnowledgeModel])
     extends ParsedDecisionLogicContainer
 
-case class ParsedBusinessKnowledgeModel(
-    id: String,
-    name: String,
-    logic: ParsedDecisionLogic,
-    parameters: Iterable[(String, String)],
-    requiredBkms: Iterable[ParsedBusinessKnowledgeModel])
-    extends ParsedDecisionLogicContainer
+trait ParsedBusinessKnowledgeModel extends ParsedDecisionLogicContainer {
+  val parameters: Iterable[(String, String)]
+  val requiredBkms: Iterable[ParsedBusinessKnowledgeModel]
+}
+
+case class EmbeddedBusinessKnowledgeModel(
+                                         id: String,
+                                         name: String,
+                                         logic: ParsedDecisionLogic,
+                                         parameters: Iterable[(String, String)],
+                                         requiredBkms: Iterable[ParsedBusinessKnowledgeModel])
+  extends ParsedBusinessKnowledgeModel
+
+case class ImportedBusinessKnowledgeModel(importer: () => ParsedBusinessKnowledgeModel) extends ParsedBusinessKnowledgeModel {
+  private lazy val model = importer()
+  override lazy val id: String = model.id
+  override lazy val name: String = model.name
+  override lazy val logic: ParsedDecisionLogic = model.logic
+  override lazy val parameters: Iterable[(String, String)] = model.parameters
+  override lazy val requiredBkms: Iterable[ParsedBusinessKnowledgeModel] = model.requiredBkms
+}
 
 sealed trait ParsedDecisionLogic
 

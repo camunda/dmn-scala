@@ -132,7 +132,8 @@ object DmnEngine {
 class DmnEngine(configuration: DmnEngine.Configuration =
                   DmnEngine.Configuration(),
                 auditLogListeners: List[AuditLogListener] = List.empty,
-                clock: FeelEngineClock = FeelEngineClock.SystemClock) {
+                clock: FeelEngineClock = FeelEngineClock.SystemClock,
+                dmnRepository: DmnRepository = StatelessDmnRepository) {
 
   import DmnEngine._
 
@@ -155,7 +156,8 @@ class DmnEngine(configuration: DmnEngine.Configuration =
   val parser = new DmnParser(
     configuration = configuration,
     feelParser = feelEngine.parseExpression(_).toEither.left.map(_.message),
-    feelUnaryTestsParser = feelEngine.parseUnaryTests(_).toEither.left.map(_.message)
+    feelUnaryTestsParser = feelEngine.parseUnaryTests(_).toEither.left.map(_.message),
+    dmnRepository = dmnRepository
   )
 
   val decisionEval = new DecisionEvaluator(eval = this.evalExpression,
@@ -196,7 +198,10 @@ class DmnEngine(configuration: DmnEngine.Configuration =
   }
 
   def parse(stream: InputStream): Either[Failure, ParsedDmn] =
-    parser.parse(stream)
+    parser.parse(stream).map { parsedDmn =>
+      dmnRepository.put(parsedDmn)
+      parsedDmn
+    }
 
   def eval(dmn: ParsedDmn,
            decisionId: String,

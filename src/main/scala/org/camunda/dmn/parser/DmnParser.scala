@@ -19,7 +19,8 @@ import java.io.InputStream
 import org.camunda.dmn.logger
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.impl.DmnModelConstants
-import org.camunda.bpm.model.dmn.instance.{BusinessKnowledgeModel, Column, Context, Decision, DecisionTable, DrgElement, Expression, FunctionDefinition, InformationItem, Invocation, ItemDefinition, LiteralExpression, Relation, UnaryTests, List => DmnList}
+import org.camunda.bpm.model.dmn.impl.instance.DrgElementImpl
+import org.camunda.bpm.model.dmn.instance.{BusinessKnowledgeModel, Column, Context, Decision, DecisionTable, Definitions, DrgElement, Expression, FunctionDefinition, InformationItem, Invocation, ItemDefinition, LiteralExpression, Relation, RequiredKnowledgeReference, UnaryTests, List => DmnList}
 import org.camunda.dmn.DmnEngine.{Configuration, Failure}
 import org.camunda.feel
 
@@ -38,15 +39,26 @@ object DmnParser {
     DmnModelConstants.FEEL14_NS,
     DmnModelConstants.DMN15_NS
   ).map(_.toLowerCase())
+
+  val dmnNamespaces: List[String] = List(
+    DmnModelConstants.DMN11_NS,
+    DmnModelConstants.DMN11_ALTERNATIVE_NS,
+    DmnModelConstants.DMN12_NS,
+    DmnModelConstants.DMN13_NS,
+    DmnModelConstants.DMN13_ALTERNATIVE_NS
+  ).map(_.toLowerCase())
 }
 
 class DmnParser(
     configuration: Configuration,
     feelParser: String => Either[String, feel.syntaxtree.ParsedExpression],
     feelUnaryTestsParser: String => Either[String,
-                                           feel.syntaxtree.ParsedExpression]) {
+                                           feel.syntaxtree.ParsedExpression],
+    dmnRepository: DmnRepository) {
 
   import DmnParser._
+
+  case class ImportedModel(namespace: String, name: String)
 
   case class ParsingContext(model: DmnModelInstance) {
 
@@ -57,6 +69,8 @@ class DmnParser(
 
     val decisions = mutable.Map[String, ParsedDecision]()
     val bkms = mutable.Map[String, ParsedBusinessKnowledgeModel]()
+
+    val importedModels = mutable.ListBuffer[ImportedModel]()
 
     val failures = mutable.ListBuffer[Failure]()
   }
@@ -88,27 +102,55 @@ class DmnParser(
 
     val ctx = ParsingContext(model)
 
-    val drgElements = model.getDefinitions.getDrgElements.asScala
+    val definitions = model.getDefinitions
+
+    val importedModels = getImportedModels(definitions)
+    ctx.importedModels.addAll(importedModels)
+
+    val drgElements = definitions.getDrgElements.asScala
 
     checkForCyclicDependencies(drgElements) match {
       case Left(failure) => Left(List(failure))
       case _ =>
-        val decisions = drgElements.collect { case d: Decision => d }
 
-        decisions.foreach(d =>
-          ctx.decisions.getOrElseUpdate(d.getId, parseDecision(d)(ctx)))
+        // parse decisions and BKMs
+        drgElements.map {
+          case decision: Decision => ctx.decisions.getOrElseUpdate(decision.getId, parseDecision(decision)(ctx))
+          case bkm: BusinessKnowledgeModel => ctx.bkms.getOrElseUpdate(bkm.getName, parseBusinessKnowledgeModel(bkm)(ctx))
+          case _ => // ignore
+        }
+
+        val parsedDmn = ParsedDmn(
+          model = model,
+          decisions = ctx.decisions.values,
+          bkms = ctx.bkms.values,
+          namespace = definitions.getNamespace)
 
         if (ctx.failures.isEmpty) {
-          Right(ParsedDmn(model, ctx.decisions.values))
+          Right(parsedDmn)
 
         } else if (configuration.lazyEvaluation) {
           logger.warn("Parsing the DMN reported the following failures:\n{}",
             ctx.failures.map(_.message).mkString("\n"))
-          Right(ParsedDmn(model, ctx.decisions.values))
+          Right(parsedDmn)
         } else {
           Left(ctx.failures)
         }
     }
+  }
+
+  private def getImportedModels(definitions: Definitions): Iterable[ImportedModel] = {
+    definitions.getImports.asScala
+      .filter { anImport =>
+        val importType = anImport.getImportType.toLowerCase
+        dmnNamespaces.contains(importType)
+      }
+      .map { anImport =>
+        ImportedModel(
+          namespace = anImport.getNamespace,
+          name = anImport.getAttributeValue("name")
+        )
+      }
   }
 
   private def checkForCyclicDependencies(drgElements: Iterable[DrgElement]): Either[Failure, Unit] = {
@@ -189,10 +231,42 @@ class DmnParser(
       .flatten
 
     val knowledgeRequirements = decision.getKnowledgeRequirements.asScala
-    val requiredBkms = knowledgeRequirements
-      .map(r => r.getRequiredKnowledge)
-      .map(k =>
-        ctx.bkms.getOrElseUpdate(k.getName, parseBusinessKnowledgeModel(k)))
+    val requiredBkms: Iterable[ParsedBusinessKnowledgeModel] = knowledgeRequirements
+      .map { knowledgeRequirement =>
+
+        // todo: extract BKM parsing into method
+        val reference = knowledgeRequirement.getUniqueChildElementByType(classOf[RequiredKnowledgeReference])
+        val href = reference.getAttributeValue("href")
+
+        ctx.importedModels
+          .find(importedModel => href.startsWith(importedModel.namespace))
+          .map { importedModel =>
+            val namespace = importedModel.namespace
+            val bkmId = href.substring(href.indexOf("#") + 1)
+
+            // todo: extract loading, try to move to evaluation phase
+            ImportedBusinessKnowledgeModel(() => {
+              dmnRepository.getBusinessKnowledgeModel(
+                namespace = namespace,
+                bkmId = bkmId
+              ) match {
+                case Right(bkm) => EmbeddedBusinessKnowledgeModel(
+                  id = bkmId,
+                  // todo: replace the hack to add the namespace to the name
+                  name = s"${importedModel.name}.${bkm.name}",
+                  logic = bkm.logic,
+                  parameters = bkm.parameters,
+                  requiredBkms = bkm.requiredBkms
+                )
+                // todo: don't throw an exception if a BKM was not found
+                case Left(failure) => throw new RuntimeException(failure.message)
+              }
+            })
+          }.getOrElse {
+           val requiredKnowledge = knowledgeRequirement.getRequiredKnowledge
+            ctx.bkms.getOrElseUpdate(requiredKnowledge.getName, parseBusinessKnowledgeModel(requiredKnowledge))
+        }
+      }
 
     val logic: ParsedDecisionLogic = decision.getExpression match {
       case dt: DecisionTable     => parseDecisionTable(dt)
@@ -252,7 +326,7 @@ class DmnParser(
         val parameters = encapsulatedLogic.getFormalParameters.asScala
           .map(f => f.getName -> f.getTypeRef)
 
-        ParsedBusinessKnowledgeModel(bkm.getId,
+        EmbeddedBusinessKnowledgeModel(bkm.getId,
                                      bkm.getName,
                                      logic,
                                      parameters,
@@ -261,7 +335,7 @@ class DmnParser(
       }
       .getOrElse {
 
-        ParsedBusinessKnowledgeModel(bkm.getId,
+        EmbeddedBusinessKnowledgeModel(bkm.getId,
                                      bkm.getName,
                                      EmptyLogic,
                                      Iterable.empty,
