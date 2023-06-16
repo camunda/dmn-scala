@@ -51,14 +51,32 @@ sealed trait ParsedDecisionLogicContainer {
   val logic: ParsedDecisionLogic
 }
 
-case class ParsedDecision(id: String,
+trait ParsedDecision extends ParsedDecisionLogicContainer {
+  val resultName: String
+  val resultType: Option[String]
+  val requiredDecisions: Iterable[ParsedDecision]
+  val requiredBkms: Iterable[ParsedBusinessKnowledgeModel]
+}
+
+case class EmbeddedDecision(id: String,
                           name: String,
                           logic: ParsedDecisionLogic,
                           resultName: String,
                           resultType: Option[String],
                           requiredDecisions: Iterable[ParsedDecision],
                           requiredBkms: Iterable[ParsedBusinessKnowledgeModel])
-    extends ParsedDecisionLogicContainer
+  extends ParsedDecision
+
+case class ImportedDecision(importer: () => ParsedDecision) extends ParsedDecision {
+  private lazy val model = importer()
+  override lazy val id: String = model.id
+  override lazy val name: String = model.name
+  override lazy val logic: ParsedDecisionLogic = model.logic
+  override lazy val resultName: String = model.resultName
+  override lazy val resultType: Option[String] = model.resultType
+  override lazy val requiredDecisions: Iterable[ParsedDecision] = model.requiredDecisions
+  override lazy val requiredBkms: Iterable[ParsedBusinessKnowledgeModel] = model.requiredBkms
+}
 
 trait ParsedBusinessKnowledgeModel extends ParsedDecisionLogicContainer {
   val parameters: Iterable[(String, String)]
