@@ -11,19 +11,31 @@ class DmnImportTest extends AnyFlatSpec with Matchers with DecisionTest{
     dmnRepository = new InMemoryDmnRepository()
   )
 
-  private val importedDecision = parse("/tck/0086-import/Imported_Model.dmn")
-  private val importingDecision = parse("/tck/0086-import/0086-import.dmn")
+  // parse required DMNs
+  parse("/tck/0086-import/Imported_Model.dmn")
+  parse("/tck/0089-nested-inputdata-imports/Say_hello_1ID1D.dmn")
+  parse("/tck/0089-nested-inputdata-imports/Model_B.dmn")
+  parse("/tck/0089-nested-inputdata-imports/Model_B2.dmn")
 
-  "A decision with an imported BKM" should "invoke the BKM from the imported DMN (1)" in {
-    eval(importingDecision,
+  private val decisionWithBkmImport = parse("/tck/0086-import/0086-import.dmn")
+  private val decisionWithDecisionImport = parse("/tck/0089-nested-inputdata-imports/0089-nested-inputdata-imports.dmn")
+
+  "A decision with an imported BKM" should "invoke the BKM from the imported DMN" in {
+    eval(decisionWithBkmImport,
       "decision_with_imported_bkm",
       Map("A_Person" -> Map("name" -> "John Doe", "age" -> 21))) should be("Hello John Doe!")
-  }
 
-  it should "invoke the BKM from the imported DMN (2)" in {
-    eval(importingDecision,
+    eval(decisionWithBkmImport,
       "decision_with_imported_bkm",
       Map("A_Person" -> Map("name" -> "John Doe", "age" -> 47))) should be("Respectfully, Hello John Doe!")
+  }
+
+  "A decision with a imported decisions" should "invoke the decisions from the imported DMN" in {
+    val context = Map("Person_name" -> "John Doe")
+
+    eval(decisionWithDecisionImport, "decision_with_imported_decisions", context) should be(
+      "B: Evaluating Say Hello to: Hello, John Doe (B); B2: Evaluating Say Hello to: Hello, John Doe (B2)"
+    )
   }
 
 }
