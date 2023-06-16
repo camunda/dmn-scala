@@ -19,6 +19,17 @@ class InMemoryDmnRepository extends DmnRepository {
     }
   }
 
+  override def getDecision(namespace: String, decisionId: String): Either[Failure, ParsedDecision] = {
+    parsedDmnByNamespace.get(namespace) match {
+      case None => Left(Failure(s"No decision found with namespace '$namespace'."))
+      case Some(parsedDmn) =>
+        parsedDmn.decisions.find(_.id == decisionId) match {
+          case None => Left(Failure(s"No decision found with id '$decisionId' in namespace '$namespace'."))
+          case Some(decision) => Right(decision)
+        }
+    }
+  }
+
   override def put(dmn: ParsedDmn): Unit = {
     parsedDmnByNamespace.put(dmn.namespace, dmn)
   }

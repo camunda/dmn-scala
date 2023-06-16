@@ -42,9 +42,13 @@ class DecisionEvaluator(
         evalRequiredKnowledge(decision.requiredBkms, context)
           .flatMap(functions => {
 
-            // todo: replace the hack to wrap the imported BKMs into a context, maybe move to the BKM evaluation logic
+            val isImported: ((String, Val)) => Boolean = {
+              case (name, _) => name.contains(".")
+            }
+
+            // todo: replace the hack to wrap the imported BKMs and decisions into a context, maybe move to the BKM evaluation logic
             val importedFunctions = functions
-              .filter { case (name, _) => name.contains(".") }
+              .filter(isImported)
               .map { case (name, function) =>
                 val Array(prefix: String, functionName: String) = name.split('.')
                 prefix -> ValContext(StaticContext(
@@ -52,11 +56,23 @@ class DecisionEvaluator(
                   functions = Map(functionName -> List(function))
                 ))
               }
+            val embeddedFunctions = functions.filterNot(isImported)
 
-            val embeddedFunctions = functions.filterNot { case (name, _) => name.contains(".") }
+            val importedDecisions = decisionResults
+              .filter(isImported)
+              .map { case (name, decisionResult) =>
+                val Array(prefix: String, decisionName: String) = name.split('.')
+                prefix -> ValContext(StaticContext(
+                  variables = Map(decisionName -> decisionResult),
+                  functions = Map.empty
+                ))
+              }
+            val embeddedDecisions = decisionResults.filterNot(isImported)
 
             val decisionEvaluationContext = context.copy(
-              variables = context.variables ++ decisionResults ++ embeddedFunctions ++ importedFunctions,
+              variables = context.variables
+                ++ embeddedDecisions ++ importedDecisions
+                ++ embeddedFunctions ++ importedFunctions,
               currentElement = decision)
 
             eval(decision.logic, decisionEvaluationContext)
