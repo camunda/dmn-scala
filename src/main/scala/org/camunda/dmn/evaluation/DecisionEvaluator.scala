@@ -17,12 +17,9 @@ package org.camunda.dmn.evaluation
 
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
-import org.camunda.feel.syntaxtree.{Val, ValFunction}
-import org.camunda.dmn.parser.{
-  ParsedDecision,
-  ParsedDecisionLogic,
-  ParsedBusinessKnowledgeModel
-}
+import org.camunda.feel.syntaxtree.{Val, ValContext, ValFunction}
+import org.camunda.dmn.parser.{ParsedBusinessKnowledgeModel, ParsedDecision, ParsedDecisionLogic}
+import org.camunda.feel.context.Context.StaticContext
 
 class DecisionEvaluator(
     eval: (ParsedDecisionLogic, EvalContext) => Either[Failure, Val],
@@ -45,8 +42,37 @@ class DecisionEvaluator(
         evalRequiredKnowledge(decision.requiredBkms, context)
           .flatMap(functions => {
 
+            val isImported: ((String, Val)) => Boolean = {
+              case (name, _) => name.contains(".")
+            }
+
+            // todo: replace the hack to wrap the imported BKMs and decisions into a context, maybe move to the BKM evaluation logic
+            val importedFunctions = functions
+              .filter(isImported)
+              .map { case (name, function) =>
+                val Array(prefix: String, functionName: String) = name.split('.')
+                prefix -> ValContext(StaticContext(
+                  variables = Map.empty,
+                  functions = Map(functionName -> List(function))
+                ))
+              }
+            val embeddedFunctions = functions.filterNot(isImported)
+
+            val importedDecisions = decisionResults
+              .filter(isImported)
+              .map { case (name, decisionResult) =>
+                val Array(prefix: String, decisionName: String) = name.split('.')
+                prefix -> ValContext(StaticContext(
+                  variables = Map(decisionName -> decisionResult),
+                  functions = Map.empty
+                ))
+              }
+            val embeddedDecisions = decisionResults.filterNot(isImported)
+
             val decisionEvaluationContext = context.copy(
-              variables = context.variables ++ decisionResults ++ functions,
+              variables = context.variables
+                ++ embeddedDecisions ++ importedDecisions
+                ++ embeddedFunctions ++ importedFunctions,
               currentElement = decision)
 
             eval(decision.logic, decisionEvaluationContext)
