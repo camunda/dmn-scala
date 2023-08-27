@@ -51,54 +51,97 @@ sealed trait ParsedDecisionLogicContainer {
   val logic: ParsedDecisionLogic
 }
 
-trait ParsedDecision extends ParsedDecisionLogicContainer {
+sealed trait ParsedDecision extends ParsedDecisionLogicContainer{
   val resultName: String
   val resultType: Option[String]
-  val requiredDecisions: Iterable[ParsedDecision]
-  val requiredBkms: Iterable[ParsedBusinessKnowledgeModel]
+  val requiredDecisions: Iterable[ParsedDecisionReference]
+  val requiredBkms: Iterable[ParsedBusinessKnowledgeModelReference]
 }
 
-case class EmbeddedDecision(id: String,
-                          name: String,
-                          logic: ParsedDecisionLogic,
-                          resultName: String,
-                          resultType: Option[String],
-                          requiredDecisions: Iterable[ParsedDecision],
-                          requiredBkms: Iterable[ParsedBusinessKnowledgeModel])
-  extends ParsedDecision
-
-case class ImportedDecision(importer: () => ParsedDecision) extends ParsedDecision {
-  private lazy val model = importer()
-  override lazy val id: String = model.id
-  override lazy val name: String = model.name
-  override lazy val logic: ParsedDecisionLogic = model.logic
-  override lazy val resultName: String = model.resultName
-  override lazy val resultType: Option[String] = model.resultType
-  override lazy val requiredDecisions: Iterable[ParsedDecision] = model.requiredDecisions
-  override lazy val requiredBkms: Iterable[ParsedBusinessKnowledgeModel] = model.requiredBkms
+trait ParsedDecisionLogicContainerReference[T <: ParsedDecisionLogicContainer] {
+  val importedModelName: Option[String] = None
+  def resolve(): T
+  def isEmbedded: Boolean
+  def isImported: Boolean = !isEmbedded
 }
 
-trait ParsedBusinessKnowledgeModel extends ParsedDecisionLogicContainer {
+trait ParsedDecisionReference extends ParsedDecisionLogicContainerReference[ParsedDecision] {
+}
+
+case class EmbeddedDecision(
+  id: String,
+  name: String,
+  logic: ParsedDecisionLogic,
+  resultName: String,
+  resultType: Option[String],
+  requiredDecisions: Iterable[ParsedDecisionReference],
+  requiredBkms: Iterable[ParsedBusinessKnowledgeModelReference]
+)
+  extends ParsedDecision with ParsedDecisionReference {
+  override def resolve(): ParsedDecision = this
+
+  override def isEmbedded: Boolean = true
+}
+
+trait ImportedParsedDecisionLogicFailure[T <: ParsedDecisionLogicContainer]
+  extends ParsedDecisionLogicContainerReference[T] {
+  val id: String
+  val namespace: String
+  val expressionFailure: ExpressionFailure
+  override def resolve(): T = throw new RuntimeException(expressionFailure.failure)
+
+  override def isEmbedded: Boolean = false
+}
+
+case class ImportedDecision(repository: DmnRepository, namespace: String, id: String, override val importedModelName: Option[String]) extends ParsedDecisionReference {
+  override def resolve(): ParsedDecision = repository.getDecision(namespace, id) match {
+    case Right(found) => found
+    case Left(failure) => ParsedDecisionFailure(id, namespace, ExpressionFailure(failure.message)).resolve()
+  }
+
+  override def isEmbedded: Boolean = false
+
+}
+
+sealed trait ParsedBusinessKnowledgeModel extends ParsedDecisionLogicContainer {
   val parameters: Iterable[(String, String)]
-  val requiredBkms: Iterable[ParsedBusinessKnowledgeModel]
+  val requiredBkms: Iterable[ParsedBusinessKnowledgeModelReference]
 }
+
+trait ParsedBusinessKnowledgeModelReference extends ParsedDecisionLogicContainerReference[ParsedBusinessKnowledgeModel]
+
 
 case class EmbeddedBusinessKnowledgeModel(
                                          id: String,
                                          name: String,
                                          logic: ParsedDecisionLogic,
                                          parameters: Iterable[(String, String)],
-                                         requiredBkms: Iterable[ParsedBusinessKnowledgeModel])
-  extends ParsedBusinessKnowledgeModel
+                                         requiredBkms: Iterable[ParsedBusinessKnowledgeModelReference])
+  extends ParsedBusinessKnowledgeModel with ParsedBusinessKnowledgeModelReference {
+  override def resolve(): ParsedBusinessKnowledgeModel = this
 
-case class ImportedBusinessKnowledgeModel(importer: () => ParsedBusinessKnowledgeModel) extends ParsedBusinessKnowledgeModel {
-  private lazy val model = importer()
-  override lazy val id: String = model.id
-  override lazy val name: String = model.name
-  override lazy val logic: ParsedDecisionLogic = model.logic
-  override lazy val parameters: Iterable[(String, String)] = model.parameters
-  override lazy val requiredBkms: Iterable[ParsedBusinessKnowledgeModel] = model.requiredBkms
+  override def isEmbedded: Boolean = true
 }
+
+case class ImportedBusinessKnowledgeModel(
+  repository: DmnRepository, namespace: String, id: String, override val importedModelName: Option[String])
+  extends ParsedBusinessKnowledgeModelReference {
+  override def resolve(): ParsedBusinessKnowledgeModel = repository.getBusinessKnowledgeModel(namespace, id) match {
+    case Right(found) => found
+    case Left(failure) =>
+      ParsedBusinessKnowledgeModelFailure(id, namespace, ExpressionFailure(failure.message)).resolve()
+  }
+
+  override def isEmbedded: Boolean = false
+}
+
+case class ParsedBusinessKnowledgeModelFailure(id: String, namespace: String, expressionFailure: ExpressionFailure)
+  extends ImportedParsedDecisionLogicFailure[ParsedBusinessKnowledgeModel]
+  with ParsedBusinessKnowledgeModelReference
+
+case class ParsedDecisionFailure(id: String, namespace: String, expressionFailure: ExpressionFailure)
+  extends ImportedParsedDecisionLogicFailure[ParsedDecision]
+    with ParsedDecisionReference
 
 sealed trait ParsedDecisionLogic
 
