@@ -15,19 +15,37 @@
  */
 package org.camunda.dmn.parser
 
-import java.io.InputStream
-import org.camunda.dmn.logger
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.impl.DmnModelConstants
-import org.camunda.bpm.model.dmn.impl.instance.DrgElementImpl
-import org.camunda.bpm.model.dmn.instance.{BusinessKnowledgeModel, Column, Context, Decision, DecisionTable, Definitions, DmnElementReference, DrgElement, Expression, FunctionDefinition, InformationItem, InformationRequirement, Invocation, ItemDefinition, KnowledgeRequirement, LiteralExpression, Relation, RequiredDecisionReference, RequiredKnowledgeReference, UnaryTests, List => DmnList}
+import org.camunda.bpm.model.dmn.instance.BusinessKnowledgeModel
+import org.camunda.bpm.model.dmn.instance.Column
+import org.camunda.bpm.model.dmn.instance.Context
+import org.camunda.bpm.model.dmn.instance.Decision
+import org.camunda.bpm.model.dmn.instance.DecisionTable
+import org.camunda.bpm.model.dmn.instance.Definitions
+import org.camunda.bpm.model.dmn.instance.DrgElement
+import org.camunda.bpm.model.dmn.instance.Expression
+import org.camunda.bpm.model.dmn.instance.FunctionDefinition
+import org.camunda.bpm.model.dmn.instance.InformationItem
+import org.camunda.bpm.model.dmn.instance.InformationRequirement
+import org.camunda.bpm.model.dmn.instance.Invocation
+import org.camunda.bpm.model.dmn.instance.ItemDefinition
+import org.camunda.bpm.model.dmn.instance.KnowledgeRequirement
+import org.camunda.bpm.model.dmn.instance.LiteralExpression
+import org.camunda.bpm.model.dmn.instance.Relation
+import org.camunda.bpm.model.dmn.instance.RequiredDecisionReference
+import org.camunda.bpm.model.dmn.instance.RequiredKnowledgeReference
+import org.camunda.bpm.model.dmn.instance.UnaryTests
+import org.camunda.bpm.model.dmn.instance.{List => DmnList}
 import org.camunda.bpm.model.xml.instance.ModelElementInstance
-import org.camunda.dmn.DmnEngine.{Configuration, Failure}
+import org.camunda.dmn.DmnEngine.Configuration
+import org.camunda.dmn.DmnEngine.Failure
+import org.camunda.dmn.logger
 import org.camunda.feel
 
-import scala.annotation.tailrec
-import scala.collection.JavaConverters._
+import java.io.InputStream
 import scala.collection.mutable
+import scala.jdk.CollectionConverters._
 import scala.util.Try
 
 object DmnParser {
@@ -73,8 +91,8 @@ class DmnParser(
     val parsedFeelExpressions = mutable.Map[String, ParsedExpression]()
     val parsedFeelUnaryTest = mutable.Map[String, ParsedExpression]()
 
-    val decisions = mutable.Map[String, ParsedDecision]()
-    val bkms = mutable.Map[String, ParsedBusinessKnowledgeModel]()
+    val decisions = mutable.Map[String, ParsedDecisionReference]()
+    val bkms = mutable.Map[String, ParsedBusinessKnowledgeModelReference]()
 
     val importedModels = mutable.ListBuffer[ImportedModel]()
 
@@ -104,7 +122,7 @@ class DmnParser(
   }
 
   private def parseModel(
-                          model: DmnModelInstance): Either[Iterable[Failure], ParsedDmn] = {
+    model: DmnModelInstance): Either[Iterable[Failure], ParsedDmn] = {
 
     val ctx = ParsingContext(model)
 
@@ -128,8 +146,8 @@ class DmnParser(
 
         val parsedDmn = ParsedDmn(
           model = model,
-          decisions = ctx.decisions.values,
-          bkms = ctx.bkms.values,
+          decisions = ctx.decisions.values.filter(_.isEmbedded).map(_.resolve()),
+          bkms = ctx.bkms.values.filter(_.isEmbedded).map(_.resolve()),
           namespace = definitions.getNamespace)
 
         if (ctx.failures.isEmpty) {
@@ -229,7 +247,7 @@ class DmnParser(
 
   private def parseDecision(decision: Decision)(
     implicit
-    ctx: ParsingContext): ParsedDecision = {
+    ctx: ParsingContext): ParsedDecisionReference = {
 
     val requiredDecisions = decision.getInformationRequirements.asScala
       .flatMap(requirement =>
@@ -289,44 +307,20 @@ class DmnParser(
     )
   }
 
-  private def parseRequiredDecision(informationRequirement: InformationRequirement, reference: ModelReference)(implicit ctx: ParsingContext): ParsedDecision = {
+  private def parseRequiredDecision(informationRequirement: InformationRequirement, reference: ModelReference)(implicit ctx: ParsingContext): ParsedDecisionReference = {
     if (reference.isEmbedded) {
       val requiredDecision = informationRequirement.getRequiredDecision
       ctx.decisions.getOrElseUpdate(requiredDecision.getId, parseDecision(decision = requiredDecision))
     } else {
       ctx.importedModels
         .find(importedModel => reference.namespace == importedModel.namespace)
-        .map(importedModel => createReferenceForImportedDecision(importedModel, reference))
+        .map(importedModel => ImportedDecision(dmnRepository, reference.namespace, reference.id, Some(importedModel.name)))
         .getOrElse {
-          ctx.failures += Failure(s"No import found for namespace '${reference.namespace}'.")
-          ImportedDecision(() =>
-            throw new RuntimeException(s"Failed to invoke decision. No import found for namespace '${reference.namespace}'.")
-          )
+          val failure = Failure(s"No import found for namespace '${reference.namespace}'.")
+          ctx.failures += failure
+          ParsedDecisionFailure(reference.id, reference.namespace, ExpressionFailure(failure.message))
         }
     }
-  }
-
-  private def createReferenceForImportedDecision(importedModel: ImportedModel, reference: ModelReference): ImportedDecision = {
-    ImportedDecision(() => {
-      // todo: extract loading, try to move to evaluation phase
-      dmnRepository.getDecision(
-        namespace = reference.namespace,
-        decisionId = reference.id
-      ) match {
-        case Right(decision) => EmbeddedDecision(
-          id = reference.id,
-          // todo: replace the hack to add the namespace to the name
-          name = s"${importedModel.name}.${decision.name}",
-          resultName = s"${importedModel.name}.${decision.resultName}",
-          logic = decision.logic,
-          resultType = decision.resultType,
-          requiredDecisions = decision.requiredDecisions,
-          requiredBkms = decision.requiredBkms
-        )
-        // todo: don't throw an exception if a decision was not found, but return a failure
-        case Left(failure) => throw new RuntimeException(failure.message)
-      }
-    })
   }
 
   private def getBkmReference(knowledgeRequirement: KnowledgeRequirement): Option[ModelReference] = {
@@ -334,47 +328,51 @@ class DmnParser(
       .map(createModelReference)
   }
 
-  private def parseRequiredBkm(knowledgeRequirement: KnowledgeRequirement, reference: ModelReference)(implicit ctx: ParsingContext): ParsedBusinessKnowledgeModel = {
+  private def parseRequiredBkm(knowledgeRequirement: KnowledgeRequirement, reference: ModelReference)(implicit ctx: ParsingContext): ParsedBusinessKnowledgeModelReference = {
     if (reference.isEmbedded) {
       val requiredKnowledge = knowledgeRequirement.getRequiredKnowledge
       ctx.bkms.getOrElseUpdate(requiredKnowledge.getName, parseBusinessKnowledgeModel(requiredKnowledge))
     } else {
       ctx.importedModels
         .find(importedModel => reference.namespace == importedModel.namespace)
-        .map(importedModel => createReferenceForImportedBkm(importedModel, reference))
-        .getOrElse {
-          ctx.failures += Failure(s"No import found for namespace '${reference.namespace}'.")
-          ImportedBusinessKnowledgeModel(() =>
-            throw new RuntimeException(s"Failed to invoke BKM. No import found for namespace '${reference.namespace}'.")
-          )
-        }
+        .map(importedModel => ImportedBusinessKnowledgeModel(
+          dmnRepository, reference.namespace, reference.id, Some(importedModel.name)))
+          .getOrElse {
+            val failure = Failure(s"No import found for namespace '${reference.namespace}'.")
+            ctx.failures += failure
+            ParsedBusinessKnowledgeModelFailure(reference.id, reference.namespace, ExpressionFailure(failure.message))
+          }
     }
   }
 
-  private def createReferenceForImportedBkm(importedModel: ImportedModel, reference: ModelReference): ImportedBusinessKnowledgeModel = {
-    ImportedBusinessKnowledgeModel(() => {
-      // todo: extract loading, try to move to evaluation phase
-      dmnRepository.getBusinessKnowledgeModel(
-        namespace = reference.namespace,
-        bkmId = reference.id
-      ) match {
-        case Right(bkm) => EmbeddedBusinessKnowledgeModel(
-          id = reference.id,
-          // todo: replace the hack to add the namespace to the name
-          name = s"${importedModel.name}.${bkm.name}",
-          logic = bkm.logic,
-          parameters = bkm.parameters,
-          requiredBkms = bkm.requiredBkms
-        )
-        // todo: don't throw an exception if a BKM was not found, but return a failure
-        case Left(failure) => throw new RuntimeException(failure.message)
-      }
-    })
+  private def createReferenceForImportedBkm(importedModel: ImportedModel, reference: ModelReference)(
+    implicit
+    ctx: ParsingContext): ImportedBusinessKnowledgeModel = {
+    ImportedBusinessKnowledgeModel(dmnRepository, reference.namespace, reference.id, Some(importedModel.name))
+    //    ImportedBusinessKnowledgeModel(() => {
+    //      // todo: extract loading, try to move to evaluation phase
+    //      dmnRepository.getBusinessKnowledgeModel(
+    //        namespace = reference.namespace,
+    //        bkmId = reference.id
+    //      ) match {
+    //        case Right(bkm) => EmbeddedBusinessKnowledgeModel(
+    //          id = reference.id,
+    //          // todo: replace the hack to add the namespace to the name
+    //          name = s"${importedModel.name}.${bkm.name}",
+    //          logic = bkm.logic,
+    //          parameters = bkm.parameters,
+    //          requiredBkms = bkm.requiredBkms
+    //        )
+    //        case Left(failure) =>
+    //          ctx.failures += Failure(failure.message)
+    //          EmbeddedBusinessKnowledgeModel(reference.id, "", EmptyLogic, Iterable.empty, Iterable.empty)
+    //      }
+    //    })
   }
 
   private def parseBusinessKnowledgeModel(bkm: BusinessKnowledgeModel)(
     implicit
-    ctx: ParsingContext): ParsedBusinessKnowledgeModel = {
+    ctx: ParsingContext): ParsedBusinessKnowledgeModelReference = {
 
     // TODO be aware of loops
     val knowledgeRequirements = bkm.getKnowledgeRequirement.asScala
@@ -582,7 +580,7 @@ class DmnParser(
         ctx.bkms
           .get(expression)
           .map(bkm => {
-            ParsedInvocation(bindings, bkm)
+            ParsedInvocation(bindings, bkm.resolve())
           })
           .getOrElse {
             ctx.failures += Failure(s"no BKM found with name '$expression'")
@@ -638,7 +636,7 @@ class DmnParser(
       .toRight(Failure(s"The expression '${lt.getId}' must not be empty."))
 
   private def validateExpressionLanguage(
-                                          lt: LiteralExpression): Either[Failure, Unit] = {
+    lt: LiteralExpression): Either[Failure, Unit] = {
     val language =
       Option(lt.getExpressionLanguage).map(_.toLowerCase).getOrElse("feel")
     if (feelNameSpaces.contains(language)) {
@@ -685,11 +683,11 @@ class DmnParser(
       ctx.parsedFeelUnaryTest.getOrElseUpdate(
         expression, {
 
-          if (expression.isEmpty()) {
+          if (expression.isEmpty) {
             EmptyExpression
           } else {
 
-            var escapedExpression =
+            val escapedExpression =
               escapeNamesInExpression(expression, ctx.namesToEscape)
 
             feelUnaryTestsParser(escapedExpression) match {
@@ -707,8 +705,8 @@ class DmnParser(
   }
 
   private def escapeNamesInExpression(
-                                       expression: String,
-                                       namesWithSpaces: Iterable[String]): String = {
+    expression: String,
+    namesWithSpaces: Iterable[String]): String = {
 
     (expression /: namesWithSpaces)(
       (e, name) =>

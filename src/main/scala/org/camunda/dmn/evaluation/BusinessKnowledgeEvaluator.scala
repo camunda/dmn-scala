@@ -31,7 +31,7 @@ class BusinessKnowledgeEvaluator(
   def eval(bkm: ParsedBusinessKnowledgeModel,
            context: EvalContext): Either[Failure, Val] = {
 
-    evalRequiredKnowledge(bkm.requiredBkms, context)
+    evalRequiredKnowledge(bkm.requiredBkms.map(_.resolve()), context)
       .flatMap(functions => {
 
         val evalContext =
@@ -47,7 +47,7 @@ class BusinessKnowledgeEvaluator(
       bkm: ParsedBusinessKnowledgeModel,
       context: EvalContext): Either[Failure, (String, ValFunction)] = {
 
-    evalRequiredKnowledge(bkm.requiredBkms, context).map(functions => {
+    evalRequiredKnowledge(bkm.requiredBkms.map(_.resolve()), context).map(functions => {
 
       val evalContext = context.copy(variables = context.variables ++ functions,
                                      currentElement = bkm)

@@ -18,7 +18,13 @@ package org.camunda.dmn.evaluation
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
 import org.camunda.feel.syntaxtree.{Val, ValContext, ValFunction}
-import org.camunda.dmn.parser.{ParsedBusinessKnowledgeModel, ParsedDecision, ParsedDecisionLogic}
+import org.camunda.dmn.parser.{
+  ParsedBusinessKnowledgeModel,
+  ParsedBusinessKnowledgeModelReference,
+  ParsedDecision,
+  ParsedDecisionReference,
+  ParsedDecisionLogic,
+  ParsedDecisionLogicContainerReference}
 import org.camunda.feel.context.Context.StaticContext
 
 class DecisionEvaluator(
@@ -42,38 +48,11 @@ class DecisionEvaluator(
         evalRequiredKnowledge(decision.requiredBkms, context)
           .flatMap(functions => {
 
-            val isImported: ((String, Val)) => Boolean = {
-              case (name, _) => name.contains(".")
-            }
-
-            // todo: replace the hack to wrap the imported BKMs and decisions into a context, maybe move to the BKM evaluation logic
-            val importedFunctions = functions
-              .filter(isImported)
-              .map { case (name, function) =>
-                val Array(prefix: String, functionName: String) = name.split('.')
-                prefix -> ValContext(StaticContext(
-                  variables = Map.empty,
-                  functions = Map(functionName -> List(function))
-                ))
-              }
-            val embeddedFunctions = functions.filterNot(isImported)
-
-            val importedDecisions = decisionResults
-              .filter(isImported)
-              .map { case (name, decisionResult) =>
-                val Array(prefix: String, decisionName: String) = name.split('.')
-                prefix -> ValContext(StaticContext(
-                  variables = Map(decisionName -> decisionResult),
-                  functions = Map.empty
-                ))
-              }
-            val embeddedDecisions = decisionResults.filterNot(isImported)
-
             val decisionEvaluationContext = context.copy(
               variables = context.variables
-                ++ embeddedDecisions ++ importedDecisions
-                ++ embeddedFunctions ++ importedFunctions,
-              currentElement = decision)
+                ++ decisionResults ++ functions,
+                //                ++ embeddedFunctions ++ importedFunctions,
+                currentElement = decision)
 
             eval(decision.logic, decisionEvaluationContext)
               .flatMap(
@@ -87,17 +66,36 @@ class DecisionEvaluator(
   }
 
   private def evalRequiredDecisions(
-      requiredDecisions: Iterable[ParsedDecision],
-      context: EvalContext): Either[Failure, List[(String, Val)]] = {
+    requiredDecisions: Iterable[ParsedDecisionReference],
+    context: EvalContext): Either[Failure, List[(String, Val)]] = {
     mapEither(requiredDecisions,
-              (d: ParsedDecision) => evalDecision(d, context))
+      (decisionRef: ParsedDecisionReference) => evalDecision(decisionRef.resolve(), context)
+      .map(maybeWrapResult(decisionRef, _)))
   }
 
   private def evalRequiredKnowledge(
-      requiredBkms: Iterable[ParsedBusinessKnowledgeModel],
-      context: EvalContext): Either[Failure, List[(String, ValFunction)]] = {
+    requiredBkms: Iterable[ParsedBusinessKnowledgeModelReference],
+    context: EvalContext): Either[Failure, List[(String, Val)]] = {
     mapEither(requiredBkms,
-              (bkm: ParsedBusinessKnowledgeModel) => evalBkm(bkm, context))
+      (bkm: ParsedBusinessKnowledgeModelReference) => evalBkm(bkm.resolve(), context)
+        .map(maybeWrapResult(bkm, _)))
   }
 
+  private def maybeWrapResult(
+    reference: ParsedDecisionLogicContainerReference[_], result: (String, Val)) =
+    reference.importedModelName match {
+      case Some(importName) =>
+        val ctx = result._2 match {
+          case func: ValFunction => StaticContext(
+            variables = Map.empty,
+            functions = Map(result._1 -> List(func))
+          )
+          case _ => StaticContext(
+            variables = Map(result._1 -> result._2),
+            functions = Map.empty
+          )
+        }
+        importName -> ValContext(ctx)
+      case _ => result
+    }
 }
