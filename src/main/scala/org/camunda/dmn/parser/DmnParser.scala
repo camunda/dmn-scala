@@ -346,31 +346,6 @@ class DmnParser(
     }
   }
 
-  private def createReferenceForImportedBkm(importedModel: ImportedModel, reference: ModelReference)(
-    implicit
-    ctx: ParsingContext): ImportedBusinessKnowledgeModel = {
-    ImportedBusinessKnowledgeModel(dmnRepository, reference.namespace, reference.id, Some(importedModel.name))
-    //    ImportedBusinessKnowledgeModel(() => {
-    //      // todo: extract loading, try to move to evaluation phase
-    //      dmnRepository.getBusinessKnowledgeModel(
-    //        namespace = reference.namespace,
-    //        bkmId = reference.id
-    //      ) match {
-    //        case Right(bkm) => EmbeddedBusinessKnowledgeModel(
-    //          id = reference.id,
-    //          // todo: replace the hack to add the namespace to the name
-    //          name = s"${importedModel.name}.${bkm.name}",
-    //          logic = bkm.logic,
-    //          parameters = bkm.parameters,
-    //          requiredBkms = bkm.requiredBkms
-    //        )
-    //        case Left(failure) =>
-    //          ctx.failures += Failure(failure.message)
-    //          EmbeddedBusinessKnowledgeModel(reference.id, "", EmptyLogic, Iterable.empty, Iterable.empty)
-    //      }
-    //    })
-  }
-
   private def parseBusinessKnowledgeModel(bkm: BusinessKnowledgeModel)(
     implicit
     ctx: ParsingContext): ParsedBusinessKnowledgeModelReference = {
