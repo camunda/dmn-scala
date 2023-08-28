@@ -51,7 +51,7 @@ sealed trait ParsedDecisionLogicContainer {
   val logic: ParsedDecisionLogic
 }
 
-sealed trait ParsedDecision extends ParsedDecisionLogicContainer{
+trait ParsedDecision extends ParsedDecisionLogicContainer {
   val resultName: String
   val resultType: Option[String]
   val requiredDecisions: Iterable[ParsedDecisionReference]
@@ -76,8 +76,7 @@ case class EmbeddedDecision(
   resultType: Option[String],
   requiredDecisions: Iterable[ParsedDecisionReference],
   requiredBkms: Iterable[ParsedBusinessKnowledgeModelReference]
-)
-  extends ParsedDecision with ParsedDecisionReference {
+) extends ParsedDecision with ParsedDecisionReference {
   override def resolve(): ParsedDecision = this
 
   override def isEmbedded: Boolean = true
@@ -112,20 +111,22 @@ trait ParsedBusinessKnowledgeModelReference extends ParsedDecisionLogicContainer
 
 
 case class EmbeddedBusinessKnowledgeModel(
-                                         id: String,
-                                         name: String,
-                                         logic: ParsedDecisionLogic,
-                                         parameters: Iterable[(String, String)],
-                                         requiredBkms: Iterable[ParsedBusinessKnowledgeModelReference])
-  extends ParsedBusinessKnowledgeModel with ParsedBusinessKnowledgeModelReference {
+  id: String,
+  name: String,
+  logic: ParsedDecisionLogic,
+  parameters: Iterable[(String, String)],
+  requiredBkms: Iterable[ParsedBusinessKnowledgeModelReference]) extends
+ParsedBusinessKnowledgeModel with ParsedBusinessKnowledgeModelReference {
+
   override def resolve(): ParsedBusinessKnowledgeModel = this
 
   override def isEmbedded: Boolean = true
 }
 
 case class ImportedBusinessKnowledgeModel(
-  repository: DmnRepository, namespace: String, id: String, override val importedModelName: Option[String])
-  extends ParsedBusinessKnowledgeModelReference {
+  repository: DmnRepository,
+  namespace: String, id: String,
+  override val importedModelName: Option[String]) extends ParsedBusinessKnowledgeModelReference {
   override def resolve(): ParsedBusinessKnowledgeModel = repository.getBusinessKnowledgeModel(namespace, id) match {
     case Right(found) => found
     case Left(failure) =>

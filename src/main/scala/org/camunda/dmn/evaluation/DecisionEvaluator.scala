@@ -51,7 +51,6 @@ class DecisionEvaluator(
             val decisionEvaluationContext = context.copy(
               variables = context.variables
                 ++ decisionResults ++ functions,
-                //                ++ embeddedFunctions ++ importedFunctions,
                 currentElement = decision)
 
             eval(decision.logic, decisionEvaluationContext)
@@ -77,8 +76,8 @@ class DecisionEvaluator(
     requiredBkms: Iterable[ParsedBusinessKnowledgeModelReference],
     context: EvalContext): Either[Failure, List[(String, Val)]] = {
     mapEither(requiredBkms,
-      (bkm: ParsedBusinessKnowledgeModelReference) => evalBkm(bkm.resolve(), context)
-        .map(maybeWrapResult(bkm, _)))
+      (bkmRef: ParsedBusinessKnowledgeModelReference) => evalBkm(bkmRef.resolve(), context)
+        .map(maybeWrapResult(bkmRef, _)))
   }
 
   private def maybeWrapResult(

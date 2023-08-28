@@ -69,11 +69,11 @@ object DmnParser {
 }
 
 class DmnParser(
-                 configuration: Configuration,
-                 feelParser: String => Either[String, feel.syntaxtree.ParsedExpression],
-                 feelUnaryTestsParser: String => Either[String,
-                   feel.syntaxtree.ParsedExpression],
-                 dmnRepository: DmnRepository) {
+  configuration: Configuration,
+  feelParser: String => Either[String, feel.syntaxtree.ParsedExpression],
+  feelUnaryTestsParser: String => Either[String,
+    feel.syntaxtree.ParsedExpression],
+  dmnRepository: DmnRepository) {
 
   import DmnParser._
 
@@ -81,6 +81,7 @@ class DmnParser(
 
   case class ModelReference(namespace: String, id: String) {
     def isEmbedded: Boolean = namespace.isEmpty
+
     def isImported: Boolean = !isEmbedded
   }
 
@@ -337,11 +338,11 @@ class DmnParser(
         .find(importedModel => reference.namespace == importedModel.namespace)
         .map(importedModel => ImportedBusinessKnowledgeModel(
           dmnRepository, reference.namespace, reference.id, Some(importedModel.name)))
-          .getOrElse {
-            val failure = Failure(s"No import found for namespace '${reference.namespace}'.")
-            ctx.failures += failure
-            ParsedBusinessKnowledgeModelFailure(reference.id, reference.namespace, ExpressionFailure(failure.message))
-          }
+        .getOrElse {
+          val failure = Failure(s"No import found for namespace '${reference.namespace}'.")
+          ctx.failures += failure
+          ParsedBusinessKnowledgeModelFailure(reference.id, reference.namespace, ExpressionFailure(failure.message))
+        }
     }
   }
 
@@ -560,18 +561,16 @@ class DmnParser(
     ctx: ParsingContext): ParsedDecisionLogic = {
 
     val bindings = invocation.getBindings.asScala
-      .map(b =>
+      .flatMap(b =>
         b.getExpression match {
           case lt: LiteralExpression =>
             Some(b.getParameter.getName -> parseFeelExpression(lt))
           case other => {
             ctx.failures += Failure(
               s"expected binding with literal expression but found '$other'")
-
             None
           }
         })
-      .flatten
 
     invocation.getExpression match {
       case lt: LiteralExpression => {
@@ -579,8 +578,8 @@ class DmnParser(
 
         ctx.bkms
           .get(expression)
-          .map(bkm => {
-            ParsedInvocation(bindings, bkm.resolve())
+          .map(bkmRef => {
+            ParsedInvocation(bindings, bkmRef.resolve())
           })
           .getOrElse {
             ctx.failures += Failure(s"no BKM found with name '$expression'")
@@ -635,8 +634,7 @@ class DmnParser(
       .map(_.getTextContent)
       .toRight(Failure(s"The expression '${lt.getId}' must not be empty."))
 
-  private def validateExpressionLanguage(
-    lt: LiteralExpression): Either[Failure, Unit] = {
+  private def validateExpressionLanguage(lt: LiteralExpression): Either[Failure, Unit] = {
     val language =
       Option(lt.getExpressionLanguage).map(_.toLowerCase).getOrElse("feel")
     if (feelNameSpaces.contains(language)) {
