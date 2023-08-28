@@ -11,7 +11,6 @@
         <!-- num method params -->
         <differenceType>7004</differenceType>
         <method>*$anonfun*</method>
-        <from>*</from>
         <to>*</to>
     </difference>
     <difference>
@@ -19,8 +18,6 @@
         <!-- method param type -->
         <differenceType>7005</differenceType>
         <method>*$anonfun*</method>
-        <!--don't care what the type has changed to-->
-        <from>*</from>
         <to>*</to>
     </difference>
     <difference>
@@ -43,4 +40,39 @@
         <differenceType>7002</differenceType>
         <method>*</method>
     </difference>
+    <!-- changes from 1.8.1 to 1.9 -->
+    <difference>
+        <className>org/camunda/dmn/DmnEngine</className>
+        <differenceType>7004</differenceType>
+        <method>DmnEngine(*</method>
+    </difference>
+    <difference>
+        <className>org/camunda/dmn/parser/DmnParser</className>
+        <differenceType>7004</differenceType>
+        <method>DmnParser(*</method>
+    </difference>
+    <difference>
+        <className>org/camunda/dmn/parser/ParsedDmn</className>
+        <differenceType>7004</differenceType>
+        <method>*</method>
+    </difference>
+    <difference>
+        <className>org/camunda/dmn/parser/ParsedBusinessKnowledgeModel</className>
+        <differenceType>2000</differenceType>
+    </difference>
+    <difference>
+        <className>org/camunda/dmn/parser/ParsedBusinessKnowledgeModel</className>
+        <differenceType>4001</differenceType>
+        <to>**</to>
+    </difference>
+    <difference>
+        <className>org/camunda/dmn/parser/ParsedDecision</className>
+        <differenceType>2000</differenceType>
+    </difference>
+    <difference>
+        <className>org/camunda/dmn/parser/ParsedDecision</className>
+        <differenceType>4001</differenceType>
+        <to>**</to>
+    </difference>
+    <!-- END changes from 1.8.1 to 1.9 -->
 </differences>
