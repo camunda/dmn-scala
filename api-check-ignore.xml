@@ -16,9 +16,9 @@
     </difference>
     <difference>
         <className>org/camunda/dmn/**</className>
-        <!-- method param type -->
+        <!-- ignore changes of internal classes -->
         <differenceType>7005</differenceType>
-        <method>*$anonfun*</method>
+        <method>*</method>
         <!--don't care what the type has changed to-->
         <from>*</from>
         <to>*</to>
@@ -42,5 +42,13 @@
         <!-- method removed -->
         <differenceType>7002</differenceType>
         <method>*</method>
+    </difference>
+    <difference>
+        <className>org/camunda/dmn/DmnEngine</className>
+        <!-- ignore change of internal field -->
+        <differenceType>7006</differenceType>
+        <method>org.camunda.feel.FeelEngine feelEngine()</method>
+        <from>*</from>
+        <to>*</to>
     </difference>
 </differences>
