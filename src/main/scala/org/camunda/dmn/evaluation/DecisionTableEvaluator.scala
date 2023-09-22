@@ -116,11 +116,11 @@ class DecisionTableEvaluator(
         evalInputEntry(entry, value)
           .flatMap { result =>
             result match {
-              case ValBoolean(false) => Right(false)
-              case ValBoolean(true)  => evalInputEntries(is)
+              case ValBoolean(true) => evalInputEntries(is)
+              case ValBoolean(false) | ValNull => Right(false)
               case other =>
                 Left(Failure(
-                  s"input entry must return true or false, but found '$other'"))
+                  s"input entry must return true, false, or null, but found '$other'"))
             }
           }
       }

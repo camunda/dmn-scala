@@ -50,7 +50,7 @@ class InvocationTest extends AnyFlatSpec with Matchers with DecisionTest {
     eval(discountDecision,
          "discount",
          Map("Customer" -> "Business", "OrderSize" -> "foo")) should be(
-      Failure("expected 'number' but found 'ValString(foo)'"))
+      Failure("expected 'number' but found '\"foo\"'"))
   }
 
   it should "fail if knowledge requirement is missing" in {

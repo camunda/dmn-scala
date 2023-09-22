@@ -96,11 +96,11 @@ class DmnEngineTest extends AnyFlatSpec with Matchers {
     val result = engine.eval(
       parsedDmn,
       "discount",
-      Map[String, Any]("customer" -> "Business", "orderSize" -> "foo"))
+      Map[String, Any]("customer" -> "Business", "orderSize" -> 9))
 
     result.isLeft should be(true)
     result.left.map(
-      _.failure.message should include("failed to evaluate expression '< 10'"))
+      _.failure.message should include("multiple values aren't allowed for UNIQUE hit policy"))
   }
 
   it should "report parse failures if expression language is set" in {
@@ -146,12 +146,12 @@ class DmnEngineTest extends AnyFlatSpec with Matchers {
     val result =
       engine.eval(parsedDmn,
         "discount",
-        Map("customer" -> "Business", "orderSize" -> "foo"))
+        Map("customer" -> "Business", "orderSize" -> 9))
 
     result.isLeft should be(true)
     result.left.map {
       case EvalFailure(failure, auditLog) =>
-        failure.message should include("failed to evaluate expression '< 10'")
+        failure.message should include("multiple values aren't allowed for UNIQUE hit policy")
 
         auditLog.dmn should be(parsedDmn)
         auditLog.entries.head.id should be("discount")
