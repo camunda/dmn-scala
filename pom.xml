@@ -16,7 +16,7 @@
 
   <properties>
     <feel.version>1.17.0</feel.version>
-    <camunda-model-api.version>7.19.0</camunda-model-api.version>
+    <camunda-model-api.version>7.20.0-alpha5</camunda-model-api.version>
     <version.java>11</version.java>
     <scala.version>2.13.12</scala.version>
     <scala.binary.version>2.13.6</scala.binary.version>
