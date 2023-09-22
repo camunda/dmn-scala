@@ -33,7 +33,7 @@ class LiteralExpressionTest
 
   it should "fail when result doesn't match type" in {
     eval(typeMismatch, "greeting", Map("name" -> "Frank")) should be(
-      Failure("expected 'number' but found 'ValString(Hello Frank)'"))
+      Failure("expected 'number' but found '\"Hello Frank\"'"))
   }
 
 }

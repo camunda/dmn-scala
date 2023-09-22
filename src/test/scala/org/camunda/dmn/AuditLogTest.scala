@@ -130,7 +130,7 @@ class AuditLogTest extends AnyFlatSpec with Matchers with DecisionTest {
     result.matchedRules(0).outputs(0).value should be(ValNumber(0.1))
 
     result.result should be(ValError(
-      "multiple values aren't allowed for UNIQUE hit policy. found: 'List(Map(discount -> ValNumber(0.1)), Map(discount -> ValNumber(0.15)))'"))
+      "multiple values aren't allowed for UNIQUE hit policy. found: 'List(Map(discount -> 0.1), Map(discount -> 0.15))'"))
   }
 
   it should "contains the result of a context" in {
