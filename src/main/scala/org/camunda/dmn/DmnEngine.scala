@@ -20,6 +20,7 @@ import java.util.ServiceLoader
 import org.camunda.dmn.Audit._
 import org.camunda.dmn.evaluation._
 import org.camunda.dmn.parser._
+import org.camunda.feel.api.FeelEngineBuilder
 import org.camunda.feel.{FeelEngine, FeelEngineClock}
 import org.camunda.feel.context.{CustomFunctionProvider, FunctionProvider}
 import org.camunda.feel.syntaxtree.{Val, ValError, ValNull}
@@ -145,17 +146,16 @@ class DmnEngine(configuration: DmnEngine.Configuration =
       s"audit-loggers: $auditLogListeners, " +
       s"configuration: $configuration]")
 
-  val feelEngine = new FeelEngine(
-    functionProvider = functionProvider,
-    valueMapper = ValueMapper.CompositeValueMapper(
-      List(new NoUnpackValueMapper(valueMapper))),
-    clock = clock
-  )
+  val feelEngine = FeelEngineBuilder()
+    .withFunctionProvider(functionProvider)
+    .withCustomValueMapper(new NoUnpackValueMapper(valueMapper))
+    .withClock(clock)
+    .build()
 
   val parser = new DmnParser(
     configuration = configuration,
-    feelParser = feelEngine.parseExpression(_).left.map(_.message),
-    feelUnaryTestsParser = feelEngine.parseUnaryTests(_).left.map(_.message)
+    feelParser = feelEngine.parseExpression(_).toEither.left.map(_.message),
+    feelUnaryTestsParser = feelEngine.parseUnaryTests(_).toEither.left.map(_.message)
   )
 
   val decisionEval = new DecisionEvaluator(eval = this.evalExpression,
