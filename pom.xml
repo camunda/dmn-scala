@@ -5,7 +5,7 @@
   <groupId>org.camunda.bpm.extension.dmn.scala</groupId>
   <artifactId>dmn-engine</artifactId>
   <name>DMN Scala Engine</name>
-  <version>1.8.2-SNAPSHOT</version>
+  <version>1.9.0-SNAPSHOT</version>
 
   <parent>
     <groupId>org.camunda</groupId>
@@ -374,7 +374,7 @@
     <connection>scm:git:git@github.com:camunda-community-hub/dmn-scala.git</connection>
     <url>scm:git:git@github.com:camunda-community-hub/dmn-scala.git</url>
     <developerConnection>scm:git:git@github.com:camunda-community-hub/dmn-scala.git</developerConnection>
-    <tag>1.0.0</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <distributionManagement>
