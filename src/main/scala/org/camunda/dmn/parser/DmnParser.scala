@@ -72,8 +72,7 @@ class DmnParser(
   configuration: Configuration,
   feelParser: String => Either[String, feel.syntaxtree.ParsedExpression],
   feelUnaryTestsParser: String => Either[String,
-    feel.syntaxtree.ParsedExpression],
-  dmnRepository: DmnRepository) {
+    feel.syntaxtree.ParsedExpression]) {
 
   import DmnParser._
 
@@ -147,8 +146,8 @@ class DmnParser(
 
         val parsedDmn = ParsedDmn(
           model = model,
-          decisions = ctx.decisions.values.filter(_.isEmbedded).map(_.resolve()),
-          bkms = ctx.bkms.values.filter(_.isEmbedded).map(_.resolve()),
+          decisions = ctx.decisions.values.collect{ case decision: ParsedDecision => decision },
+          bkms = ctx.bkms.values.collect { case bkm: ParsedBusinessKnowledgeModel => bkm },
           namespace = definitions.getNamespace)
 
         if (ctx.failures.isEmpty) {
@@ -315,11 +314,11 @@ class DmnParser(
     } else {
       ctx.importedModels
         .find(importedModel => reference.namespace == importedModel.namespace)
-        .map(importedModel => ImportedDecision(dmnRepository, reference.namespace, reference.id, Some(importedModel.name)))
+        .map(importedModel => ImportedDecision(reference.namespace, reference.id, importedModel.name))
         .getOrElse {
           val failure = Failure(s"No import found for namespace '${reference.namespace}'.")
           ctx.failures += failure
-          ParsedDecisionFailure(reference.id, reference.namespace, ExpressionFailure(failure.message))
+          ParsedDecisionFailure(reference.id, reference.namespace, failure.message)
         }
     }
   }
@@ -336,12 +335,11 @@ class DmnParser(
     } else {
       ctx.importedModels
         .find(importedModel => reference.namespace == importedModel.namespace)
-        .map(importedModel => ImportedBusinessKnowledgeModel(
-          dmnRepository, reference.namespace, reference.id, Some(importedModel.name)))
+        .map(importedModel => ImportedBusinessKnowledgeModel(reference.namespace, reference.id, importedModel.name))
         .getOrElse {
           val failure = Failure(s"No import found for namespace '${reference.namespace}'.")
           ctx.failures += failure
-          ParsedBusinessKnowledgeModelFailure(reference.id, reference.namespace, ExpressionFailure(failure.message))
+          ParsedBusinessKnowledgeModelFailure(reference.id, reference.namespace, failure.message)
         }
     }
   }
@@ -554,7 +552,7 @@ class DmnParser(
         ctx.bkms
           .get(expression)
           .map(bkmRef => {
-            ParsedInvocation(bindings, bkmRef.resolve())
+            ParsedInvocation(bindings, bkmRef)
           })
           .getOrElse {
             ctx.failures += Failure(s"no BKM found with name '$expression'")

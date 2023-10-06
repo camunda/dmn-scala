@@ -18,19 +18,14 @@ package org.camunda.dmn.evaluation
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
 import org.camunda.feel.syntaxtree.{Val, ValContext, ValFunction}
-import org.camunda.dmn.parser.{
-  ParsedBusinessKnowledgeModel,
-  ParsedBusinessKnowledgeModelReference,
-  ParsedDecision,
-  ParsedDecisionReference,
-  ParsedDecisionLogic,
-  ParsedDecisionLogicContainerReference}
+import org.camunda.dmn.parser.{DmnRepository, EmbeddedBusinessKnowledgeModel, EmbeddedDecision, ImportedBusinessKnowledgeModel, ImportedDecision, ParsedBusinessKnowledgeModel, ParsedBusinessKnowledgeModelFailure, ParsedBusinessKnowledgeModelReference, ParsedDecision, ParsedDecisionFailure, ParsedDecisionLogic, ParsedDecisionReference}
 import org.camunda.feel.context.Context.StaticContext
 
 class DecisionEvaluator(
     eval: (ParsedDecisionLogic, EvalContext) => Either[Failure, Val],
     evalBkm: (ParsedBusinessKnowledgeModel,
-              EvalContext) => Either[Failure, (String, ValFunction)]) {
+              EvalContext) => Either[Failure, (String, ValFunction)],
+    repository: DmnRepository) {
 
   def eval(decision: ParsedDecision,
            context: EvalContext): Either[Failure, Val] = {
@@ -67,34 +62,43 @@ class DecisionEvaluator(
   private def evalRequiredDecisions(
     requiredDecisions: Iterable[ParsedDecisionReference],
     context: EvalContext): Either[Failure, List[(String, Val)]] = {
-    mapEither(requiredDecisions,
-      (decisionRef: ParsedDecisionReference) => evalDecision(decisionRef.resolve(), context)
-      .map(maybeWrapResult(decisionRef, _)))
+    mapEither[ParsedDecisionReference, (String, Val)](requiredDecisions, {
+          case ImportedDecision(namespace, decisionId, importName) =>
+            repository.getDecision(namespace = namespace, decisionId = decisionId)
+              .flatMap(evalDecision(_, context))
+              .map { case (name, result) =>
+                importName -> ValContext(StaticContext(
+                  variables = Map(name -> result),
+                  functions = Map.empty
+                ))
+              }
+
+          case ParsedDecisionFailure(_, _, failureMessage) => Left(Failure(failureMessage))
+          case decision: EmbeddedDecision => evalDecision(decision, context)
+        }
+    )
   }
 
   private def evalRequiredKnowledge(
     requiredBkms: Iterable[ParsedBusinessKnowledgeModelReference],
     context: EvalContext): Either[Failure, List[(String, Val)]] = {
-    mapEither(requiredBkms,
-      (bkmRef: ParsedBusinessKnowledgeModelReference) => evalBkm(bkmRef.resolve(), context)
-        .map(maybeWrapResult(bkmRef, _)))
+    mapEither[ParsedBusinessKnowledgeModelReference, (String, Val)](requiredBkms, {
+          case ImportedBusinessKnowledgeModel(namespace, id, importName) =>
+            repository.getBusinessKnowledgeModel(namespace = namespace, bkmId = id)
+            .flatMap(evalBkm(_, context))
+            .map { case (name, resultFunction) =>
+              importName -> ValContext(
+                StaticContext(
+                  variables = Map.empty,
+                  functions = Map(name -> List(resultFunction))
+                )
+              )
+            }
+
+          case ParsedBusinessKnowledgeModelFailure(_, _, failureMessage) => Left(Failure(failureMessage))
+          case bkm: EmbeddedBusinessKnowledgeModel => evalBkm(bkm, context)
+        }
+    )
   }
 
-  private def maybeWrapResult(
-    reference: ParsedDecisionLogicContainerReference[_], result: (String, Val)) =
-    reference.importedModelName match {
-      case Some(importName) =>
-        val ctx = result._2 match {
-          case func: ValFunction => StaticContext(
-            variables = Map.empty,
-            functions = Map(result._1 -> List(func))
-          )
-          case _ => StaticContext(
-            variables = Map(result._1 -> result._2),
-            functions = Map.empty
-          )
-        }
-        importName -> ValContext(ctx)
-      case _ => result
-    }
 }

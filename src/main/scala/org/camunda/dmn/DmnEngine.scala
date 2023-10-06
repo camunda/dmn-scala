@@ -156,19 +156,21 @@ class DmnEngine(configuration: DmnEngine.Configuration =
   val parser = new DmnParser(
     configuration = configuration,
     feelParser = feelEngine.parseExpression(_).toEither.left.map(_.message),
-    feelUnaryTestsParser = feelEngine.parseUnaryTests(_).toEither.left.map(_.message),
-    dmnRepository = dmnRepository
+    feelUnaryTestsParser = feelEngine.parseUnaryTests(_).toEither.left.map(_.message)
   )
 
-  val decisionEval = new DecisionEvaluator(eval = this.evalExpression,
-                                           evalBkm = bkmEval.createFunction)
+  val decisionEval = new DecisionEvaluator(
+    eval = this.evalExpression,
+    evalBkm = bkmEval.createFunction,
+    repository = dmnRepository
+  )
 
   val literalExpressionEval = new LiteralExpressionEvaluator(feelEngine)
 
   val decisionTableEval = new DecisionTableEvaluator(
     literalExpressionEval.evalExpression)
 
-  val bkmEval = new BusinessKnowledgeEvaluator(this.evalExpression, valueMapper)
+  val bkmEval = new BusinessKnowledgeEvaluator(this.evalExpression, valueMapper, dmnRepository)
 
   val contextEval = new ContextEvaluator(this.evalExpression)
 
@@ -178,7 +180,9 @@ class DmnEngine(configuration: DmnEngine.Configuration =
 
   val invocationEval = new InvocationEvaluator(
     eval = literalExpressionEval.evalExpression,
-    evalBkm = bkmEval.eval)
+    evalBkm = bkmEval.eval,
+    repository = dmnRepository
+  )
 
   val functionDefinitionEval = new FunctionDefinitionEvaluator(
     literalExpressionEval.evalExpression)

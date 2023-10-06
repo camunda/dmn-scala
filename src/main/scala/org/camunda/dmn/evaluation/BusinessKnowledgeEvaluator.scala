@@ -17,21 +17,20 @@ package org.camunda.dmn.evaluation
 
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
-import org.camunda.dmn.parser.{
-  ParsedBusinessKnowledgeModel,
-  ParsedDecisionLogic
-}
+import org.camunda.dmn.parser.{DmnRepository, EmbeddedBusinessKnowledgeModel, ExpressionFailure, ImportedBusinessKnowledgeModel, ParsedBusinessKnowledgeModel, ParsedBusinessKnowledgeModelFailure, ParsedBusinessKnowledgeModelReference, ParsedDecisionLogic}
 import org.camunda.feel.syntaxtree.{Val, ValError, ValFunction}
 import org.camunda.feel.valuemapper.ValueMapper
 
 class BusinessKnowledgeEvaluator(
     eval: (ParsedDecisionLogic, EvalContext) => Either[Failure, Val],
-    valueMapper: ValueMapper) {
+    valueMapper: ValueMapper,
+    repository: DmnRepository) {
 
   def eval(bkm: ParsedBusinessKnowledgeModel,
            context: EvalContext): Either[Failure, Val] = {
 
-    evalRequiredKnowledge(bkm.requiredBkms.map(_.resolve()), context)
+    resolveRequiredBkms(bkm)
+      .flatMap(evalRequiredKnowledge(_, context))
       .flatMap(functions => {
 
         val evalContext =
@@ -43,11 +42,21 @@ class BusinessKnowledgeEvaluator(
       })
   }
 
+  private def resolveRequiredBkms(bkm: ParsedBusinessKnowledgeModel): Either[Failure, Iterable[ParsedBusinessKnowledgeModel]] = {
+    mapEither[ParsedBusinessKnowledgeModelReference, ParsedBusinessKnowledgeModel](bkm.requiredBkms, {
+      case ImportedBusinessKnowledgeModel(namespace, id, _) => repository.getBusinessKnowledgeModel(namespace = namespace, bkmId = id)
+      case ParsedBusinessKnowledgeModelFailure(_, _, failureMessage) => Left(Failure(failureMessage))
+      case bkm: EmbeddedBusinessKnowledgeModel => Right(bkm)
+    })
+  }
+
   def createFunction(
       bkm: ParsedBusinessKnowledgeModel,
       context: EvalContext): Either[Failure, (String, ValFunction)] = {
 
-    evalRequiredKnowledge(bkm.requiredBkms.map(_.resolve()), context).map(functions => {
+    resolveRequiredBkms(bkm)
+      .flatMap(evalRequiredKnowledge(_, context))
+      .map(functions => {
 
       val evalContext = context.copy(variables = context.variables ++ functions,
                                      currentElement = bkm)
