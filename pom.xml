@@ -15,7 +15,7 @@
   </parent>
 
   <properties>
-    <feel.version>1.18.0</feel.version>
+    <feel.version>1.18.1</feel.version>
     <camunda-model-api.version>7.21.0</camunda-model-api.version>
     <version.java>11</version.java>
     <scala.version>2.13.15</scala.version>
