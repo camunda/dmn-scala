@@ -17,17 +17,15 @@ package org.camunda.dmn.evaluation
 
 import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
-import org.camunda.feel.syntaxtree.{Val, ValFunction}
-import org.camunda.dmn.parser.{
-  ParsedDecision,
-  ParsedDecisionLogic,
-  ParsedBusinessKnowledgeModel
-}
+import org.camunda.feel.syntaxtree.{Val, ValContext, ValFunction}
+import org.camunda.dmn.parser.{DmnRepository, EmbeddedBusinessKnowledgeModel, EmbeddedDecision, ImportedBusinessKnowledgeModel, ImportedDecision, ParsedBusinessKnowledgeModel, ParsedBusinessKnowledgeModelFailure, ParsedBusinessKnowledgeModelReference, ParsedDecision, ParsedDecisionFailure, ParsedDecisionLogic, ParsedDecisionReference}
+import org.camunda.feel.context.Context.StaticContext
 
 class DecisionEvaluator(
     eval: (ParsedDecisionLogic, EvalContext) => Either[Failure, Val],
     evalBkm: (ParsedBusinessKnowledgeModel,
-              EvalContext) => Either[Failure, (String, ValFunction)]) {
+              EvalContext) => Either[Failure, (String, ValFunction)],
+    repository: DmnRepository) {
 
   def eval(decision: ParsedDecision,
            context: EvalContext): Either[Failure, Val] = {
@@ -46,8 +44,9 @@ class DecisionEvaluator(
           .flatMap(functions => {
 
             val decisionEvaluationContext = context.copy(
-              variables = context.variables ++ decisionResults ++ functions,
-              currentElement = decision)
+              variables = context.variables
+                ++ decisionResults ++ functions,
+                currentElement = decision)
 
             eval(decision.logic, decisionEvaluationContext)
               .flatMap(
@@ -61,17 +60,45 @@ class DecisionEvaluator(
   }
 
   private def evalRequiredDecisions(
-      requiredDecisions: Iterable[ParsedDecision],
-      context: EvalContext): Either[Failure, List[(String, Val)]] = {
-    mapEither(requiredDecisions,
-              (d: ParsedDecision) => evalDecision(d, context))
+    requiredDecisions: Iterable[ParsedDecisionReference],
+    context: EvalContext): Either[Failure, List[(String, Val)]] = {
+    mapEither[ParsedDecisionReference, (String, Val)](requiredDecisions, {
+          case ImportedDecision(namespace, decisionId, importName) =>
+            repository.getDecision(namespace = namespace, decisionId = decisionId)
+              .flatMap(evalDecision(_, context))
+              .map { case (name, result) =>
+                importName -> ValContext(StaticContext(
+                  variables = Map(name -> result),
+                  functions = Map.empty
+                ))
+              }
+
+          case ParsedDecisionFailure(_, _, failureMessage) => Left(Failure(failureMessage))
+          case decision: EmbeddedDecision => evalDecision(decision, context)
+        }
+    )
   }
 
   private def evalRequiredKnowledge(
-      requiredBkms: Iterable[ParsedBusinessKnowledgeModel],
-      context: EvalContext): Either[Failure, List[(String, ValFunction)]] = {
-    mapEither(requiredBkms,
-              (bkm: ParsedBusinessKnowledgeModel) => evalBkm(bkm, context))
+    requiredBkms: Iterable[ParsedBusinessKnowledgeModelReference],
+    context: EvalContext): Either[Failure, List[(String, Val)]] = {
+    mapEither[ParsedBusinessKnowledgeModelReference, (String, Val)](requiredBkms, {
+          case ImportedBusinessKnowledgeModel(namespace, id, importName) =>
+            repository.getBusinessKnowledgeModel(namespace = namespace, bkmId = id)
+            .flatMap(evalBkm(_, context))
+            .map { case (name, resultFunction) =>
+              importName -> ValContext(
+                StaticContext(
+                  variables = Map.empty,
+                  functions = Map(name -> List(resultFunction))
+                )
+              )
+            }
+
+          case ParsedBusinessKnowledgeModelFailure(_, _, failureMessage) => Left(Failure(failureMessage))
+          case bkm: EmbeddedBusinessKnowledgeModel => evalBkm(bkm, context)
+        }
+    )
   }
 
 }
