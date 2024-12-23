@@ -139,7 +139,7 @@ class DmnEngine(configuration: DmnEngine.Configuration =
   private val valueMapper = loadValueMapper()
   private val functionProvider = loadFunctionProvider()
 
-  logger.info(
+  logger.debug(
     s"DMN-Engine created. [" +
       s"value-mapper: $valueMapper, " +
       s"function-provider: $functionProvider, " +
