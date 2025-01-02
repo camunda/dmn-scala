@@ -132,7 +132,8 @@ object DmnEngine {
 class DmnEngine(configuration: DmnEngine.Configuration =
                   DmnEngine.Configuration(),
                 auditLogListeners: List[AuditLogListener] = List.empty,
-                clock: FeelEngineClock = FeelEngineClock.SystemClock) {
+                clock: FeelEngineClock = FeelEngineClock.SystemClock,
+                dmnRepository: DmnRepository = StatelessDmnRepository) {
 
   import DmnEngine._
 
@@ -158,15 +159,18 @@ class DmnEngine(configuration: DmnEngine.Configuration =
     feelUnaryTestsParser = feelEngine.parseUnaryTests(_).toEither.left.map(_.message)
   )
 
-  val decisionEval = new DecisionEvaluator(eval = this.evalExpression,
-                                           evalBkm = bkmEval.createFunction)
+  val decisionEval = new DecisionEvaluator(
+    eval = this.evalExpression,
+    evalBkm = bkmEval.createFunction,
+    repository = dmnRepository
+  )
 
   val literalExpressionEval = new LiteralExpressionEvaluator(feelEngine)
 
   val decisionTableEval = new DecisionTableEvaluator(
     literalExpressionEval.evalExpression)
 
-  val bkmEval = new BusinessKnowledgeEvaluator(this.evalExpression, valueMapper)
+  val bkmEval = new BusinessKnowledgeEvaluator(this.evalExpression, valueMapper, dmnRepository)
 
   val contextEval = new ContextEvaluator(this.evalExpression)
 
@@ -176,7 +180,9 @@ class DmnEngine(configuration: DmnEngine.Configuration =
 
   val invocationEval = new InvocationEvaluator(
     eval = literalExpressionEval.evalExpression,
-    evalBkm = bkmEval.eval)
+    evalBkm = bkmEval.eval,
+    repository = dmnRepository
+  )
 
   val functionDefinitionEval = new FunctionDefinitionEvaluator(
     literalExpressionEval.evalExpression)
@@ -196,7 +202,10 @@ class DmnEngine(configuration: DmnEngine.Configuration =
   }
 
   def parse(stream: InputStream): Either[Failure, ParsedDmn] =
-    parser.parse(stream)
+    parser.parse(stream).map { parsedDmn =>
+      dmnRepository.put(parsedDmn)
+      parsedDmn
+    }
 
   def eval(dmn: ParsedDmn,
            decisionId: String,
