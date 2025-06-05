@@ -335,7 +335,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
-        <version>3.6.0</version>
+        <version>3.6.1</version>
         <executions>
           <!-- Attaches the dependency BOM to the Maven build so
             that it can be consumed as a Maven artifact in the license book
