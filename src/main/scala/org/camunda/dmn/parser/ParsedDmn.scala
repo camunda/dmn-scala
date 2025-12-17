@@ -22,7 +22,9 @@ import org.camunda.bpm.model.dmn.BuiltinAggregator
 import org.camunda.feel
 
 case class ParsedDmn(model: DmnModelInstance,
-                     decisions: Iterable[ParsedDecision]) {
+                     decisions: Iterable[ParsedDecision],
+                     bkms: Iterable[ParsedBusinessKnowledgeModel],
+                     namespace: String) {
 
   val decisionsById: Map[String, ParsedDecision] =
     decisions.map(d => d.id -> d).toMap
@@ -49,27 +51,80 @@ sealed trait ParsedDecisionLogicContainer {
   val logic: ParsedDecisionLogic
 }
 
-case class ParsedDecision(id: String,
-                          name: String,
-                          logic: ParsedDecisionLogic,
-                          resultName: String,
-                          resultType: Option[String],
-                          requiredDecisions: Iterable[ParsedDecision],
-                          requiredBkms: Iterable[ParsedBusinessKnowledgeModel])
-    extends ParsedDecisionLogicContainer
+trait ParsedDecision extends ParsedDecisionLogicContainer {
+  val resultName: String
+  val resultType: Option[String]
+  val requiredDecisions: Iterable[ParsedDecisionReference]
+  val requiredBkms: Iterable[ParsedBusinessKnowledgeModelReference]
+}
 
-case class ParsedBusinessKnowledgeModel(
-    id: String,
-    name: String,
-    logic: ParsedDecisionLogic,
-    parameters: Iterable[(String, String)],
-    requiredBkms: Iterable[ParsedBusinessKnowledgeModel])
-    extends ParsedDecisionLogicContainer
+trait ParsedDecisionReference {
+  def isEmbedded: Boolean
+
+  def isImported: Boolean = !isEmbedded
+}
+
+case class EmbeddedDecision(
+  id: String,
+  name: String,
+  logic: ParsedDecisionLogic,
+  resultName: String,
+  resultType: Option[String],
+  requiredDecisions: Iterable[ParsedDecisionReference],
+  requiredBkms: Iterable[ParsedBusinessKnowledgeModelReference]
+) extends ParsedDecision with ParsedDecisionReference {
+
+  override def isEmbedded: Boolean = true
+}
+
+case class ImportedDecision(namespace: String, id: String, importedModelName: String) extends ParsedDecisionReference {
+
+  override def isEmbedded: Boolean = false
+
+}
+
+sealed trait ParsedBusinessKnowledgeModel extends ParsedDecisionLogicContainer {
+  val parameters: Iterable[(String, String)]
+  val requiredBkms: Iterable[ParsedBusinessKnowledgeModelReference]
+}
+
+trait ParsedBusinessKnowledgeModelReference {
+  def isEmbedded: Boolean
+
+  def isImported: Boolean = !isEmbedded
+}
+
+
+case class EmbeddedBusinessKnowledgeModel(
+  id: String,
+  name: String,
+  logic: ParsedDecisionLogic,
+  parameters: Iterable[(String, String)],
+  requiredBkms: Iterable[ParsedBusinessKnowledgeModelReference]) extends
+ParsedBusinessKnowledgeModel with ParsedBusinessKnowledgeModelReference {
+
+  override def isEmbedded: Boolean = true
+}
+
+case class ImportedBusinessKnowledgeModel(namespace: String, id: String, importedModelName: String) extends ParsedBusinessKnowledgeModelReference {
+
+  override def isEmbedded: Boolean = false
+}
+
+case class ParsedBusinessKnowledgeModelFailure(id: String, namespace: String, failureMessage: String)
+ extends ParsedBusinessKnowledgeModelReference {
+  override def isEmbedded: Boolean = false
+}
+
+case class ParsedDecisionFailure(id: String, namespace: String, failureMessage: String)
+  extends ParsedDecisionReference {
+  override def isEmbedded: Boolean = false
+}
 
 sealed trait ParsedDecisionLogic
 
 case class ParsedInvocation(bindings: Iterable[(String, ParsedExpression)],
-                            invocation: ParsedBusinessKnowledgeModel)
+                            invocation: ParsedBusinessKnowledgeModelReference)
     extends ParsedDecisionLogic
 
 case class ParsedContext(entries: Iterable[(String, ParsedDecisionLogic)],
