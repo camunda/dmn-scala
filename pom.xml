@@ -18,7 +18,7 @@
     <feel.version>1.20.0</feel.version>
     <camunda-model-api.version>7.24.0</camunda-model-api.version>
     <version.java>11</version.java>
-    <scala.version>2.13.18</scala.version>
+    <scala.version>3.8.0</scala.version>
     <scala.binary.version>2.13.6</scala.binary.version>
     <log4j.version>2.25.3</log4j.version>
     <encoding>UTF-8</encoding>
