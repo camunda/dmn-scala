@@ -22,26 +22,46 @@ jobs:
         key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
         restore-keys: |
           ${{ runner.os }}-maven-
+    - name: Import Secrets
+      id: secrets
+      uses: hashicorp/vault-action@v3.4.0
+      with:
+        url: ${{ secrets.VAULT_ADDR }}
+        method: approle
+        roleId: ${{ secrets.VAULT_ROLE_ID }}
+        secretId: ${{ secrets.VAULT_SECRET_ID }}
+        exportEnv: false
+        secrets: |
+          secret/data/github.com/organizations/camunda-community-hub MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC ;
+          secret/data/github.com/organizations/camunda-community-hub MAVEN_CENTRAL_GPG_PASSPHRASE ;
+          secret/data/github.com/organizations/camunda-community-hub NEXUS_USR ;
+          secret/data/github.com/organizations/camunda-community-hub NEXUS_PSW ;
+          secret/data/github.com/organizations/camunda-community-hub COMMUNITY_HUB_MAVEN_CENTRAL_CP_USR ;
+          secret/data/github.com/organizations/camunda-community-hub COMMUNITY_HUB_MAVEN_CENTRAL_CP_PSW ;
+          secret/data/github.com/organizations/camunda-community-hub COMMUNITY_HUB_MAVEN_CENTRAL_OSS_USR ;
+          secret/data/github.com/organizations/camunda-community-hub COMMUNITY_HUB_MAVEN_CENTRAL_OSS_PSW
     - name: Set up Java environment
       uses: actions/setup-java@v5
+      env:
+        MAVEN_CENTRAL_GPG_PASSPHRASE: ${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_PASSPHRASE }}
       with:
         distribution: 'temurin'
         java-version: 11
-        gpg-private-key: ${{ secrets.MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC }}
+        gpg-private-key: ${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC }}
         gpg-passphrase: MAVEN_CENTRAL_GPG_PASSPHRASE
     - name: Deploy SNAPSHOT / Release
       uses: camunda-community-hub/community-action-maven-release@v2
       with:
         release-version: ${{ github.event.release.tag_name }}
-        nexus-usr: ${{ secrets.NEXUS_USR }}
-        nexus-psw: ${{ secrets.NEXUS_PSW }}
-        sonatype-central-portal-usr: ${{ secrets.COMMUNITY_HUB_MAVEN_CENTRAL_CP_USR }}
-        sonatype-central-portal-psw: ${{ secrets.COMMUNITY_HUB_MAVEN_CENTRAL_CP_PSW }}
+        nexus-usr: ${{ steps.secrets.outputs.NEXUS_USR }}
+        nexus-psw: ${{ steps.secrets.outputs.NEXUS_PSW }}
+        sonatype-central-portal-usr: ${{ steps.secrets.outputs.COMMUNITY_HUB_MAVEN_CENTRAL_CP_USR }}
+        sonatype-central-portal-psw: ${{ steps.secrets.outputs.COMMUNITY_HUB_MAVEN_CENTRAL_CP_PSW }}
         # maven-usr, maven-psw and maven-url are deprecated; they are required only for publishing to the legacy OSS Sonatype repository.
         # Once the io.zeebe namespace is migrated to the Sonatype Central Portal, these can be safely removed.
-        maven-usr: ${{ secrets.COMMUNITY_HUB_MAVEN_CENTRAL_OSS_USR }}
-        maven-psw: ${{ secrets.COMMUNITY_HUB_MAVEN_CENTRAL_OSS_PSW }}
-        maven-gpg-passphrase: ${{ secrets.MAVEN_CENTRAL_GPG_SIGNING_KEY_PASSPHRASE }}
+        maven-usr: ${{ steps.secrets.outputs.COMMUNITY_HUB_MAVEN_CENTRAL_OSS_USR }}
+        maven-psw: ${{ steps.secrets.outputs.COMMUNITY_HUB_MAVEN_CENTRAL_OSS_PSW }}
+        maven-gpg-passphrase: ${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_PASSPHRASE }}
         github-token: ${{ secrets.GITHUB_TOKEN }}
         maven-auto-release-after-close: true
       id: release
