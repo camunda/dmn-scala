@@ -19,7 +19,7 @@ import java.io.InputStream
 import org.camunda.dmn.logger
 import org.camunda.bpm.model.dmn._
 import org.camunda.bpm.model.dmn.impl.DmnModelConstants
-import org.camunda.bpm.model.dmn.instance.{BusinessKnowledgeModel, Column, Context, Decision, DecisionTable, DrgElement, Expression, FunctionDefinition, InformationItem, Invocation, ItemDefinition, LiteralExpression, Relation, UnaryTests, List => DmnList}
+import org.camunda.bpm.model.dmn.instance.{BusinessKnowledgeModel, Column, Context, Decision, DecisionService, DecisionTable, DrgElement, Expression, FunctionDefinition, InformationItem, Invocation, ItemDefinition, LiteralExpression, Relation, UnaryTests, List => DmnList}
 import org.camunda.dmn.DmnEngine.{Configuration, Failure}
 import org.camunda.feel
 
@@ -57,6 +57,7 @@ class DmnParser(
 
     val decisions = mutable.Map[String, ParsedDecision]()
     val bkms = mutable.Map[String, ParsedBusinessKnowledgeModel]()
+    val decisionServices = mutable.Map[String, ParsedDecisionService]()
 
     val failures = mutable.ListBuffer[Failure]()
   }
@@ -93,18 +94,23 @@ class DmnParser(
     checkForCyclicDependencies(drgElements) match {
       case Left(failure) => Left(List(failure))
       case _ =>
-        val decisions = drgElements.collect { case d: Decision => d }
+        val decisions = model.getModelElementsByType(classOf[Decision]).asScala
+        val decisionServices =
+          model.getModelElementsByType(classOf[DecisionService]).asScala
 
         decisions.foreach(d =>
           ctx.decisions.getOrElseUpdate(d.getId, parseDecision(d)(ctx)))
 
+        decisionServices.foreach(d =>
+          ctx.decisionServices.getOrElseUpdate(d.getId, parseDecisionService(d)(ctx)))
+
         if (ctx.failures.isEmpty) {
-          Right(ParsedDmn(model, ctx.decisions.values))
+          Right(ParsedDmn(model, ctx.decisions.values, ctx.decisionServices.values))
 
         } else if (configuration.lazyEvaluation) {
           logger.warn("Parsing the DMN reported the following failures:\n{}",
             ctx.failures.map(_.message).mkString("\n"))
-          Right(ParsedDmn(model, ctx.decisions.values))
+          Right(ParsedDmn(model, ctx.decisions.values, ctx.decisionServices.values))
         } else {
           Left(ctx.failures)
         }
@@ -269,6 +275,23 @@ class DmnParser(
       }
   }
 
+  private def parseDecisionService(decisionService: DecisionService)(
+      implicit
+      ctx: ParsingContext): ParsedDecisionService = {
+
+    val outputDecisions = decisionService.getOutputDecisions.asScala
+      .map(d => ctx.decisions.getOrElseUpdate(d.getId, parseDecision(d)))
+
+    val encapsulatedDecisions = decisionService.getEncapsulatedDecisions.asScala
+      .map(d => ctx.decisions.getOrElseUpdate(d.getId, parseDecision(d)))
+
+    ParsedDecisionService(
+      id = decisionService.getId,
+      name = decisionService.getName,
+      outputDecisions = outputDecisions,
+      encapsulatedDecisions = encapsulatedDecisions)
+  }
+
   private def parseDecisionTable(decisionTable: DecisionTable)(
       implicit
       ctx: ParsingContext): ParsedDecisionTable = {
@@ -428,15 +451,27 @@ class DmnParser(
 
     invocation.getExpression match {
       case lt: LiteralExpression => {
-        val expression = lt.getText.getTextContent
+        val expression = lt.getText.getTextContent.trim
 
         ctx.bkms
           .get(expression)
           .map(bkm => {
             ParsedInvocation(bindings, bkm)
           })
+          .orElse(
+            ctx.decisionServices
+              .get(expression)
+              .map(decisionService => ParsedInvocation(bindings, decisionService)))
+          .orElse(
+            findDecisionServiceByName(expression)
+              .map(decisionService =>
+                ParsedInvocation(bindings,
+                                 ctx.decisionServices.getOrElseUpdate(
+                                   decisionService.getId,
+                                   parseDecisionService(decisionService)))))
           .getOrElse {
-            ctx.failures += Failure(s"no BKM found with name '$expression'")
+            ctx.failures += Failure(
+              s"no BKM or decision service found with name '$expression'")
             ParsingFailure
           }
       }
@@ -591,6 +626,12 @@ class DmnParser(
     namesToEscape.toList.distinct
       .sortBy(_.length)
       .reverse
+  }
+
+  private def findDecisionServiceByName(name: String)(
+      implicit ctx: ParsingContext): Option[DecisionService] = {
+    ctx.model.getModelElementsByType(classOf[DecisionService]).asScala
+      .find(_.getName == name)
   }
 
 }

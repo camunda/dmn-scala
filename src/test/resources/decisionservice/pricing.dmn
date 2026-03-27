@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" id="definitions_decision_service" name="definitions" namespace="https://camunda.org/schema/1.0/dmn">
+  <inputData id="input_amount" name="Amount">
+    <variable id="input_amount_var" name="Amount" typeRef="number"/>
+  </inputData>
+
+  <decision id="decision_taxRate" name="TaxRate">
+    <variable id="decision_taxRate_var" name="TaxRate" typeRef="number"/>
+    <literalExpression id="literal_taxRate">
+      <text>if Amount &gt; 100 then 0.2 else 0.1</text>
+    </literalExpression>
+  </decision>
+
+  <decision id="decision_total" name="Total">
+    <variable id="decision_total_var" name="Total" typeRef="number"/>
+    <informationRequirement>
+      <requiredDecision href="#decision_taxRate"/>
+    </informationRequirement>
+    <literalExpression id="literal_total">
+      <text>Amount + (Amount * TaxRate)</text>
+    </literalExpression>
+  </decision>
+
+  <decisionService id="decision_service_pricing" name="Pricing Service">
+    <outputDecision href="#decision_total"/>
+    <encapsulatedDecision href="#decision_taxRate"/>
+  </decisionService>
+
+  <decision id="decision_internal_call" name="Internal Call">
+    <variable id="decision_internal_call_var" name="Result" typeRef="number"/>
+    <invocation>
+      <literalExpression id="literal_service_name">
+        <text>Pricing Service</text>
+      </literalExpression>
+      <binding>
+        <parameter name="Amount"/>
+        <literalExpression id="literal_binding_amount">
+          <text>BaseAmount</text>
+        </literalExpression>
+      </binding>
+    </invocation>
+  </decision>
+</definitions>
