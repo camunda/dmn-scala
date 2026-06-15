@@ -55,7 +55,7 @@ class DmnVersionCompatibilityTest
   }
 
   it should "evaluate a DMN 1.5 decision" in {
-    eval(dmn1_4_decision, "greeting", Map("name" -> "DMN")) should be(
+    eval(dmn1_5_decision, "greeting", Map("name" -> "DMN")) should be(
       "Hello DMN")
   }
 
