@@ -36,7 +36,7 @@ object DmnParser {
     DmnModelConstants.FEEL12_NS,
     DmnModelConstants.FEEL13_NS,
     DmnModelConstants.FEEL14_NS,
-    DmnModelConstants.DMN15_NS
+    DmnModelConstants.FEEL15_NS
   ).map(_.toLowerCase())
 }
 
