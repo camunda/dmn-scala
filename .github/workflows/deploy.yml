@@ -53,7 +53,7 @@ jobs:
       run: |
         echo -n "${{ steps.secrets.outputs.MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC }}" \
           | base64 --decode \
-          | gpg -q --allow-secret-key-import --import --no-tty --batch --yes
+          | gpg -q --import --no-tty --batch --yes
     - name: Deploy SNAPSHOT / Release
       uses: camunda-community-hub/community-action-maven-release@v2
       with:
