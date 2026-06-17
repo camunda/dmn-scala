@@ -10,7 +10,7 @@
   <parent>
     <groupId>org.camunda</groupId>
     <artifactId>camunda-release-parent</artifactId>
-    <version>3.9.1</version>
+    <version>4.1.1</version>
     <relativePath />
   </parent>
 
@@ -140,7 +140,7 @@
       <plugin>
         <groupId>net.alchim31.maven</groupId>
         <artifactId>scala-maven-plugin</artifactId>
-        <version>4.9.2</version>
+        <version>4.9.10</version>
         <configuration>
           <scalaCompatVersion>${scala.binary.version}</scalaCompatVersion>
           <scalaVersion>${scala.version}</scalaVersion>
@@ -174,7 +174,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.5.2</version>
+        <version>3.5.6</version>
         <configuration>
           <skipTests>true</skipTests>
         </configuration>
@@ -220,7 +220,7 @@
       <plugin>
         <groupId>com.mycila</groupId>
         <artifactId>license-maven-plugin</artifactId>
-        <version>4.6</version>
+        <version>5.0.0</version>
         <configuration>
           <header>${license.header}</header>
           <properties>
@@ -277,7 +277,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.8.1</version>
+        <version>3.11.0</version>
         <executions>
           <execution>
             <id>list-deps</id>
@@ -298,7 +298,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
-        <version>3.1.0</version>
+        <version>3.2.0</version>
         <executions>
           <!-- Reformats the dependency list:
             - into a plain list (no header line, no indentation)
@@ -335,7 +335,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
-        <version>3.6.0</version>
+        <version>3.6.1</version>
         <executions>
           <!-- Attaches the dependency BOM to the Maven build so
             that it can be consumed as a Maven artifact in the license book
