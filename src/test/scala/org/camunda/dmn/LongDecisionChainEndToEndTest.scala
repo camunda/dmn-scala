@@ -27,7 +27,7 @@ class LongDecisionChainEndToEndTest extends AnyFlatSpec with Matchers with Decis
   // -> decisionN): deploy (parse), then evaluate, exactly as reported. Kept
   // at the same, smaller count as LongDecisionChainParsingTest (not the
   // evaluator's 10,000) since parsing here goes through the same O(n^2)
-  // cycle-detection walk on an acyclic chain — see Task 4's note.
+  // cycle-detection walk (DmnParser.hasDependencyCycle) on an acyclic chain.
   private val decisionCount = 3000
 
   "A deployed long decision chain" should "parse and evaluate successfully end to end" in {

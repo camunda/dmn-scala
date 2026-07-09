@@ -49,10 +49,14 @@ object FunctionalHelper {
   def mapEitherTailRec[T, R](
       it: Iterable[T],
       f: T => TailRec[Either[Failure, R]]): TailRec[Either[Failure, List[R]]] = {
+    // Accumulate by prepending (O(1) per element) and reverse once at the
+    // end, rather than appending with `:+` (O(n) per element, O(n^2) total)
+    // — this helper is meant to support large traversals, so it should stay
+    // linear in `it`.
     foldEitherTailRec[T, List[R]](List(), it, {
       case (xs, x) =>
-        tailcall(f(x)).map(_.map(xs :+ _))
-    })
+        tailcall(f(x)).map(_.map(_ :: xs))
+    }).map(_.map(_.reverse))
   }
 
   def foldEitherTailRec[T, R](
