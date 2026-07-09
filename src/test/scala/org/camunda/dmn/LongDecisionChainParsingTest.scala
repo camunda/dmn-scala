@@ -28,9 +28,11 @@ class LongDecisionChainParsingTest
     with StackSizeTestSupport {
 
   // Deliberately much smaller than the evaluator test's 10,000: the parser's
-  // cycle-detection walk is O(n^2) on an acyclic chain once trampolined (see
-  // the note above this task), so this only needs to be large enough to
-  // reliably overflow a small stack pre-fix, not to stress-test throughput.
+  // cycle-detection walk (DmnParser.hasDependencyCycle) is O(n^2) on an
+  // acyclic chain once trampolined, since `.exists` runs a full DFS from
+  // every start node when none of them find a cycle. This only needs to be
+  // large enough to reliably overflow a small stack pre-fix, not to
+  // stress-test throughput.
   private val decisionCount = 3000
 
   "The DMN parser" should "parse a long chain of acyclic decisions without a StackOverflowError" in {
