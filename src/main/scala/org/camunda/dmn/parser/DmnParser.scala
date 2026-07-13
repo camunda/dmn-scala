@@ -23,7 +23,7 @@ import org.camunda.bpm.model.dmn.instance.{BusinessKnowledgeModel, Column, Conte
 import org.camunda.dmn.DmnEngine.{Configuration, Failure}
 import org.camunda.feel
 
-import scala.annotation.tailrec
+import scala.util.control.TailCalls._
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.util.Try
@@ -164,17 +164,46 @@ class DmnParser(
   private def hasDependencyCycle(visit: String,
                         visited: Set[String],
                         dependencies: Map[String, Iterable[String]]): Boolean = {
+    hasDependencyCycleTailRec(visit, visited, dependencies).result
+  }
+
+  // Trampolined via TailCalls: this DFS walk recurses one frame per edge
+  // followed, which overflows the JVM stack for long decision/BKM chains
+  // even when they are acyclic (camunda/dmn-scala#335).
+  private def hasDependencyCycleTailRec(
+      visit: String,
+      visited: Set[String],
+      dependencies: Map[String, Iterable[String]]): TailRec[Boolean] = {
     if (visited.contains(visit)) {
-      true
+      done(true)
     } else {
-      dependencies.getOrElse(visit, Nil).exists(dependency =>
-        hasDependencyCycle(
-          visit = dependency,
-          visited = visited + visit,
-          dependencies = dependencies
-        )
-      )
+      existsTailRec(
+        dependencies.getOrElse(visit, Nil),
+        (dependency: String) =>
+          tailcall(
+            hasDependencyCycleTailRec(
+              visit = dependency,
+              visited = visited + visit,
+              dependencies = dependencies
+            )))
     }
+  }
+
+  private def existsTailRec[T](it: Iterable[T],
+                               f: T => TailRec[Boolean]): TailRec[Boolean] = {
+    val iterator = it.iterator
+
+    def loop(): TailRec[Boolean] = {
+      if (!iterator.hasNext) {
+        done(false)
+      } else {
+        tailcall(f(iterator.next())).flatMap { found =>
+          if (found) done(true) else loop()
+        }
+      }
+    }
+
+    loop()
   }
 
   private def parseDecision(decision: Decision)(

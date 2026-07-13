@@ -24,6 +24,8 @@ import org.camunda.dmn.parser.{
   ParsedBusinessKnowledgeModel
 }
 
+import scala.util.control.TailCalls._
+
 class DecisionEvaluator(
     eval: (ParsedDecisionLogic, EvalContext) => Either[Failure, Val],
     evalBkm: (ParsedBusinessKnowledgeModel,
@@ -32,16 +34,20 @@ class DecisionEvaluator(
   def eval(decision: ParsedDecision,
            context: EvalContext): Either[Failure, Val] = {
 
-    evalDecision(decision, context)
+    evalDecision(decision, context).result
       .map { case (name, result) => result }
   }
 
+  // Trampolined via TailCalls: evalDecision <-> evalRequiredDecisions is
+  // mutually recursive with depth equal to the length of the decision
+  // requirements chain, which can be in the thousands. Ordinary recursion
+  // here overflows the JVM stack (camunda/dmn-scala#335).
   private def evalDecision(
       decision: ParsedDecision,
-      context: EvalContext): Either[Failure, (String, Val)] = {
+      context: EvalContext): TailRec[Either[Failure, (String, Val)]] = {
 
-    evalRequiredDecisions(decision.requiredDecisions, context)
-      .flatMap(decisionResults => {
+    tailcall(evalRequiredDecisions(decision.requiredDecisions, context))
+      .map(_.flatMap(decisionResults => {
         evalRequiredKnowledge(decision.requiredBkms, context)
           .flatMap(functions => {
 
@@ -57,14 +63,14 @@ class DecisionEvaluator(
                     .getOrElse(Right(result)))
               .map(decision.resultName -> _)
           })
-      })
+      }))
   }
 
   private def evalRequiredDecisions(
       requiredDecisions: Iterable[ParsedDecision],
-      context: EvalContext): Either[Failure, List[(String, Val)]] = {
-    mapEither(requiredDecisions,
-              (d: ParsedDecision) => evalDecision(d, context))
+      context: EvalContext): TailRec[Either[Failure, List[(String, Val)]]] = {
+    mapEitherTailRec(requiredDecisions,
+                     (d: ParsedDecision) => evalDecision(d, context))
   }
 
   private def evalRequiredKnowledge(
