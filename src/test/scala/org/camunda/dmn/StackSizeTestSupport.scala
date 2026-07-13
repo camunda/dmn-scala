@@ -23,25 +23,32 @@ trait StackSizeTestSupport {
   // whether a StackOverflowError is thrown does not depend on the JVM's or
   // CI runner's default thread stack size.
   def runWithStackSize[T](stackSizeBytes: Long)(body: => T): T = {
-    @volatile var outcome: Either[Throwable, T] = null
+    @volatile var outcome: Option[Either[Throwable, T]] = None
 
     val thread = new Thread(
       null,
       () => {
-        outcome = try {
+        outcome = Some(try {
           Right(body)
         } catch {
           case t: Throwable => Left(t)
-        }
+        })
       },
       "stack-size-test-thread",
       stackSizeBytes
     )
 
     thread.start()
-    thread.join()
+    try {
+      thread.join()
+    } catch {
+      case _: InterruptedException =>
+        Thread.currentThread().interrupt()
+        throw new RuntimeException("interrupted while waiting for stack-size test thread")
+    }
 
-    outcome match {
+    outcome.getOrElse(
+      Left(new IllegalStateException("thread completed without setting outcome"))) match {
       case Right(value) => value
       case Left(error)  => throw error
     }

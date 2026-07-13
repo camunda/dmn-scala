@@ -23,7 +23,6 @@ import org.camunda.bpm.model.dmn.instance.{BusinessKnowledgeModel, Column, Conte
 import org.camunda.dmn.DmnEngine.{Configuration, Failure}
 import org.camunda.feel
 
-import scala.annotation.tailrec
 import scala.util.control.TailCalls._
 import scala.collection.JavaConverters._
 import scala.collection.mutable
