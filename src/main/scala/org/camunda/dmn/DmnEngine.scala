@@ -176,7 +176,7 @@ class DmnEngine(configuration: DmnEngine.Configuration =
 
   val invocationEval = new InvocationEvaluator(
     eval = literalExpressionEval.evalExpression,
-    evalBkm = bkmEval.eval)
+    evalInvocable = evalInvocable)
 
   val functionDefinitionEval = new FunctionDefinitionEvaluator(
     literalExpressionEval.evalExpression)
@@ -228,6 +228,36 @@ class DmnEngine(configuration: DmnEngine.Configuration =
           )))
   }
 
+  def evalDecisionService(dmn: ParsedDmn,
+                          decisionServiceId: String,
+                          variables: Map[String, Any]): DecisionResult = {
+    dmn.decisionServicesById
+      .get(decisionServiceId)
+      .map(decisionService => evalDecisionService(dmn, decisionService, variables))
+      .getOrElse(
+        Left(
+          EvalFailure(
+            failure = Failure(
+              s"no decision service found with id '$decisionServiceId'"),
+            auditLog = AuditLog(dmn = dmn, entries = List.empty)
+          )))
+  }
+
+  def evalDecisionServiceByName(dmn: ParsedDmn,
+                                decisionServiceName: String,
+                                variables: Map[String, Any]): DecisionResult = {
+    dmn.decisionServicesByName
+      .get(decisionServiceName)
+      .map(decisionService => evalDecisionService(dmn, decisionService, variables))
+      .getOrElse(
+        Left(
+          EvalFailure(
+            failure = Failure(
+              s"no decision service found with name '$decisionServiceName'"),
+            auditLog = AuditLog(dmn = dmn, entries = List.empty)
+          )))
+  }
+
   ///// Java public API
 
   @deprecated(message = "The DMN should be parsed before evaluating it",
@@ -248,12 +278,53 @@ class DmnEngine(configuration: DmnEngine.Configuration =
                  variables: java.util.Map[String, Object]): DecisionResult =
     evalByName(dmn, decisionName, variables.asScala.toMap)
 
+  def evalDecisionService(
+      dmn: ParsedDmn,
+      decisionServiceId: String,
+      variables: java.util.Map[String, Object]): DecisionResult =
+    evalDecisionService(dmn, decisionServiceId, variables.asScala.toMap)
+
+  def evalDecisionServiceByName(
+      dmn: ParsedDmn,
+      decisionServiceName: String,
+      variables: java.util.Map[String, Object]): DecisionResult =
+    evalDecisionServiceByName(dmn, decisionServiceName, variables.asScala.toMap)
+
   ///// internal
 
   private def evalDecision(decision: ParsedDecision,
                            context: EvalContext): DecisionResult = {
 
     val result = decisionEval.eval(decision, context)
+    toResult(result, context)
+  }
+
+  private def evalDecisionService(dmn: ParsedDmn,
+                                  decisionService: ParsedDecisionService,
+                                  variables: Map[String, Any]): DecisionResult = {
+    decisionService.outputDecisions.headOption
+      .map(outputDecision =>
+        evalDecisionService(decisionService,
+                            EvalContext(dmn, variables, outputDecision)))
+      .getOrElse {
+        Left(
+          EvalFailure(
+            failure = Failure(
+              s"decision service '${decisionService.name}' has no output decision"),
+            auditLog = AuditLog(dmn = dmn, entries = List.empty)
+          ))
+      }
+  }
+
+  private def evalDecisionService(decisionService: ParsedDecisionService,
+                                  context: EvalContext): DecisionResult = {
+
+    val result = evalDecisionServiceOutput(decisionService, context)
+    toResult(result, context)
+  }
+
+  private def toResult(result: Either[Failure, Val],
+                       context: EvalContext): DecisionResult = {
     val auditLog = AuditLog(context.dmn, context.auditLog.toList)
 
     result match {
@@ -270,6 +341,46 @@ class DmnEngine(configuration: DmnEngine.Configuration =
       }
       .left
       .map(failure => EvalFailure(failure, auditLog))
+  }
+
+  private def evalDecisionServiceOutput(
+      decisionService: ParsedDecisionService,
+      context: EvalContext): Either[Failure, Val] = {
+
+    if (decisionService.outputDecisions.isEmpty) {
+      Left(Failure(
+        s"decision service '${decisionService.name}' has no output decision"))
+    } else {
+      val results = decisionService.outputDecisions
+        .map(d => decisionEval.eval(d, context).map(d.resultName -> _))
+
+      val evaluated = results.foldLeft(Right(List.empty[(String, Val)]): Either[Failure, List[(String, Val)]]) {
+        case (acc, next) =>
+          for {
+            values <- acc
+            value <- next
+          } yield values :+ value
+      }
+
+      evaluated.map(values => {
+        if (values.size == 1) {
+          values.head._2
+        } else {
+          valueMapper.toVal(values.map {
+            case (key, value) => key -> valueMapper.unpackVal(value)
+          }.toMap)
+        }
+      })
+    }
+  }
+
+  private def evalInvocable(invocable: ParsedInvocable,
+                            context: EvalContext): Either[Failure, Val] = {
+    invocable match {
+      case bkm: ParsedBusinessKnowledgeModel => bkmEval.eval(bkm, context)
+      case decisionService: ParsedDecisionService =>
+        evalDecisionServiceOutput(decisionService, context)
+    }
   }
 
   private def evalExpression(expression: ParsedDecisionLogic,
