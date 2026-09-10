@@ -58,7 +58,8 @@ class InvocationTest extends AnyFlatSpec with Matchers with DecisionTest {
 
     result.isLeft should be(true)
     result.left.map(
-      _.message should be("no BKM found with name 'Discount table'"))
+      _.message should be(
+        "no BKM or decision service found with name 'Discount table'"))
   }
 
 }

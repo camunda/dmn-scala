@@ -22,12 +22,18 @@ import org.camunda.bpm.model.dmn.BuiltinAggregator
 import org.camunda.feel
 
 case class ParsedDmn(model: DmnModelInstance,
-                     decisions: Iterable[ParsedDecision]) {
+                     decisions: Iterable[ParsedDecision],
+                     decisionServices: Iterable[ParsedDecisionService]) {
 
   val decisionsById: Map[String, ParsedDecision] =
     decisions.map(d => d.id -> d).toMap
   val decisionsByName: Map[String, ParsedDecision] =
     decisions.map(d => d.name -> d).toMap
+
+    val decisionServicesById: Map[String, ParsedDecisionService] =
+        decisionServices.map(d => d.id -> d).toMap
+    val decisionServicesByName: Map[String, ParsedDecisionService] =
+        decisionServices.map(d => d.name -> d).toMap
 }
 
 // ---------------
@@ -49,6 +55,11 @@ sealed trait ParsedDecisionLogicContainer {
   val logic: ParsedDecisionLogic
 }
 
+sealed trait ParsedInvocable {
+    val id: String
+    val name: String
+}
+
 case class ParsedDecision(id: String,
                           name: String,
                           logic: ParsedDecisionLogic,
@@ -65,11 +76,19 @@ case class ParsedBusinessKnowledgeModel(
     parameters: Iterable[(String, String)],
     requiredBkms: Iterable[ParsedBusinessKnowledgeModel])
     extends ParsedDecisionLogicContainer
+    with ParsedInvocable
+
+case class ParsedDecisionService(
+    id: String,
+    name: String,
+    outputDecisions: Iterable[ParsedDecision],
+    encapsulatedDecisions: Iterable[ParsedDecision])
+    extends ParsedInvocable
 
 sealed trait ParsedDecisionLogic
 
 case class ParsedInvocation(bindings: Iterable[(String, ParsedExpression)],
-                            invocation: ParsedBusinessKnowledgeModel)
+                            invocation: ParsedInvocable)
     extends ParsedDecisionLogic
 
 case class ParsedContext(entries: Iterable[(String, ParsedDecisionLogic)],
