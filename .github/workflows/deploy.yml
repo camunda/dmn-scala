@@ -13,6 +13,9 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # community-action-maven-release creates a GitHub release; upload-release-asset attaches artifacts
+      id-token: write  # mint GitHub OIDC token for Vault JWT auth
     steps:
     - uses: actions/checkout@v5
     - name: Cache
@@ -24,12 +27,13 @@ jobs:
           ${{ runner.os }}-maven-
     - name: Import Secrets
       id: secrets
-      uses: hashicorp/vault-action@v3.4.0
+      uses: hashicorp/vault-action@892a26828f195e65540a40b4768ae4571f51ebfc  # v4.0.0
       with:
         url: ${{ secrets.VAULT_ADDR }}
-        method: approle
-        roleId: ${{ secrets.VAULT_ROLE_ID }}
-        secretId: ${{ secrets.VAULT_SECRET_ID }}
+        method: jwt
+        role: ${{ secrets.VAULT_JWT_ROLE }}
+        path: ${{ secrets.VAULT_JWT_PATH }}
+        jwtGithubAudience: ${{ secrets.VAULT_JWT_AUDIENCE }}
         exportEnv: false
         secrets: |
           secret/data/github.com/organizations/camunda-community-hub MAVEN_CENTRAL_GPG_SIGNING_KEY_SEC ;
