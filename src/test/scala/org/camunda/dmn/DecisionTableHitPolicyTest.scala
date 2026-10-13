@@ -15,6 +15,8 @@
  */
 package org.camunda.dmn
 
+import org.camunda.dmn.Audit.DecisionTableEvaluationResult
+import org.camunda.dmn.DmnEngine.Failure
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -207,6 +209,36 @@ class DecisionTableHitPolicyTest
                       "typeOfCustomer" -> "Wholesaler")
 
     eval(specialDiscountDecision, "specialDiscount", context) should be(10)
+  }
+
+  it should "return null if no rule matches" in {
+    val context = Map("typeOfOrder" -> "Web",
+                      "customerLocation" -> "US",
+                      "typeOfCustomer" -> "Other")
+
+    eval(specialDiscountDecision, "specialDiscount", context) should be(None)
+  }
+
+  it should "contain only the first matching rule in the audit log" in {
+    // both the rule for "Non-US" and the rule for "Retailer" match
+    val context = Map("typeOfOrder" -> "Web",
+                      "customerLocation" -> "Non-US",
+                      "typeOfCustomer" -> "Retailer")
+
+    eval(specialDiscountDecision, "specialDiscount", context) should be(0)
+
+    val result = auditLog.entries.head.result
+      .asInstanceOf[DecisionTableEvaluationResult]
+    result.matchedRules.map(_.rule.id) should be(List("row-723033347-16"))
+  }
+
+  it should "fail if a rule before the first matching rule fails to evaluate" in {
+    val decision =
+      parse("/decisiontable/first_with_failing_rule_before_match.dmn")
+
+    eval(decision, "decision", Map("amount" -> 10)) should be(
+      Failure(
+        "Assertion failure on evaluate the expression 'assert(?, false)': The condition is not fulfilled"))
   }
 
   "The decision table 'Holidays' (Collect-Sum)" should "return '30'" in {
