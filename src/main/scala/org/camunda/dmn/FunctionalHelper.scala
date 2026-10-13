@@ -23,10 +23,14 @@ object FunctionalHelper {
 
   def mapEither[T, R](it: Iterable[T],
                       f: T => Either[Failure, R]): Either[Failure, List[R]] = {
+    // Accumulate by prepending (O(1) per element) and reverse once at the
+    // end, rather than appending with `:+` (O(n) per element, O(n^2) total)
+    // — this is called with every rule of a decision table, which can have
+    // thousands of rules.
     foldEither[T, List[R]](List(), it, {
       case (xs, x) =>
-        f(x).map(xs :+ _)
-    })
+        f(x).map(_ :: xs)
+    }).map(_.reverse)
   }
 
   def foldEither[T, R](start: R,
