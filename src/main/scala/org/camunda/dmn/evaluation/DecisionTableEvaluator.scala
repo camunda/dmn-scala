@@ -57,21 +57,14 @@ class DecisionTableEvaluator(
       inputValues =>
         auditContext.inputValues = inputValues
 
-        checkRules(decisionTable.rules, inputValues)
-          .map(_.flatten)
+        findMatchingRules(decisionTable, inputValues)
           .flatMap {
             case Nil => {
               auditContext.matchedRules = Nil
 
               applyDefaultOutputEntries(decisionTable.outputs)
             }
-            case matchedRules => {
-              val rules = if (decisionTable.hitPolicy == HitPolicy.FIRST) {
-                List(matchedRules.head)
-              } else {
-                matchedRules
-              }
-
+            case rules => {
               evalOutputValues(rules).flatMap { values =>
                 auditContext.matchedRules = rules.zip(values)
 
@@ -95,14 +88,50 @@ class DecisionTableEvaluator(
     mapEither(inputs, (input: ParsedInput) => eval(input.expression, context))
   }
 
-  private def checkRules(rules: Iterable[ParsedRule], inputValues: List[Val])(
+  private def findMatchingRules(decisionTable: ParsedDecisionTable,
+                                inputValues: List[Val])(
       implicit
-      context: EvalContext): Either[Failure, List[Option[ParsedRule]]] = {
-    mapEither(rules, (rule: ParsedRule) => {
+      context: EvalContext): Either[Failure, List[ParsedRule]] = {
 
-      evalInputEntries(rule.inputEntries.zip(inputValues))
-        .map(isMet => if (isMet) Some(rule) else None)
-    })
+    decisionTable.hitPolicy match {
+      // Only the first matching rule (in rule order) is used, so the rules
+      // after it don't need to be checked.
+      case HitPolicy.FIRST =>
+        findFirstMatchingRule(decisionTable.rules, inputValues).map(_.toList)
+      case _ => findAllMatchingRules(decisionTable.rules, inputValues)
+    }
+  }
+
+  private def findFirstMatchingRule(
+      rules: Iterable[ParsedRule],
+      inputValues: List[Val])(
+      implicit
+      context: EvalContext): Either[Failure, Option[ParsedRule]] = {
+
+    // The iterator checks the rules lazily, so the search stops at the first
+    // matching rule, or at the first failure.
+    rules.iterator
+      .map(rule => checkRule(rule, inputValues))
+      .find {
+        case Right(None) => false
+        case _           => true
+      }
+      .getOrElse(Right(None))
+  }
+
+  private def findAllMatchingRules(rules: Iterable[ParsedRule],
+                                   inputValues: List[Val])(
+      implicit
+      context: EvalContext): Either[Failure, List[ParsedRule]] = {
+    mapEither(rules, (rule: ParsedRule) => checkRule(rule, inputValues))
+      .map(_.flatten)
+  }
+
+  private def checkRule(rule: ParsedRule, inputValues: List[Val])(
+      implicit
+      context: EvalContext): Either[Failure, Option[ParsedRule]] = {
+    evalInputEntries(rule.inputEntries.zip(inputValues))
+      .map(isMet => Option.when(isMet)(rule))
   }
 
   private def evalInputEntries(inputEntries: Iterable[(ParsedExpression, Val)])(
