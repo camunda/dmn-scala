@@ -61,24 +61,24 @@ object TypeChecker {
             case v: ValDate => Right(v)
             case other      => Left(Failure(s"expected 'date' but found '$other'"))
           }
-        case "dateTime" =>
+        case "dateTime" | "date and time" =>
           value match {
             case v: ValDateTime      => Right(v)
             case v: ValLocalDateTime => Right(v)
             case other =>
-              Left(Failure(s"expected 'dateTime' but found '$other'"))
+              Left(Failure(s"expected '${`type`}' but found '$other'"))
           }
-        case "dayTimeDuration" =>
+        case "dayTimeDuration" | "days and time duration" =>
           value match {
             case v: ValDayTimeDuration => Right(v)
             case other =>
-              Left(Failure(s"expected 'dayTimeDuration' but found '$other'"))
+              Left(Failure(s"expected '${`type`}' but found '$other'"))
           }
-        case "yearMonthDuration" =>
+        case "yearMonthDuration" | "years and months duration" =>
           value match {
             case v: ValYearMonthDuration => Right(v)
             case other =>
-              Left(Failure(s"expected 'yearMonthDuration' but found '$other'"))
+              Left(Failure(s"expected '${`type`}' but found '$other'"))
           }
         case other => Right(value) // ignore
       }

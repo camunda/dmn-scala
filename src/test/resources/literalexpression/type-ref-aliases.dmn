@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="typeRefAliases" name="typeRefAliases"
+	namespace="https://github.com/camunda/dmn-scala"
+	xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
+	xmlns:feel="https://www.omg.org/spec/DMN/20191111/FEEL/">
+	<decision name="DateAndTime" id="dateAndTime">
+		<variable name="DateAndTime" typeRef="date and time"/>
+		<literalExpression>
+			<text>@"2022-01-01T10:00:00"</text>
+		</literalExpression>
+	</decision>
+	<decision name="YearsAndMonthsDuration" id="yearsAndMonthsDuration">
+		<variable name="YearsAndMonthsDuration" typeRef="years and months duration"/>
+		<literalExpression>
+			<text>@"P1Y2M"</text>
+		</literalExpression>
+	</decision>
+	<decision name="DaysAndTimeDuration" id="daysAndTimeDuration">
+		<variable name="DaysAndTimeDuration" typeRef="days and time duration"/>
+		<literalExpression>
+			<text>@"P1DT2H"</text>
+		</literalExpression>
+	</decision>
+	<decision name="DateAndTimeMismatch" id="dateAndTimeMismatch">
+		<variable name="DateAndTimeMismatch" typeRef="date and time"/>
+		<literalExpression>
+			<text>"not a date"</text>
+		</literalExpression>
+	</decision>
+</definitions>
