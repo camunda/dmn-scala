@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" id="definitions_first_failing_rule_before_match" name="definitions" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="decision" name="Decision">
+    <decisionTable id="decisionTable" hitPolicy="FIRST">
+      <input id="input1" label="Amount">
+        <inputExpression id="inputExpression1" typeRef="number">
+          <text>amount</text>
+        </inputExpression>
+      </input>
+      <output id="output1" label="Result" name="result" typeRef="string" />
+      <rule id="failing_rule">
+        <inputEntry id="UnaryTests_2">
+          <text>assert(?, false)</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_2">
+          <text>"unreachable"</text>
+        </outputEntry>
+      </rule>
+      <rule id="matching_rule">
+        <inputEntry id="UnaryTests_1">
+          <text>&gt;= 0</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1">
+          <text>"match"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>
