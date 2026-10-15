@@ -33,6 +33,9 @@
       Must be a pipe-separated (|) list of Maven scopes -->
     <third-party-bom-scopes>compile</third-party-bom-scopes>
 
+    <!-- Override the property to use a new plugin version -->
+    <plugin.version.central-publishing>0.12.0</plugin.version.central-publishing>
+
   </properties>
 
   <dependencyManagement>
