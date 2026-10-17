@@ -45,6 +45,11 @@ trait ConstantDecisionTableFixture extends DecisionTest {
       org.camunda.feel.syntaxtree.ParsedExpression(ConstBool(value),
                                                    value.toString))
 
+  // The input entry "-", which matches any input.
+  protected val anyInput: ParsedExpression =
+    FeelExpression(
+      org.camunda.feel.syntaxtree.ParsedExpression(ConstBool(true), "-"))
+
   protected def constant(value: Int): ParsedExpression =
     FeelExpression(
       org.camunda.feel.syntaxtree.ParsedExpression(ConstNumber(value),
@@ -56,12 +61,23 @@ trait ConstantDecisionTableFixture extends DecisionTest {
       ruleCount: Int,
       hitPolicy: HitPolicy,
       ruleMatches: Int => Boolean): ParsedDecisionTable =
+    decisionTableWithEntries(ruleCount,
+                             hitPolicy,
+                             i => List(constant(ruleMatches(i))))
+
+  // A decision table with one input per entry of `inputEntries(i)` and one
+  // output. Rule i has the input entries `inputEntries(i)` and outputs i.
+  protected def decisionTableWithEntries(
+      ruleCount: Int,
+      hitPolicy: HitPolicy,
+      inputEntries: Int => List[ParsedExpression]): ParsedDecisionTable =
     ParsedDecisionTable(
-      inputs = List(ParsedInput("input", "input", constant(1))),
+      inputs = inputEntries(0).indices.map(i =>
+        ParsedInput(s"input$i", s"input$i", constant(1))).toList,
       outputs = List(ParsedOutput("output", "output", "output", None, None)),
       rules = (0 until ruleCount).map { i =>
         ParsedRule(id = s"rule$i",
-                   inputEntries = List(constant(ruleMatches(i))),
+                   inputEntries = inputEntries(i),
                    outputEntries = List("output" -> constant(i)))
       }.toList,
       hitPolicy = hitPolicy,
