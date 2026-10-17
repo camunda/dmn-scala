@@ -164,6 +164,16 @@ class DecisionTableEvaluator(
       context: EvalContext): Either[Failure, Val] = entry match {
     case AnyInputEntry() => Right(ValBoolean(true))
     case _ =>
+      entry match {
+        case FeelExpression(parsed)
+            if !context.variables.contains(FeelEngine.UnaryTests.inputVariable) &&
+              !Thread.currentThread().isInterrupted =>
+          ConstantUnaryTests.evaluate(parsed.expression, inputValue) match {
+            case Some(result) => return Right(ValBoolean(result))
+            case None => ()
+          }
+        case _ => ()
+      }
       val variablesWithInput = context.variables + (FeelEngine.UnaryTests.defaultInputVariable -> inputValue)
 
       eval(entry, context.copy(variables = variablesWithInput))
