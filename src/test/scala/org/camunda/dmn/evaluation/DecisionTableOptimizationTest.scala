@@ -39,7 +39,7 @@ class DecisionTableOptimizationTest extends AnyFlatSpec with Matchers
                     aggregation: BuiltinAggregator = null): ParsedDecisionTable =
     ParsedDecisionTable(
       List(ParsedInput("input", "input", expression("value"))),
-      List(ParsedOutput("output", "output", "output", None, None)),
+      List(ParsedOutput("output", "output", "output", Some("1,0"), None)),
       tests.zipWithIndex.map { case (text, i) =>
         ParsedRule(s"rule$i", List(unary(text)), List("output" -> constant(i % 2)))
       }, policy, aggregation)
@@ -77,10 +77,11 @@ class DecisionTableOptimizationTest extends AnyFlatSpec with Matchers
   "Optimized decision tables" should "preserve hit policies, rule order and audit values" in {
     for {
       policy <- List(HitPolicy.FIRST, HitPolicy.UNIQUE, HitPolicy.ANY,
-        HitPolicy.RULE_ORDER, HitPolicy.COLLECT)
+        HitPolicy.RULE_ORDER, HitPolicy.COLLECT, HitPolicy.PRIORITY,
+        HitPolicy.OUTPUT_ORDER)
       value <- List[Any](1, 2, 3, 5, 8, null, "2", true)
     } {
-      equivalent(table(List("1,2", "[1..5]", "> 7", "-"), policy),
+      equivalent(table(List("1,2", "1,2", "[1..5]", "> 7", "-"), policy),
         Map("value" -> value))
     }
     for (aggregation <- List(BuiltinAggregator.MIN, BuiltinAggregator.MAX,
@@ -107,5 +108,37 @@ class DecisionTableOptimizationTest extends AnyFlatSpec with Matchers
     equivalent(table(List("1", "8", "-"), HitPolicy.FIRST), variables)
     run(table(List("1", "8", "-"), HitPolicy.FIRST), variables)._1 should be(
       Right(ValNumber(1)))
+  }
+
+  it should "not retain values between requests to the same parsed table" in {
+    val model = table(List("1,2", "1,2", "3", "-"), HitPolicy.RULE_ORDER)
+    for (value <- List[Any](1, 3, 8, null, "1", 2, 1)) {
+      equivalent(model, Map("value" -> value))
+    }
+  }
+
+  it should "preserve no-match and default-output behavior" in {
+    val model = table(List("1", "1"), HitPolicy.FIRST)
+    equivalent(model, Map("value" -> 9))
+    equivalent(model.copy(rules = Nil), Map("value" -> 9))
+    equivalent(model.copy(outputs = model.outputs.map(
+      _.copy(defaultValue = Some(expression("42"))))), Map("value" -> 9))
+  }
+
+  it should "isolate simultaneous evaluations of the same parsed model" in {
+    val executor = java.util.concurrent.Executors.newFixedThreadPool(4)
+    implicit val executionContext: scala.concurrent.ExecutionContext =
+      scala.concurrent.ExecutionContext.fromExecutorService(executor)
+    try {
+      val model = table(List("1,2", "1,2", "3", "-"), HitPolicy.RULE_ORDER)
+      val inputs = (0 until 24).map(i => Map[String, Any]("value" -> (i % 5)))
+      val expected = inputs.map(run(reference(model), _))
+      val evaluated = scala.concurrent.Future.sequence(
+        inputs.map(variables => scala.concurrent.Future(run(model, variables))))
+      scala.concurrent.Await.result(evaluated,
+        scala.concurrent.duration.Duration(10, "seconds")) should be(expected)
+    } finally {
+      executor.shutdownNow()
+    }
   }
 }
