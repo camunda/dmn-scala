@@ -49,6 +49,9 @@ import org.camunda.feel.context.Context.StaticContext
 class DecisionTableEvaluator(
     eval: (ParsedExpression, EvalContext) => Either[Failure, Val]) {
 
+  private type InputEntryCaches =
+    Array[java.util.IdentityHashMap[ParsedExpression, Val]]
+
   def eval(decisionTable: ParsedDecisionTable,
            context: EvalContext): Either[Failure, Val] = {
     implicit val ctx: EvalContext = context
@@ -95,6 +98,9 @@ class DecisionTableEvaluator(
       implicit
       context: EvalContext): Either[Failure, List[ParsedRule]] = {
 
+    // Each column has one fixed input value; cache only within this table evaluation.
+    implicit val caches: InputEntryCaches =
+      Array.fill(inputValues.size)(new java.util.IdentityHashMap[ParsedExpression, Val]())
     decisionTable.hitPolicy match {
       // Only the first matching rule (in rule order) is used, so the rules
       // after it don't need to be checked.
@@ -108,7 +114,8 @@ class DecisionTableEvaluator(
       rules: Iterable[ParsedRule],
       inputValues: List[Val])(
       implicit
-      context: EvalContext): Either[Failure, Option[ParsedRule]] = {
+      context: EvalContext,
+      caches: InputEntryCaches): Either[Failure, Option[ParsedRule]] = {
 
     // The iterator checks the rules lazily, so the search stops at the first
     // matching rule, or at the first failure.
@@ -124,30 +131,34 @@ class DecisionTableEvaluator(
   private def findAllMatchingRules(rules: Iterable[ParsedRule],
                                    inputValues: List[Val])(
       implicit
-      context: EvalContext): Either[Failure, List[ParsedRule]] = {
+      context: EvalContext,
+      caches: InputEntryCaches): Either[Failure, List[ParsedRule]] = {
     mapEither(rules, (rule: ParsedRule) => checkRule(rule, inputValues))
       .map(_.flatten)
   }
 
   private def checkRule(rule: ParsedRule, inputValues: List[Val])(
       implicit
-      context: EvalContext): Either[Failure, Option[ParsedRule]] = {
+      context: EvalContext,
+      caches: InputEntryCaches): Either[Failure, Option[ParsedRule]] = {
     evalInputEntries(rule.inputEntries.zip(inputValues))
       .map(isMet => Option.when(isMet)(rule))
   }
 
-  private def evalInputEntries(inputEntries: Iterable[(ParsedExpression, Val)])(
+  private def evalInputEntries(inputEntries: Iterable[(ParsedExpression, Val)],
+                               column: Int = 0)(
       implicit
-      context: EvalContext): Either[Failure, Boolean] = {
+      context: EvalContext,
+      caches: InputEntryCaches): Either[Failure, Boolean] = {
 
     inputEntries.toList match {
       case Nil => Right(true)
       case (entry, value) :: is => {
 
-        evalInputEntry(entry, value)
+        evalMemoized(entry, value, caches(column))
           .flatMap { result =>
             result match {
-              case ValBoolean(true) => evalInputEntries(is)
+              case ValBoolean(true) => evalInputEntries(is, column + 1)
               case ValBoolean(false) | ValNull => Right(false)
               case other =>
                 Left(Failure(
@@ -176,6 +187,30 @@ class DecisionTableEvaluator(
       val variablesWithInput = context.variables + (FeelEngine.UnaryTests.defaultInputVariable -> inputValue)
 
       eval(entry, context.copy(variables = variablesWithInput))
+  }
+
+  private def evalMemoized(
+      entry: ParsedExpression,
+      inputValue: Val,
+      cache: java.util.IdentityHashMap[ParsedExpression, Val])(
+      implicit context: EvalContext): Either[Failure, Val] = {
+    if (Thread.interrupted()) throw new InterruptedException()
+    val previous = cache.get(entry)
+    if (previous != null) Right(previous)
+    else {
+      val result = evalInputEntry(entry, inputValue)
+      val pure = entry match {
+        case FeelExpression(parsed)
+            if !context.variables.contains(FeelEngine.UnaryTests.inputVariable) =>
+          PureUnaryTests.isPure(parsed.expression)
+        case _ => false
+      }
+      if (pure) result match {
+        case Right(value @ ValBoolean(_)) => cache.put(entry, value)
+        case _ => ()
+      }
+      result
+    }
   }
 
   // The "-" input entry matches any input. Skip the FEEL engine for it, since
