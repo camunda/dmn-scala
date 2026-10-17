@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" id="any-input" name="any-input" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="decision" name="Decision">
+    <decisionTable id="decisionTable" hitPolicy="FIRST">
+      <input id="input1" label="Category">
+        <inputExpression id="inputExpression1" typeRef="string">
+          <text>category</text>
+        </inputExpression>
+      </input>
+      <input id="input2" label="Amount">
+        <inputExpression id="inputExpression2" typeRef="number">
+          <text>amount</text>
+        </inputExpression>
+      </input>
+      <output id="output1" name="result" typeRef="string" />
+      <rule id="rule1">
+        <inputEntry id="inputEntry11">
+          <text>"A"</text>
+        </inputEntry>
+        <inputEntry id="inputEntry12">
+          <text> - </text>
+        </inputEntry>
+        <outputEntry id="outputEntry1">
+          <text>"category A"</text>
+        </outputEntry>
+      </rule>
+      <rule id="rule2">
+        <inputEntry id="inputEntry21">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="inputEntry22">
+          <text>&gt; 10</text>
+        </inputEntry>
+        <outputEntry id="outputEntry2">
+          <text>"large amount"</text>
+        </outputEntry>
+      </rule>
+      <rule id="rule3">
+        <inputEntry id="inputEntry31">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="inputEntry32">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="outputEntry3">
+          <text>"any"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>
