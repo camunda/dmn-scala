@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" id="definitions_shared_required_decisions" name="definitions" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="D" name="D">
+    <variable id="variable_D" name="d" />
+    <literalExpression id="literalExpression_D">
+      <text>x + 1</text>
+    </literalExpression>
+  </decision>
+  <decision id="Single" name="Single">
+    <variable id="variable_Single" name="single" />
+    <informationRequirement id="requirement_Single_D">
+      <requiredDecision href="#D" />
+    </informationRequirement>
+    <literalExpression id="literalExpression_Single">
+      <text>d</text>
+    </literalExpression>
+  </decision>
+  <decision id="B" name="B">
+    <variable id="variable_B" name="b" />
+    <informationRequirement id="requirement_B_D">
+      <requiredDecision href="#D" />
+    </informationRequirement>
+    <literalExpression id="literalExpression_B">
+      <text>d * 2</text>
+    </literalExpression>
+  </decision>
+  <decision id="C" name="C">
+    <variable id="variable_C" name="c" />
+    <informationRequirement id="requirement_C_D">
+      <requiredDecision href="#D" />
+    </informationRequirement>
+    <literalExpression id="literalExpression_C">
+      <text>d * 3</text>
+    </literalExpression>
+  </decision>
+  <decision id="Diamond" name="Diamond">
+    <variable id="variable_Diamond" name="diamond" />
+    <informationRequirement id="requirement_Diamond_B">
+      <requiredDecision href="#B" />
+    </informationRequirement>
+    <informationRequirement id="requirement_Diamond_C">
+      <requiredDecision href="#C" />
+    </informationRequirement>
+    <literalExpression id="literalExpression_Diamond">
+      <text>b + c</text>
+    </literalExpression>
+  </decision>
+  <decision id="DiamondDirect" name="DiamondDirect">
+    <variable id="variable_DiamondDirect" name="diamondDirect" />
+    <informationRequirement id="requirement_DiamondDirect_B">
+      <requiredDecision href="#B" />
+    </informationRequirement>
+    <informationRequirement id="requirement_DiamondDirect_C">
+      <requiredDecision href="#C" />
+    </informationRequirement>
+    <informationRequirement id="requirement_DiamondDirect_D">
+      <requiredDecision href="#D" />
+    </informationRequirement>
+    <literalExpression id="literalExpression_DiamondDirect">
+      <text>b + c + d</text>
+    </literalExpression>
+  </decision>
+  <decision id="Y1" name="Y1">
+    <variable id="variable_Y1" name="y1" />
+    <informationRequirement id="requirement_Y1_D">
+      <requiredDecision href="#D" />
+    </informationRequirement>
+    <literalExpression id="literalExpression_Y1">
+      <text>d + 10</text>
+    </literalExpression>
+  </decision>
+  <decision id="Y2" name="Y2">
+    <variable id="variable_Y2" name="y2" />
+    <informationRequirement id="requirement_Y2_D">
+      <requiredDecision href="#D" />
+    </informationRequirement>
+    <literalExpression id="literalExpression_Y2">
+      <text>d + 20</text>
+    </literalExpression>
+  </decision>
+  <decision id="X1" name="X1">
+    <variable id="variable_X1" name="x1" />
+    <informationRequirement id="requirement_X1_Y1">
+      <requiredDecision href="#Y1" />
+    </informationRequirement>
+    <informationRequirement id="requirement_X1_Y2">
+      <requiredDecision href="#Y2" />
+    </informationRequirement>
+    <literalExpression id="literalExpression_X1">
+      <text>y1 + y2</text>
+    </literalExpression>
+  </decision>
+  <decision id="X2" name="X2">
+    <variable id="variable_X2" name="x2" />
+    <informationRequirement id="requirement_X2_Y1">
+      <requiredDecision href="#Y1" />
+    </informationRequirement>
+    <informationRequirement id="requirement_X2_Y2">
+      <requiredDecision href="#Y2" />
+    </informationRequirement>
+    <literalExpression id="literalExpression_X2">
+      <text>y1 * y2</text>
+    </literalExpression>
+  </decision>
+  <decision id="Top" name="Top">
+    <variable id="variable_Top" name="top" />
+    <informationRequirement id="requirement_Top_X1">
+      <requiredDecision href="#X1" />
+    </informationRequirement>
+    <informationRequirement id="requirement_Top_X2">
+      <requiredDecision href="#X2" />
+    </informationRequirement>
+    <literalExpression id="literalExpression_Top">
+      <text>x1 + x2</text>
+    </literalExpression>
+  </decision>
+  <decision id="F" name="F">
+    <variable id="variable_F" name="f" />
+    <literalExpression id="literalExpression_F">
+      <text>assert(x, x &gt; 0)</text>
+    </literalExpression>
+  </decision>
+  <decision id="FB" name="FB">
+    <variable id="variable_FB" name="fb" />
+    <informationRequirement id="requirement_FB_F">
+      <requiredDecision href="#F" />
+    </informationRequirement>
+    <literalExpression id="literalExpression_FB">
+      <text>f * 2</text>
+    </literalExpression>
+  </decision>
+  <decision id="FC" name="FC">
+    <variable id="variable_FC" name="fc" />
+    <informationRequirement id="requirement_FC_F">
+      <requiredDecision href="#F" />
+    </informationRequirement>
+    <literalExpression id="literalExpression_FC">
+      <text>f * 3</text>
+    </literalExpression>
+  </decision>
+  <decision id="FailingDiamond" name="FailingDiamond">
+    <variable id="variable_FailingDiamond" name="failingDiamond" />
+    <informationRequirement id="requirement_FailingDiamond_FB">
+      <requiredDecision href="#FB" />
+    </informationRequirement>
+    <informationRequirement id="requirement_FailingDiamond_FC">
+      <requiredDecision href="#FC" />
+    </informationRequirement>
+    <literalExpression id="literalExpression_FailingDiamond">
+      <text>fb + fc</text>
+    </literalExpression>
+  </decision>
+  <decision id="N" name="N">
+    <variable id="variable_N" name="n" />
+    <literalExpression id="literalExpression_N">
+      <text>null</text>
+    </literalExpression>
+  </decision>
+  <decision id="NB" name="NB">
+    <variable id="variable_NB" name="nb" />
+    <informationRequirement id="requirement_NB_N">
+      <requiredDecision href="#N" />
+    </informationRequirement>
+    <literalExpression id="literalExpression_NB">
+      <text>n = null</text>
+    </literalExpression>
+  </decision>
+  <decision id="NC" name="NC">
+    <variable id="variable_NC" name="nc" />
+    <informationRequirement id="requirement_NC_N">
+      <requiredDecision href="#N" />
+    </informationRequirement>
+    <literalExpression id="literalExpression_NC">
+      <text>n = null</text>
+    </literalExpression>
+  </decision>
+  <decision id="NullDiamond" name="NullDiamond">
+    <variable id="variable_NullDiamond" name="nullDiamond" />
+    <informationRequirement id="requirement_NullDiamond_NB">
+      <requiredDecision href="#NB" />
+    </informationRequirement>
+    <informationRequirement id="requirement_NullDiamond_NC">
+      <requiredDecision href="#NC" />
+    </informationRequirement>
+    <literalExpression id="literalExpression_NullDiamond">
+      <text>nb and nc</text>
+    </literalExpression>
+  </decision>
+  <decision id="ShadowX" name="ShadowX">
+    <variable id="variable_ShadowX" name="x" />
+    <literalExpression id="literalExpression_ShadowX">
+      <text>100</text>
+    </literalExpression>
+  </decision>
+  <decision id="Isolated" name="Isolated">
+    <variable id="variable_Isolated" name="isolated" />
+    <informationRequirement id="requirement_Isolated_ShadowX">
+      <requiredDecision href="#ShadowX" />
+    </informationRequirement>
+    <informationRequirement id="requirement_Isolated_C">
+      <requiredDecision href="#C" />
+    </informationRequirement>
+    <literalExpression id="literalExpression_Isolated">
+      <text>c</text>
+    </literalExpression>
+  </decision>
+</definitions>
