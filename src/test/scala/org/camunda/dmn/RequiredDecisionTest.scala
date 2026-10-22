@@ -33,4 +33,65 @@ class RequiredDecisionTest extends AnyFlatSpec with Matchers with DecisionTest {
   it should "evaluate multiple required decision" in {
     eval(applicantDataDecision, "income", Map()) should be(10000.00)
   }
+
+  // camunda/dmn-scala#394: a required decision that is reachable over
+  // multiple paths is evaluated only once per evaluation.
+  "A required decision" should "be evaluated once if it is required once" in {
+    eval(sharedRequiredDecisions, "Single", Map("x" -> 1)) should be(2)
+
+    evaluatedDecisions should be(List("D", "Single"))
+  }
+
+  it should "be evaluated once if it is required by sibling decisions" in {
+    eval(sharedRequiredDecisions, "Diamond", Map("x" -> 1)) should be(10)
+
+    evaluatedDecisions should be(List("D", "B", "C", "Diamond"))
+  }
+
+  it should "be evaluated once if it is also required directly" in {
+    eval(sharedRequiredDecisions, "DiamondDirect", Map("x" -> 1)) should be(12)
+
+    evaluatedDecisions should be(List("D", "B", "C", "DiamondDirect"))
+  }
+
+  it should "be evaluated once if it is reachable over many paths" in {
+    eval(sharedRequiredDecisions, "Top", Map("x" -> 1)) should be(298)
+
+    evaluatedDecisions should be(List("D", "Y1", "Y2", "X1", "X2", "Top"))
+  }
+
+  it should "not reuse results across evaluations" in {
+    eval(sharedRequiredDecisions, "Diamond", Map("x" -> 1)) should be(10)
+    eval(sharedRequiredDecisions, "Diamond", Map("x" -> 2)) should be(15)
+
+    evaluatedDecisions should be(List("D", "B", "C", "Diamond"))
+  }
+
+  it should "fail the evaluation if it fails, without evaluating it again" in {
+    eval(sharedRequiredDecisions, "FailingDiamond", Map("x" -> -1)) shouldBe a[
+      Failure]
+
+    evaluatedDecisions should be(List("F"))
+  }
+
+  it should "be evaluated once if its result is null" in {
+    eval(sharedRequiredDecisions, "NullDiamond", Map("x" -> 1)) should equal(
+      true)
+
+    evaluatedDecisions should be(List("N", "NB", "NC", "NullDiamond"))
+  }
+
+  // The reuse relies on this: a required decision only sees the input
+  // variables, not the results of the decisions evaluated before it.
+  it should "not see the results of sibling decisions" in {
+    // ShadowX's result is named "x", like the input variable that D reads
+    eval(sharedRequiredDecisions, "Isolated", Map("x" -> 1)) should be(6)
+
+    evaluatedDecisions should be(List("ShadowX", "D", "C", "Isolated"))
+  }
+
+  private lazy val sharedRequiredDecisions =
+    parse("/requirements/shared-required-decisions.dmn")
+
+  private def evaluatedDecisions: List[String] = auditLog.entries.map(_.id)
 }
