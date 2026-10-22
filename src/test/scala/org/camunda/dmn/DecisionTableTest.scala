@@ -61,10 +61,21 @@ class DecisionTableTest extends AnyFlatSpec with Matchers with DecisionTest {
   "A decision table with any-input entries" should "match any input value" in {
     eval(anyInputDecision, "decision", Map("category" -> "A", "amount" -> 5)) should be(
       "category A")
-    eval(anyInputDecision, "decision", Map("category" -> "B", "amount" -> 50)) should be(
+    eval(anyInputDecision, "decision", Map("category" -> "C", "amount" -> 50)) should be(
       "large amount")
-    eval(anyInputDecision, "decision", Map("category" -> "B", "amount" -> 5)) should be(
+    eval(anyInputDecision, "decision", Map("category" -> "C", "amount" -> 5)) should be(
       "any")
+  }
+
+  it should "match any input value for empty input entries" in {
+    eval(anyInputDecision, "decision", Map("category" -> "B", "amount" -> 50)) should be(
+      "category B")
+    eval(anyInputDecision, "decision", Map("category" -> "C", "amount" -> -1)) should be(
+      "negative amount")
+    eval(anyInputDecision, "decision", Map("category" -> "B", "amount" -> null)) should be(
+      "category B")
+    eval(anyInputDecision, "decision", Map("category" -> "B")) should be(
+      "category B")
   }
 
   it should "match a null input value" in {

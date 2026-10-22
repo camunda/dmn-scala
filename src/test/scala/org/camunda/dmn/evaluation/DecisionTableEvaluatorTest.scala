@@ -45,4 +45,15 @@ class DecisionTableEvaluatorTest
     evalDecisionTable(table, expressionEval) should be(Right(ValNumber(2)))
     expressionEval.evaluatedInputEntries should be(3)
   }
+
+  "A decision table with empty input entries" should "not evaluate them" in {
+    val table = decisionTableWithEntries(
+      ruleCount = 3,
+      HitPolicy.FIRST,
+      inputEntries = i => List(emptyInput, constant(i == 2), emptyInput))
+    val expressionEval = new ConstantExpressionEval
+
+    evalDecisionTable(table, expressionEval) should be(Right(ValNumber(2)))
+    expressionEval.evaluatedInputEntries should be(3)
+  }
 }

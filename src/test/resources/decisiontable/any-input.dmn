@@ -26,13 +26,13 @@
       </rule>
       <rule id="rule2">
         <inputEntry id="inputEntry21">
-          <text>-</text>
+          <text>"B"</text>
         </inputEntry>
         <inputEntry id="inputEntry22">
-          <text>&gt; 10</text>
+          <text></text>
         </inputEntry>
         <outputEntry id="outputEntry2">
-          <text>"large amount"</text>
+          <text>"category B"</text>
         </outputEntry>
       </rule>
       <rule id="rule3">
@@ -40,9 +40,31 @@
           <text>-</text>
         </inputEntry>
         <inputEntry id="inputEntry32">
-          <text>-</text>
+          <text>&gt; 10</text>
         </inputEntry>
         <outputEntry id="outputEntry3">
+          <text>"large amount"</text>
+        </outputEntry>
+      </rule>
+      <rule id="rule4">
+        <inputEntry id="inputEntry41">
+          <text />
+        </inputEntry>
+        <inputEntry id="inputEntry42">
+          <text>&lt; 0</text>
+        </inputEntry>
+        <outputEntry id="outputEntry4">
+          <text>"negative amount"</text>
+        </outputEntry>
+      </rule>
+      <rule id="rule5">
+        <inputEntry id="inputEntry51">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="inputEntry52">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="outputEntry5">
           <text>"any"</text>
         </outputEntry>
       </rule>

@@ -19,6 +19,7 @@ import org.camunda.bpm.model.dmn.HitPolicy
 import org.camunda.dmn.DecisionTest
 import org.camunda.dmn.DmnEngine.{EvalContext, Failure}
 import org.camunda.dmn.parser.{
+  EmptyExpression,
   FeelExpression,
   ParsedDecision,
   ParsedDecisionTable,
@@ -28,7 +29,14 @@ import org.camunda.dmn.parser.{
   ParsedOutput,
   ParsedRule
 }
-import org.camunda.feel.syntaxtree.{ConstBool, ConstNumber, Val, ValBoolean, ValNumber}
+import org.camunda.feel.syntaxtree.{
+  ConstBool,
+  ConstNumber,
+  UnaryTestExpression,
+  Val,
+  ValBoolean,
+  ValNumber
+}
 
 // Shared fixtures for camunda/camunda#62594, isolated from the FEEL engine:
 // every expression of the decision tables below is a constant, evaluated by
@@ -40,15 +48,22 @@ trait ConstantDecisionTableFixture extends DecisionTest {
   // irrelevant here.
   protected val dummyModel = parse("/decisiontable/discount.dmn").model
 
+  // An input entry that evaluates to `value`. It's wrapped in a unary test, as
+  // the FEEL parser does, since a top-level ConstBool(true) matches any input
+  // without being evaluated.
   protected def constant(value: Boolean): ParsedExpression =
     FeelExpression(
-      org.camunda.feel.syntaxtree.ParsedExpression(ConstBool(value),
-                                                   value.toString))
+      org.camunda.feel.syntaxtree.ParsedExpression(
+        UnaryTestExpression(ConstBool(value)),
+        value.toString))
 
   // The input entry "-", which matches any input.
   protected val anyInput: ParsedExpression =
     FeelExpression(
       org.camunda.feel.syntaxtree.ParsedExpression(ConstBool(true), "-"))
+
+  // An empty input entry, which also matches any input.
+  protected val emptyInput: ParsedExpression = EmptyExpression
 
   protected def constant(value: Int): ParsedExpression =
     FeelExpression(
@@ -96,7 +111,7 @@ trait ConstantDecisionTableFixture extends DecisionTest {
       expression match {
         case FeelExpression(parsed) =>
           parsed.expression match {
-            case ConstBool(value) =>
+            case UnaryTestExpression(ConstBool(value)) =>
               evaluatedInputEntries += 1
               Right(ValBoolean(value))
             case ConstNumber(value) => Right(ValNumber(value))

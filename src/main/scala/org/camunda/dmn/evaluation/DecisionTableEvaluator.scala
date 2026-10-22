@@ -31,6 +31,7 @@ import org.camunda.feel.syntaxtree.{
 }
 import org.camunda.bpm.model.dmn._
 import org.camunda.dmn.parser.{
+  EmptyExpression,
   FeelExpression,
   ParsedDecisionTable,
   ParsedExpression,
@@ -168,12 +169,13 @@ class DecisionTableEvaluator(
       eval(entry, context.copy(variables = variablesWithInput))
   }
 
-  // The "-" input entry matches any input. Skip the FEEL engine for it, since
-  // building the evaluation context dominates the cost of large tables.
+  // An empty input entry, or one that parses to ConstBool(true) (such as "-"),
+  // matches any input. Skip the FEEL engine for them, since building the
+  // evaluation context dominates the cost of large tables.
   private object AnyInputEntry {
     def unapply(entry: ParsedExpression): Boolean = entry match {
-      case FeelExpression(parsed) =>
-        parsed.expression == ConstBool(true) && parsed.text.trim == "-"
+      case EmptyExpression => true
+      case FeelExpression(parsed) => parsed.expression == ConstBool(true)
       case _ => false
     }
   }
