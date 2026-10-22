@@ -33,6 +33,7 @@ class DecisionTableTest extends AnyFlatSpec with Matchers with DecisionTest {
 
   lazy val routingRulesDecision = parse("/decisiontable/routingRules.dmn")
   lazy val holidaysDecision = parse("/decisiontable/holidays_output_order.dmn")
+  lazy val anyInputDecision = parse("/decisiontable/any-input.dmn")
 
   "A decision table with single output" should "return single value" in {
     eval(discountDecision,
@@ -55,6 +56,35 @@ class DecisionTableTest extends AnyFlatSpec with Matchers with DecisionTest {
     eval(discountWithDefaultOutputDecision,
          "discount",
          Map("customer" -> "Something else", "orderSize" -> 9)) should be(0.05)
+  }
+
+  "A decision table with any-input entries" should "match any input value" in {
+    eval(anyInputDecision, "decision", Map("category" -> "A", "amount" -> 5)) should be(
+      "category A")
+    eval(anyInputDecision, "decision", Map("category" -> "C", "amount" -> 50)) should be(
+      "large amount")
+    eval(anyInputDecision, "decision", Map("category" -> "C", "amount" -> 5)) should be(
+      "any")
+  }
+
+  it should "match any input value for empty input entries" in {
+    eval(anyInputDecision, "decision", Map("category" -> "B", "amount" -> 50)) should be(
+      "category B")
+    eval(anyInputDecision, "decision", Map("category" -> "C", "amount" -> -1)) should be(
+      "negative amount")
+    eval(anyInputDecision, "decision", Map("category" -> "B", "amount" -> null)) should be(
+      "category B")
+    eval(anyInputDecision, "decision", Map("category" -> "B")) should be(
+      "category B")
+  }
+
+  it should "match a null input value" in {
+    eval(anyInputDecision, "decision", Map("category" -> null, "amount" -> null)) should be(
+      "any")
+  }
+
+  it should "match a missing input value" in {
+    eval(anyInputDecision, "decision", Map[String, Any]()) should be("any")
   }
 
   "A decision table with multiple outputs" should "return single values" in {

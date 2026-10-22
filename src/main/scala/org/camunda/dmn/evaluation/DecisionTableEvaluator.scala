@@ -19,6 +19,7 @@ import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.FunctionalHelper._
 import org.camunda.feel._
 import org.camunda.feel.syntaxtree.{
+  ConstBool,
   Val,
   ValBoolean,
   ValContext,
@@ -30,6 +31,8 @@ import org.camunda.feel.syntaxtree.{
 }
 import org.camunda.bpm.model.dmn._
 import org.camunda.dmn.parser.{
+  EmptyExpression,
+  FeelExpression,
   ParsedDecisionTable,
   ParsedExpression,
   ParsedInput,
@@ -158,11 +161,23 @@ class DecisionTableEvaluator(
 
   private def evalInputEntry(entry: ParsedExpression, inputValue: Val)(
       implicit
-      context: EvalContext): Either[Failure, Val] = {
+      context: EvalContext): Either[Failure, Val] = entry match {
+    case AnyInputEntry() => Right(ValBoolean(true))
+    case _ =>
+      val variablesWithInput = context.variables + (FeelEngine.UnaryTests.defaultInputVariable -> inputValue)
 
-    val variablesWithInput = context.variables + (FeelEngine.UnaryTests.defaultInputVariable -> inputValue)
+      eval(entry, context.copy(variables = variablesWithInput))
+  }
 
-    eval(entry, context.copy(variables = variablesWithInput))
+  // An empty input entry, or one that parses to ConstBool(true) (such as "-"),
+  // matches any input. Skip the FEEL engine for them, since building the
+  // evaluation context dominates the cost of large tables.
+  private object AnyInputEntry {
+    def unapply(entry: ParsedExpression): Boolean = entry match {
+      case EmptyExpression => true
+      case FeelExpression(parsed) => parsed.expression == ConstBool(true)
+      case _ => false
+    }
   }
 
   private def applyDefaultOutputEntries(outputs: Iterable[ParsedOutput])(
