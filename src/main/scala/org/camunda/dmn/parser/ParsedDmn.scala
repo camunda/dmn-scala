@@ -21,6 +21,15 @@ import org.camunda.bpm.model.dmn.HitPolicy
 import org.camunda.bpm.model.dmn.BuiltinAggregator
 import org.camunda.feel
 
+/**
+  * The result of parsing a DMN resource.
+  *
+  * @param model the parsed DMN model. It holds the whole XML DOM, which is about 10 times the
+  *              size of the resource, and it isn't needed for evaluation. A caller that keeps the
+  *              parsed DMN, for example in a cache, can drop it with `copy(model = null)`, so the
+  *              model can be garbage collected.
+  * @param decisions the parsed decisions
+  */
 case class ParsedDmn(model: DmnModelInstance,
                      decisions: Iterable[ParsedDecision]) {
 
