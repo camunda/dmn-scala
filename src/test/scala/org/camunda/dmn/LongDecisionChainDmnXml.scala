@@ -19,7 +19,7 @@ object LongDecisionChainDmnXml {
 
   // Builds a linear, acyclic DRG: d0 -> d1 -> ... -> d(n-1), where d(n-1) = 1
   // and each d(i) = d(i+1) + 1. Mirrors the shape from camunda/dmn-scala#335.
-  def chainDmnXml(decisionCount: Int): String = {
+  def chainDmnXml(decisionCount: Int, requiredDecisionsFirst: Boolean = false): String = {
     val decisions = (0 until decisionCount)
       .map { i =>
         if (i == decisionCount - 1) {
@@ -38,13 +38,14 @@ object LongDecisionChainDmnXml {
              |</decision>""".stripMargin
         }
       }
-      .mkString("\n")
+    val ordered = if (requiredDecisionsFirst) decisions.reverse else decisions
+    val xmlDecisions = ordered.mkString("\n")
 
     s"""<?xml version="1.0" encoding="UTF-8"?>
        |<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
        |id="Definitions_chain" name="Chain"
        |namespace="http://camunda.org/schema/1.0/dmn">
-       |$decisions
+       |$xmlDecisions
        |</definitions>""".stripMargin
   }
 }

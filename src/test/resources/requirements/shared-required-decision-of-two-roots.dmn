@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" id="defs" name="DRD" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="first" name="first">
+    <variable id="v_first" name="first" />
+    <informationRequirement id="ir_first_shared"><requiredDecision href="#shared" /></informationRequirement>
+    <informationRequirement id="iri_first"><requiredInput href="#offset" /></informationRequirement>
+    <literalExpression id="le_first"><text>shared + offset</text></literalExpression>
+  </decision>
+  <decision id="second" name="second">
+    <variable id="v_second" name="second" />
+    <informationRequirement id="ir_second_shared"><requiredDecision href="#shared" /></informationRequirement>
+    <literalExpression id="le_second"><text>shared * 10</text></literalExpression>
+  </decision>
+  <decision id="shared" name="shared">
+    <variable id="v_shared" name="shared" />
+    <informationRequirement id="iri_shared"><requiredInput href="#base" /></informationRequirement>
+    <literalExpression id="le_shared"><text>base + 1</text></literalExpression>
+  </decision>
+  <inputData id="offset" name="offset"><variable id="v_offset" name="offset" /></inputData>
+  <inputData id="base" name="base"><variable id="v_base" name="base" /></inputData>
+</definitions>
