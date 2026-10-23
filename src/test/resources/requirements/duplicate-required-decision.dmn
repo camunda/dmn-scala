@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" id="defs" name="DRD" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="root" name="root">
+    <variable id="v_root" name="root" />
+    <informationRequirement id="ir_root_shared"><requiredDecision href="#shared" /></informationRequirement>
+    <informationRequirement id="ir_root_shared_2"><requiredDecision href="#shared" /></informationRequirement>
+    <literalExpression id="le_root"><text>shared + 1</text></literalExpression>
+  </decision>
+  <decision id="shared" name="shared">
+    <variable id="v_shared" name="shared" />
+    <literalExpression id="le_shared"><text>1</text></literalExpression>
+  </decision>
+</definitions>
