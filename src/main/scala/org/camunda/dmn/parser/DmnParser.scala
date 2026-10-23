@@ -163,12 +163,7 @@ class DmnParser(
   }
 
   private def hasCyclicDependenciesInDecisions(decisions: Iterable[Decision]): Boolean = {
-    val dependencies = decisions.map { decision =>
-      val requiredDecisions = decision.getInformationRequirements.asScala
-        .flatMap(requirement => Option(requirement.getRequiredDecision).map(_.getId))
-
-      decision.getId -> requiredDecisions
-    }.toMap
+    val dependencies = decisions.map(decision => decision.getId -> requiredDecisionIds(decision)).toMap
 
     decisions.exists(decision =>
       hasDependencyCycle(
