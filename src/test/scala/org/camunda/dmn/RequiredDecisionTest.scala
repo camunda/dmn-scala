@@ -16,8 +16,11 @@
 package org.camunda.dmn
 
 import org.camunda.dmn.DmnEngine._
+import org.camunda.dmn.parser.ParsedDmn
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+
+import java.lang.ref.WeakReference
 
 class RequiredDecisionTest extends AnyFlatSpec with Matchers with DecisionTest {
 
@@ -32,6 +35,13 @@ class RequiredDecisionTest extends AnyFlatSpec with Matchers with DecisionTest {
 
   it should "evaluate multiple required decision" in {
     eval(applicantDataDecision, "income", Map()) should be(10000.00)
+  }
+
+  it should "not keep the DMN model reachable through its required decisions" in {
+    val (withoutModel, modelRef) = parseAndDropModel("/requirements/ApplicantData.dmn")
+
+    isCollected(modelRef) should be(true)
+    eval(withoutModel, "income", Map()) should be(10000.00)
   }
 
   // camunda/dmn-scala#394: a required decision that is reachable over
@@ -94,4 +104,15 @@ class RequiredDecisionTest extends AnyFlatSpec with Matchers with DecisionTest {
     parse("/requirements/shared-required-decisions.dmn")
 
   private def evaluatedDecisions: List[String] = auditLog.entries.map(_.id)
+
+  private def parseAndDropModel(file: String): (ParsedDmn, WeakReference[AnyRef]) = {
+    val parsed = parse(file)
+    (ParsedDmn(model = null, decisions = parsed.decisions), new WeakReference(parsed.model))
+  }
+
+  private def isCollected(ref: WeakReference[_]): Boolean =
+    (1 to 20).exists { _ =>
+      System.gc()
+      ref.get() == null
+    }
 }
