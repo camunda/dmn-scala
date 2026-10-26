@@ -44,6 +44,7 @@ class LongDecisionChainParsingTest
     }
 
     parseResult.isRight should be(true)
+    eval(parseResult.toOption.get, "d0", Map()) should be(decisionCount)
   }
 
   it should "parse a long chain whose required decisions come first in the file" in {

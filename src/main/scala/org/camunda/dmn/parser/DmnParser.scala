@@ -238,6 +238,9 @@ class DmnParser(
       implicit
       ctx: ParsingContext): ParsedDecision = {
 
+    // Relies on parseModel parsing decisions in dependency order, so the required decisions
+    // are already in ctx.decisions. An id that isn't found is skipped without an error, as
+    // before.
     val requiredDecisions = requiredDecisionIds(decision)
       .flatMap(ctx.decisions.get)
 
