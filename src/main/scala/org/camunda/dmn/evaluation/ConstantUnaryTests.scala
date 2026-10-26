@@ -25,12 +25,8 @@ private[evaluation] object ConstantUnaryTests {
         case ValString(v) => Some(v == s)
         case _ => None
       }
-    case UnaryTestExpression(ConstNumber(n)) =>
-      input match {
-        case ValNumber(v) => Some(v == n)
-        case _ => None
-      }
-    case InputLessThan(ConstNumber(n)) => number(input)( _ < n)
+    case UnaryTestExpression(ConstNumber(n)) => number(input)(_ == n)
+    case InputLessThan(ConstNumber(n)) => number(input)(_ < n)
     case InputLessOrEqual(ConstNumber(n)) => number(input)(_ <= n)
     case InputGreaterThan(ConstNumber(n)) => number(input)(_ > n)
     case InputGreaterOrEqual(ConstNumber(n)) => number(input)(_ >= n)
