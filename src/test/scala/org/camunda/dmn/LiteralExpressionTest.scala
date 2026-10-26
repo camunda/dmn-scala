@@ -26,6 +26,7 @@ class LiteralExpressionTest
 
   lazy val greeting = parse("/literalexpression/greeting.dmn")
   lazy val typeMismatch = parse("/literalexpression/type-mismatch.dmn")
+  lazy val scopedVariables = parse("/literalexpression/scoped-variables.dmn")
 
   "A literal expression" should "be evaluated as decision" in {
     eval(greeting, "greeting", Map("name" -> "John")) should be("Hello John")
@@ -34,6 +35,11 @@ class LiteralExpressionTest
   it should "fail when result doesn't match type" in {
     eval(typeMismatch, "greeting", Map("name" -> "Frank")) should be(
       Failure("expected 'number' but found '\"Hello Frank\"'"))
+  }
+
+  it should "shadow a variable with a scoped variable and read other variables" in {
+    eval(scopedVariables, "scopedVariables", Map("x" -> 100, "y" -> 3)) should be(
+      List(3, 6))
   }
 
 }

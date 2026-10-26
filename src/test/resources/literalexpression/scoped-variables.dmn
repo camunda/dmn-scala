@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="scoped-variables" name="Scoped variables"
+	namespace="http://camunda.org/schema/1.0/dmn"
+	xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/">
+	<decision name="Scoped variables" id="scopedVariables">
+		<literalExpression>
+			<text>for x in [1, 2] return x * y</text>
+		</literalExpression>
+	</decision>
+</definitions>

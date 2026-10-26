@@ -19,10 +19,12 @@ import org.camunda.dmn.DmnEngine._
 import org.camunda.dmn.parser._
 import org.camunda.feel
 import org.camunda.feel.api.{FailedEvaluationResult, FeelEngineApi, SuccessfulEvaluationResult}
-import org.camunda.feel.context.Context.StaticContext
+import org.camunda.feel.context.{Context, FunctionProvider, VariableProvider}
 import org.camunda.feel.syntaxtree.{Val, ValBoolean, ValFunction}
 
 class LiteralExpressionEvaluator(feelEngine: FeelEngineApi) {
+
+  import LiteralExpressionEvaluator.VariablesContext
 
   def evalExpression(literalExpression: ParsedLiteralExpression,
                      context: EvalContext): Either[Failure, Val] = {
@@ -45,21 +47,45 @@ class LiteralExpressionEvaluator(feelEngine: FeelEngineApi) {
 
   private def evalFeelExpression(expression: feel.syntaxtree.ParsedExpression,
                                  context: EvalContext): Either[Failure, Val] = {
-    val functions = context.variables
-      .filter { case (k, v) => v.isInstanceOf[ValFunction] }
-      .map { case (k, f) => k -> List(f.asInstanceOf[ValFunction]) }
-
-    val evalContext =
-      StaticContext(variables = context.variables, functions = functions)
-
     feelEngine.evaluate(
       expression = expression,
-      context = evalContext
+      context = new VariablesContext(context.variables)
     ) match {
       case SuccessfulEvaluationResult(result: Val, _) => Right(result)
       case SuccessfulEvaluationResult(other, _) => Left(Failure(s"expected value but found '$other'"))
       case FailedEvaluationResult(failure, _) => Left(Failure(failure.message))
     }
+  }
+
+}
+
+object LiteralExpressionEvaluator {
+
+  // Exposes the variables to the FEEL engine without copying them. The engine
+  // copies the variables of a StaticContext into a new map on every
+  // evaluation, which dominates the cost of evaluating large decision tables.
+  // Variables that hold a function are also provided as functions.
+  private class VariablesContext(variables: Map[String, Any])
+      extends Context
+      with VariableProvider
+      with FunctionProvider {
+
+    override def variableProvider: VariableProvider = this
+
+    override def functionProvider: FunctionProvider = this
+
+    override def getVariable(name: String): Option[Any] = variables.get(name)
+
+    override def keys: Iterable[String] = variables.keys
+
+    override def getFunctions(name: String): List[ValFunction] =
+      variables.get(name) match {
+        case Some(function: ValFunction) => List(function)
+        case _                           => List.empty
+      }
+
+    override def functionNames: Iterable[String] =
+      variables.collect { case (name, _: ValFunction) => name }
   }
 
 }
