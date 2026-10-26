@@ -44,5 +44,18 @@ class LongDecisionChainParsingTest
     }
 
     parseResult.isRight should be(true)
+    eval(parseResult.toOption.get, "d0", Map()) should be(decisionCount)
+  }
+
+  it should "parse a long chain whose required decisions come first in the file" in {
+    val xml = LongDecisionChainDmnXml.chainDmnXml(decisionCount, requiredDecisionsFirst = true)
+
+    val parseResult = runWithStackSize(smallStackSize) {
+      val stream = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8))
+      engine.parse(stream)
+    }
+
+    parseResult.isRight should be(true)
+    eval(parseResult.toOption.get, "d0", Map()) should be(decisionCount)
   }
 }

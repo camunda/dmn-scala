@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" id="defs" name="DRD" namespace="http://camunda.org/schema/1.0/dmn">
+  <decision id="root" name="root">
+    <variable id="v_root" name="root" />
+    <informationRequirement id="ir_root_broken"><requiredDecision href="#broken" /></informationRequirement>
+    <literalExpression id="le_root"><text>broken + 1</text></literalExpression>
+  </decision>
+  <decision id="broken" name="broken">
+    <variable id="v_broken" name="broken" />
+    <literalExpression id="le_broken"><text>1 +</text></literalExpression>
+  </decision>
+</definitions>

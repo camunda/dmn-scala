@@ -95,20 +95,53 @@ class DmnParser(
       case _ =>
         val decisions = drgElements.collect { case d: Decision => d }
 
-        decisions.foreach(d =>
+        // Required decisions are parsed first, so each decision can hold strict references to
+        // them instead of a lazy view that keeps the whole DMN model reachable.
+        inDependencyOrder(decisions).foreach(d =>
           ctx.decisions.getOrElseUpdate(d.getId, parseDecision(d)(ctx)))
 
         if (ctx.failures.isEmpty) {
-          Right(ParsedDmn(model, ctx.decisions.values))
+          Right(ParsedDmn(model, ctx.decisions.values.toList))
 
         } else if (configuration.lazyEvaluation) {
           logger.warn("Parsing the DMN reported the following failures:\n{}",
             ctx.failures.map(_.message).mkString("\n"))
-          Right(ParsedDmn(model, ctx.decisions.values))
+          Right(ParsedDmn(model, ctx.decisions.values.toList))
         } else {
           Left(ctx.failures)
         }
     }
+  }
+
+  private def requiredDecisionIds(decision: Decision): List[String] =
+    decision.getInformationRequirements.asScala
+      .flatMap(r => Option(r.getRequiredDecision).map(_.getId))
+      .toList
+
+  // Iterative post-order DFS: long decision chains must not overflow the stack
+  // (camunda/dmn-scala#335). Cycles are rejected before this is called.
+  private def inDependencyOrder(decisions: Iterable[Decision]): List[Decision] = {
+    val decisionsById = decisions.map(d => d.getId -> d).toMap
+    val visited = mutable.Set[String]()
+    val ordered = mutable.ListBuffer[Decision]()
+
+    decisions.foreach { root =>
+      var stack: List[(Decision, Boolean)] = List((root, false))
+      while (stack.nonEmpty) {
+        val (decision, dependenciesPushed) = stack.head
+        stack = stack.tail
+        if (dependenciesPushed) {
+          ordered += decision
+        } else if (visited.add(decision.getId)) {
+          stack = (decision, true) :: stack
+          requiredDecisionIds(decision).reverse
+            .filterNot(visited.contains)
+            .flatMap(decisionsById.get)
+            .foreach(required => stack = (required, false) :: stack)
+        }
+      }
+    }
+    ordered.toList
   }
 
   private def checkForCyclicDependencies(drgElements: Iterable[DrgElement]): Either[Failure, Unit] = {
@@ -130,12 +163,7 @@ class DmnParser(
   }
 
   private def hasCyclicDependenciesInDecisions(decisions: Iterable[Decision]): Boolean = {
-    val dependencies = decisions.map { decision =>
-      val requiredDecisions = decision.getInformationRequirements.asScala
-        .flatMap(requirement => Option(requirement.getRequiredDecision).map(_.getId))
-
-      decision.getId -> requiredDecisions
-    }.toMap
+    val dependencies = decisions.map(decision => decision.getId -> requiredDecisionIds(decision)).toMap
 
     decisions.exists(decision =>
       hasDependencyCycle(
@@ -210,12 +238,11 @@ class DmnParser(
       implicit
       ctx: ParsingContext): ParsedDecision = {
 
-    val informationRequirements = decision.getInformationRequirements.asScala
-    val requiredDecisions = informationRequirements.view
-      .map(r => Option(r.getRequiredDecision))
-      .flatten
-      .map(d => ctx.decisions.get(d.getId))
-      .flatten
+    // Relies on parseModel parsing decisions in dependency order, so the required decisions
+    // are already in ctx.decisions. An id that isn't found is skipped without an error, as
+    // before.
+    val requiredDecisions = requiredDecisionIds(decision)
+      .flatMap(ctx.decisions.get)
 
     val knowledgeRequirements = decision.getKnowledgeRequirements.asScala
     val requiredBkms = knowledgeRequirements
