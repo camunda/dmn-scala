@@ -34,6 +34,10 @@ class DmnVersionCompatibilityTest
 
   private def dmn1_5_decision = parse("/dmn1.5/greeting.dmn")
 
+  private def dmn1_6_decision = parse("/dmn1.6/greeting.dmn")
+
+  private def dmn1_7_decision = parse("/dmn1.7/greeting.dmn")
+
   "The DMN engine" should "evaluate a DMN 1.1 decision" in {
     eval(dmn1_1_decision, "greeting", Map("name" -> "DMN")) should be(
       "Hello DMN")
@@ -56,6 +60,16 @@ class DmnVersionCompatibilityTest
 
   it should "evaluate a DMN 1.5 decision" in {
     eval(dmn1_5_decision, "greeting", Map("name" -> "DMN")) should be(
+      "Hello DMN")
+  }
+
+  it should "evaluate a DMN 1.6 decision" in {
+    eval(dmn1_6_decision, "greeting", Map("name" -> "DMN")) should be(
+      "Hello DMN")
+  }
+
+  it should "evaluate a DMN 1.7 decision" in {
+    eval(dmn1_7_decision, "greeting", Map("name" -> "DMN")) should be(
       "Hello DMN")
   }
 

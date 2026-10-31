@@ -36,7 +36,11 @@ object DmnParser {
     DmnModelConstants.FEEL12_NS,
     DmnModelConstants.FEEL13_NS,
     DmnModelConstants.FEEL14_NS,
-    DmnModelConstants.FEEL15_NS
+    DmnModelConstants.FEEL15_NS,
+    // DMN 1.6
+    "https://www.omg.org/spec/DMN/20240513/FEEL/",
+    // DMN 1.7 introduced a permanent namespace that doesn't change with new versions
+    "https://www.omg.org/spec/DMN/FEEL/"
   ).map(_.toLowerCase())
 }
 
