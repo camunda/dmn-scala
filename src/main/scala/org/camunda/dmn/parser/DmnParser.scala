@@ -38,6 +38,8 @@ object DmnParser {
     DmnModelConstants.FEEL14_NS,
     DmnModelConstants.FEEL15_NS
   ).map(_.toLowerCase())
+
+  private lazy val modelParser = new BundledSchemaDmnParser
 }
 
 class DmnParser(
@@ -74,7 +76,7 @@ class DmnParser(
 
   def parse(stream: InputStream): Either[Failure, ParsedDmn] = {
 
-    Try(Dmn.readModelFromStream(stream)) match {
+    Try(modelParser.parseModelFromStream(stream)) match {
       case scala.util.Success(model) => {
         parseModel(model).left.map(failures =>
           Failure(failures.map(_.message).mkString("\n")))
