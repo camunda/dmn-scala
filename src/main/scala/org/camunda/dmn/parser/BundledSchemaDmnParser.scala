@@ -44,9 +44,8 @@ private[parser] class BundledSchemaDmnParser extends CamundaDmnParser {
 
     try {
       factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "")
-      factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "")
     } catch {
-      case _: IllegalArgumentException => // Apache Xerces 2.x lacks these JAXP 1.5 properties
+      case _: IllegalArgumentException => // Apache Xerces 2.x lacks this JAXP 1.5 property
     }
   }
 }
